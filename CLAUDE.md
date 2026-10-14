@@ -45,6 +45,9 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - **Üyelik/giriş yok.** Tüm veriler telefonda (lokalde) tutulur (AsyncStorage). Giriş
   ekranı yerine bir "Welcome" karşılama ekranı olacak. Sunucu ileride (senkron, paylaşım,
   premium) gerekirse eklenir.
+- **İlk açılış ekranı "Girl Math Kullanım Sözleşmesi"** (`src/components/agreement-screen.tsx`).
+  Onaylanınca AsyncStorage'a `girlmath.agreementAccepted = true` yazılır, bir daha gösterilmez.
+  İleride gelecek Welcome/giriş adımları bu sözleşmeden *sonra* gelir.
 - **Sadece açık tema** (app.json: `"userInterfaceStyle": "light"`). Karanlık mod sonra.
 - **Fotoğraflar:** expo-image-picker ile seçilir, expo-file-system'in File/Paths API'siyle
   `Paths.document` altına kopyalanır. Kayıtta tam yol değil **sadece dosya adı** tutulur,

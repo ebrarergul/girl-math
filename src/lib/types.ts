@@ -1,0 +1,31 @@
+/**
+ * GIRL MATH – VERİ MODELİ
+ *
+ * Bu dosya bir "kalıp" dosyasıdır: bir kıyafetin hangi bilgilerden oluştuğunu
+ * tarif eder. İçinde çalışan kod yoktur, sadece tanım vardır.
+ */
+
+// Dolaptaki kategoriler. Yeni kategori eklemek için bu listeye bir satır eklemek yeterli.
+export const CATEGORIES = [
+  'Üst',
+  'Alt',
+  'Elbise',
+  'Dış giyim',
+  'Ayakkabı',
+  'Çanta',
+  'Aksesuar',
+] as const;
+
+export type Category = (typeof CATEGORIES)[number];
+
+// Bir kıyafetin tüm bilgileri
+export type ClothingItem = {
+  id: string; // Her kıyafete özel, değişmeyen kimlik numarası
+  name: string; // Örn: "Siyah deri ceket"
+  category: Category;
+  price: number; // Satın alma fiyatı (TL)
+  photoFileName: string | null; // Sadece dosya adı (tam yol çalışma anında üretilir), fotoğraf yoksa null
+  wearDates: string[]; // "Giydim"e her basıldığında o günün tarihi eklenir, örn: "2026-10-14". Giyilme sayısı = bu listenin uzunluğu
+  targetWears: number; // Hedef giyilme sayısı. Buna ulaşınca "amorti edildi" sayılır
+  createdAt: string; // Dolaba eklendiği tarih, örn: "2026-10-14"
+};
