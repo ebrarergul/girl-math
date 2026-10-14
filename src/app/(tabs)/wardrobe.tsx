@@ -21,6 +21,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClothingCard } from '@/components/clothing-card';
+import { ScreenBackground } from '@/components/screen-background';
 import { BottomTabInset, Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { isPaidOff, wearCount } from '@/lib/girl-math';
@@ -93,154 +94,155 @@ export default function WardrobeScreen() {
     filtered.length % 2 === 1 ? [...filtered, null] : filtered;
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <FlatList
-        data={data}
-        keyExtractor={(item, index) => item?.id ?? `bos-${index}`}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <View style={styles.titleRow}>
-              <View style={styles.titleText}>
-                <Text style={styles.label}>GIRL MATH</Text>
-                <Text style={styles.title}>Dolabım</Text>
-                {isLoaded && items.length > 0 && (
-                  <Text style={styles.subtitle}>{items.length} parça</Text>
-                )}
+    <ScreenBackground>
+      <SafeAreaView style={styles.screen} edges={['top']}>
+        <FlatList
+          data={data}
+          keyExtractor={(item, index) => item?.id ?? `bos-${index}`}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={styles.header}>
+              <View style={styles.titleRow}>
+                <View style={styles.titleText}>
+                  <Text style={styles.label}>GIRL MATH</Text>
+                  <Text style={styles.title}>Dolabım</Text>
+                  {isLoaded && items.length > 0 && (
+                    <Text style={styles.subtitle}>{items.length} parça</Text>
+                  )}
+                </View>
+                <Pressable
+                  onPress={() => router.push('/add-item')}
+                  accessibilityLabel="Yeni parça ekle"
+                  style={({ pressed }) => [styles.addButton, pressed && styles.addButtonPressed]}>
+                  <SymbolView
+                    name={{ ios: 'plus', android: 'add', web: 'add' }}
+                    tintColor={colors.onPrimary}
+                    size={22}
+                    weight="bold"
+                  />
+                </Pressable>
               </View>
-              <Pressable
-                onPress={() => router.push('/add-item')}
-                accessibilityLabel="Yeni parça ekle"
-                style={({ pressed }) => [styles.addButton, pressed && styles.addButtonPressed]}>
-                <SymbolView
-                  name={{ ios: 'plus', android: 'add', web: 'add' }}
-                  tintColor={colors.onPrimary}
-                  size={22}
-                  weight="bold"
-                />
-              </Pressable>
-            </View>
 
-            <View style={styles.searchRow}>
-              <View style={styles.searchBox}>
+              <View style={styles.searchRow}>
+                <View style={styles.searchBox}>
+                  <SymbolView
+                    name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
+                    tintColor={colors.textMuted}
+                    size={18}
+                  />
+                  <TextInput
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholder="Dolabında ara"
+                    placeholderTextColor={colors.textMuted}
+                    style={styles.searchInput}
+                    returnKeyType="search"
+                    clearButtonMode="while-editing"
+                  />
+                </View>
+                {/* Sıralama butonu: varsayılan dışında bir sıralama seçiliyse pembe olur */}
+                <Pressable
+                  onPress={openSortMenu}
+                  accessibilityLabel="Sırala"
+                  style={({ pressed }) => [
+                    styles.sortButton,
+                    sort !== 'newest' && styles.sortButtonActive,
+                    pressed && styles.sortButtonPressed,
+                  ]}>
+                  <SymbolView
+                    name={{ ios: 'arrow.up.arrow.down', android: 'sort', web: 'sort' }}
+                    tintColor={sort !== 'newest' ? colors.onPrimary : colors.text}
+                    size={18}
+                    weight="semibold"
+                  />
+                </Pressable>
+              </View>
+              {sort !== 'newest' && (
+                <Text style={styles.sortNote}>
+                  Sıralama: {SORTS.find((option) => option.key === sort)?.label}
+                </Text>
+              )}
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.chipScroll}
+                contentContainerStyle={styles.chips}>
+                {FILTERS.map((name) => {
+                  const selected = name === category;
+                  return (
+                    <Pressable
+                      key={name}
+                      onPress={() => setCategory(name)}
+                      style={[styles.chip, selected && styles.chipSelected]}>
+                      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                        {name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <View style={styles.emptyIcon}>
                 <SymbolView
-                  name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
-                  tintColor={colors.textMuted}
-                  size={18}
-                />
-                <TextInput
-                  value={search}
-                  onChangeText={setSearch}
-                  placeholder="Dolabında ara"
-                  placeholderTextColor={colors.textMuted}
-                  style={styles.searchInput}
-                  returnKeyType="search"
-                  clearButtonMode="while-editing"
+                  name={
+                    !isLoaded
+                      ? { ios: 'hourglass', android: 'hourglass_empty', web: 'hourglass_empty' }
+                      : isFiltering
+                        ? { ios: 'magnifyingglass', android: 'search', web: 'search' }
+                        : { ios: 'bag', android: 'shopping_bag', web: 'shopping_bag' }
+                  }
+                  tintColor={colors.primary}
+                  size={34}
+                  weight="light"
                 />
               </View>
-              {/* Sıralama butonu: varsayılan dışında bir sıralama seçiliyse pembe olur */}
-              <Pressable
-                onPress={openSortMenu}
-                accessibilityLabel="Sırala"
-                style={({ pressed }) => [
-                  styles.sortButton,
-                  sort !== 'newest' && styles.sortButtonActive,
-                  pressed && styles.sortButtonPressed,
-                ]}>
-                <SymbolView
-                  name={{ ios: 'arrow.up.arrow.down', android: 'sort', web: 'sort' }}
-                  tintColor={sort !== 'newest' ? colors.onPrimary : colors.text}
-                  size={18}
-                  weight="semibold"
-                />
-              </Pressable>
-            </View>
-            {sort !== 'newest' && (
-              <Text style={styles.sortNote}>
-                Sıralama: {SORTS.find((option) => option.key === sort)?.label}
+              <Text style={styles.emptyTitle}>
+                {!isLoaded
+                  ? 'Dolabın açılıyor…'
+                  : isFiltering
+                    ? 'Bu aramada parça yok'
+                    : 'Dolabın şimdilik boş'}
               </Text>
-            )}
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.chipScroll}
-              contentContainerStyle={styles.chips}>
-              {FILTERS.map((name) => {
-                const selected = name === category;
-                return (
-                  <Pressable
-                    key={name}
-                    onPress={() => setCategory(name)}
-                    style={[styles.chip, selected && styles.chipSelected]}>
-                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
-        }
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <SymbolView
-                name={
-                  !isLoaded
-                    ? { ios: 'hourglass', android: 'hourglass_empty', web: 'hourglass_empty' }
-                    : isFiltering
-                      ? { ios: 'magnifyingglass', android: 'search', web: 'search' }
-                      : { ios: 'bag', android: 'shopping_bag', web: 'shopping_bag' }
-                }
-                tintColor={colors.primary}
-                size={34}
-                weight="light"
+              {isLoaded && !isFiltering && (
+                <Text style={styles.emptyText}>
+                  İlk parçanı ekle, her giydiğinde maliyeti nasıl düştüğünü gör.
+                </Text>
+              )}
+              {isLoaded && !isFiltering && (
+                <Pressable
+                  onPress={() => router.push('/add-item')}
+                  style={({ pressed }) => [styles.emptyButton, pressed && styles.addButtonPressed]}>
+                  <Text style={styles.emptyButtonText}>İlk parçanı ekle</Text>
+                </Pressable>
+              )}
+            </View>
+          }
+          renderItem={({ item }) =>
+            item ? (
+              <ClothingCard
+                item={item}
+                onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } })}
               />
-            </View>
-            <Text style={styles.emptyTitle}>
-              {!isLoaded
-                ? 'Dolabın açılıyor…'
-                : isFiltering
-                  ? 'Bu aramada parça yok'
-                  : 'Dolabın şimdilik boş'}
-            </Text>
-            {isLoaded && !isFiltering && (
-              <Text style={styles.emptyText}>
-                İlk parçanı ekle, her giydiğinde maliyeti nasıl düştüğünü gör.
-              </Text>
-            )}
-            {isLoaded && !isFiltering && (
-              <Pressable
-                onPress={() => router.push('/add-item')}
-                style={({ pressed }) => [styles.emptyButton, pressed && styles.addButtonPressed]}>
-                <Text style={styles.emptyButtonText}>İlk parçanı ekle</Text>
-              </Pressable>
-            )}
-          </View>
-        }
-        renderItem={({ item }) =>
-          item ? (
-            <ClothingCard
-              item={item}
-              onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } })}
-            />
-          ) : (
-            <View style={styles.spacer} />
-          )
-        }
-      />
-    </SafeAreaView>
+            ) : (
+              <View style={styles.spacer} />
+            )
+          }
+        />
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     paddingHorizontal: Spacing.three,

@@ -8,6 +8,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenBackground } from '@/components/screen-background';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 
 const colors = Colors.light;
@@ -25,45 +26,46 @@ type Props = {
 
 export function WelcomeScreen({ onStart }: Props) {
   return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.emoji}>🎀</Text>
-          <Text style={styles.label}>GIRL MATH</Text>
-          <Text style={styles.title}>Hoş geldin aşko!</Text>
-          <Text style={styles.subtitle}>
-            Dolabındaki her parçanın gerçek maliyetini birlikte hesaplayalım.
-          </Text>
-        </View>
-
-        {STEPS.map((step, index) => (
-          <View key={index} style={styles.card}>
-            <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>{step.emoji}</Text>
-            </View>
-            <View style={styles.cardBody}>
-              <Text style={styles.cardTitle}>{step.title}</Text>
-              <Text style={styles.cardText}>{step.text}</Text>
-            </View>
+    <ScreenBackground>
+      <SafeAreaView style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text style={styles.emoji}>🎀</Text>
+            <Text style={styles.label}>GIRL MATH</Text>
+            <Text style={styles.title}>Hoş geldin aşko!</Text>
+            <Text style={styles.subtitle}>
+              Dolabındaki her parçanın gerçek maliyetini birlikte hesaplayalım.
+            </Text>
           </View>
-        ))}
-      </ScrollView>
 
-      <View style={styles.footer}>
-        <Pressable
-          onPress={onStart}
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
-          <Text style={styles.buttonText}>Hadi başlayalım 💖</Text>
-        </Pressable>
-      </View>
-    </SafeAreaView>
+          {STEPS.map((step, index) => (
+            <View key={index} style={styles.card}>
+              <View style={styles.iconCircle}>
+                <Text style={styles.iconText}>{step.emoji}</Text>
+              </View>
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle}>{step.title}</Text>
+                <Text style={styles.cardText}>{step.text}</Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Pressable
+            onPress={onStart}
+            style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
+            <Text style={styles.buttonText}>Hadi başlayalım 💖</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     paddingHorizontal: Spacing.four,

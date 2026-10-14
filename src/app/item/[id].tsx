@@ -7,6 +7,7 @@
  * "Giydim"e basınca maliyet rakamı zıplar ve kısa bir kutlama balonu çıkar.
  */
 
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -110,6 +111,13 @@ export default function ItemDetailScreen() {
     wearItem(item!.id);
     popCost();
 
+    // Titreşim: hedefe ulaştıysa iPhone'un "başarı" titreşimi, değilse tek bir "tık"
+    if (newWears === item!.targetWears) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
     if (newWears === item!.targetWears) {
       showToast('Amorti edildi! Bu parça artık resmen bedava 💅');
     } else if (newWears === 1) {
@@ -123,6 +131,7 @@ export default function ItemDetailScreen() {
 
   function handleUndo() {
     undoWear(item!.id);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     popCost();
     showToast('Son giyim geri alındı ↩');
   }
@@ -143,16 +152,29 @@ export default function ItemDetailScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['bottom']}>
-      {/* Sağ üstte "Düzenle": aynı formu bu kıyafetin bilgileriyle açar */}
+      {/* Sağ üstte paylaş simgesi (Story kartı) ve "Düzenle" (aynı formu dolu açar) */}
       <Stack.Screen
         options={{
           ...headerOptions,
           headerRight: () => (
-            <Pressable
-              onPress={() => router.push({ pathname: '/add-item', params: { id: item.id } })}
-              hitSlop={8}>
-              <Text style={styles.editText}>Düzenle</Text>
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                onPress={() => router.push({ pathname: '/share', params: { id: item.id } })}
+                accessibilityLabel="Paylaş"
+                hitSlop={8}>
+                <SymbolView
+                  name={{ ios: 'square.and.arrow.up', android: 'share', web: 'share' }}
+                  tintColor={colors.primary}
+                  size={20}
+                  weight="semibold"
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => router.push({ pathname: '/add-item', params: { id: item.id } })}
+                hitSlop={8}>
+                <Text style={styles.editText}>Düzenle</Text>
+              </Pressable>
+            </View>
           ),
         }}
       />
@@ -295,6 +317,12 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: Spacing.four,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    paddingLeft: Spacing.two,
   },
   editText: {
     ...Typography.bodyBold,

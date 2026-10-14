@@ -8,6 +8,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenBackground } from '@/components/screen-background';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 
 const colors = Colors.light;
@@ -26,41 +27,42 @@ type Props = {
 
 export function AgreementScreen({ onAccept }: Props) {
   return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.scroll}>📜</Text>
-          <Text style={styles.title}>GIRL MATH{'\n'}KULLANIM SÖZLEŞMESİ</Text>
-          <Text style={styles.subtitle}>Devam etmeden önce lütfen dikkatle okuyunuz 🎀</Text>
-        </View>
-
-        {ARTICLES.map((text, index) => (
-          <View key={index} style={styles.card}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>Madde {index + 1}</Text>
-            </View>
-            <Text style={styles.articleText}>{text}</Text>
+    <ScreenBackground>
+      <SafeAreaView style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text style={styles.scroll}>📜</Text>
+            <Text style={styles.title}>GIRL MATH{'\n'}KULLANIM SÖZLEŞMESİ</Text>
+            <Text style={styles.subtitle}>Devam etmeden önce lütfen dikkatle okuyunuz 🎀</Text>
           </View>
-        ))}
-      </ScrollView>
 
-      <View style={styles.footer}>
-        <Pressable
-          onPress={onAccept}
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
-          <Text style={styles.buttonText}>
-            💖 Okudum, anladım ve banka bakiyemi görmezden gelmeyi kabul ediyorum!
-          </Text>
-        </Pressable>
-      </View>
-    </SafeAreaView>
+          {ARTICLES.map((text, index) => (
+            <View key={index} style={styles.card}>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>Madde {index + 1}</Text>
+              </View>
+              <Text style={styles.articleText}>{text}</Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Pressable
+            onPress={onAccept}
+            style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
+            <Text style={styles.buttonText}>
+              💖 Okudum, anladım ve banka bakiyemi görmezden gelmeyi kabul ediyorum!
+            </Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     paddingHorizontal: Spacing.four,

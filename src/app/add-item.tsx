@@ -95,7 +95,13 @@ export default function AddItemScreen() {
       addItem(values);
     }
     savedRef.current = true;
-    router.back();
+    if (priceParam && !editing) {
+      // "Almalı mıyım?" → "Aldım!" ile geldiyse: açık sayfaları kapat, yeni parçayı Dolap'ta göster
+      router.dismissAll();
+      router.navigate('/wardrobe');
+    } else {
+      router.back();
+    }
   }
 
   const uri = photoUri(photoFileName);

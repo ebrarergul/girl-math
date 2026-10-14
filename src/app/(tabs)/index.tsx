@@ -8,6 +8,7 @@
  * İleride: "Günün kombini" kartı (Onur'un kombin motoru hazır olunca).
  */
 
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -18,9 +19,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatTL } from '@/components/clothing-card';
 import { StatTile } from '@/components/stat-tile';
+import { ScreenBackground } from '@/components/screen-background';
 import { BottomTabInset, Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
-import { comparisonText } from '@/lib/comparisons';
+import { comparisonText, findComparison } from '@/lib/comparisons';
 import { costPerWear, todayString, wearCount } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
 import { getWardrobeStats } from '@/lib/stats';
@@ -30,6 +32,28 @@ const colors = Colors.light;
 
 // Bu kadar gün giyilmeyen parça "unutulmuş" sayılır ve Ana sayfada uyarı çıkar
 const FORGOTTEN_DAYS = 7;
+
+// Utanç Duvarı "zarar" hesabı: bir kıyafetin parası 1 yılda "eritilmeli"; giyilmeden geçen
+// her gün fiyatın 1/365'i boşa gider. Günlük tutar sadece anlamlıysa (≥ 10 ₺) gösterilir,
+// asıl vurgu zamanla büyüyen toplam zarardadır.
+const LOSS_YEAR_DAYS = 365;
+const MIN_DAILY_LOSS_TO_SHOW = 10;
+
+// Örn: "📉 Sana günlük 16 ₺ zarar yazıyor. Şimdiye kadar boşa giden: 986 ₺ ≈ Brunch 🥞"
+// Boşa giden tutar en ucuz kıyas kaleminden bile azsa null döner (satır gösterilmez).
+function lossText(price: number, days: number): string | null {
+  const daily = price / LOSS_YEAR_DAYS;
+  const total = Math.round(daily * days);
+  const match = findComparison(total);
+  if (days <= 0 || !match) {
+    return null;
+  }
+  const dailyPart =
+    daily >= MIN_DAILY_LOSS_TO_SHOW
+      ? `Sana günlük ${formatTL(Math.round(daily))} zarar yazıyor. `
+      : '';
+  return `📉 ${dailyPart}Şimdiye kadar boşa giden: ${formatTL(total)} ≈ ${match.name} ${match.emoji}`;
+}
 // Check-in balonunun ekranda kalma süresi (milisaniye); "Geri al"a basmaya yetecek kadar
 const TOAST_DURATION = 4000;
 
@@ -65,11 +89,18 @@ export default function HomeScreen() {
     const name = `“${item.name}”`;
     if (item.wearDates.includes(today)) {
       undoWear(item.id);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       showToast(`${name} bugünden çıkarıldı ↩`);
       return;
     }
     const newWears = wearCount(item) + 1;
     wearItem(item.id);
+    // Titreşim: hedefe ulaştıysa "başarı" titreşimi, değilse tek bir "tık"
+    if (newWears === item.targetWears) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     if (newWears === item.targetWears) {
       showToast(`${name} amorti edildi, resmen bedava 💅`, item.id);
     } else if (newWears === 1) {
@@ -82,6 +113,7 @@ export default function HomeScreen() {
   function handleUndo() {
     if (toast?.undoItemId) {
       undoWear(toast.undoItemId);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast(null);
@@ -107,108 +139,111 @@ export default function HomeScreen() {
   const star = stats.mostWorn;
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.label}>GIRL MATH</Text>
-          <Text style={styles.title}>Merhaba aşko 🎀</Text>
-          <Text style={styles.subtitle}>Bugün hangi kıyafetin kendini amorti edecek?</Text>
-        </View>
-
-        {isEmpty ? (
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <SymbolView
-                name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
-                tintColor={colors.primary}
-                size={34}
-                weight="light"
-              />
-            </View>
-            <Text style={styles.emptyTitle}>{"Girl Math'e hoş geldin"}</Text>
-            <Text style={styles.emptyText}>
-              İlk parçanı ekle, her giydiğinde maliyetinin nasıl düştüğünü gör.
-            </Text>
-            <Pressable
-              onPress={() => router.push('/add-item')}
-              style={({ pressed }) => [styles.emptyButton, pressed && styles.buttonPressed]}>
-              <Text style={styles.emptyButtonText}>İlk parçanı ekle</Text>
-            </Pressable>
+    <ScreenBackground>
+      <SafeAreaView style={styles.screen} edges={['top']}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text style={styles.label}>GIRL MATH</Text>
+            <Text style={styles.title}>Merhaba aşko 🎀</Text>
+            <Text style={styles.subtitle}>Bugün hangi kıyafetin kendini amorti edecek?</Text>
           </View>
-        ) : (
-          <>
-            {items.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Bugün ne giydin?</Text>
-                <Text style={styles.sectionNote}>
-                  Dokun, Giydim sayılsın ✨ Tekrar dokunursan geri alınır.
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.stripScroll}
-                  contentContainerStyle={styles.strip}>
-                  {items.map((item) => (
-                    <QuickWearButton
-                      key={item.id}
-                      item={item}
-                      wornToday={item.wearDates.includes(today)}
-                      onPress={() => handleQuickWear(item)}
-                    />
-                  ))}
-                </ScrollView>
+
+          {isEmpty ? (
+            <View style={styles.empty}>
+              <View style={styles.emptyIcon}>
+                <SymbolView
+                  name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
+                  tintColor={colors.primary}
+                  size={34}
+                  weight="light"
+                />
               </View>
-            )}
-
-            <View style={styles.row}>
-              <StatTile label="Dolabındaki parça" value={isLoaded ? String(items.length) : '…'} />
-              <StatTile
-                label="Bu ay giyim"
-                value={String(stats.wearsThisMonth)}
-                caption={stats.wearsThisMonth > 0 ? 'harikasın ✨' : 'ilk "Giydim" seni bekliyor'}
-              />
-            </View>
-
-            {forgotten && forgottenMessage && (
-              <HighlightCard
-                eyebrow="UNUTULAN PARÇA"
-                item={forgotten.item}
-                message={forgottenMessage}
-                tone="warning"
-                onPress={() => openItem(forgotten.item)}
-              />
-            )}
-
-            {star && (
-              <HighlightCard
-                eyebrow="DOLABININ YILDIZI ⭐"
-                item={star}
-                message={`${wearCount(star)} kere giydin, ${formatTL(costPerWear(star))} /giyim. ${comparisonText(costPerWear(star))}`}
-                onPress={() => openItem(star)}
-              />
-            )}
-          </>
-        )}
-      </ScrollView>
-
-      {/* Check-in balonu: sekme çubuğunun hemen üstünde belirir */}
-      {toast && (
-        <View style={styles.toastWrap} pointerEvents="box-none">
-          <Animated.View
-            key={toast.id}
-            entering={FadeInDown.springify()}
-            exiting={FadeOutDown}
-            style={styles.toast}>
-            <Text style={styles.toastText}>{toast.text}</Text>
-            {toast.undoItemId && (
-              <Pressable onPress={handleUndo} hitSlop={8}>
-                <Text style={styles.toastUndo}>Geri al</Text>
+              <Text style={styles.emptyTitle}>{"Girl Math'e hoş geldin"}</Text>
+              <Text style={styles.emptyText}>
+                İlk parçanı ekle, her giydiğinde maliyetinin nasıl düştüğünü gör.
+              </Text>
+              <Pressable
+                onPress={() => router.push('/add-item')}
+                style={({ pressed }) => [styles.emptyButton, pressed && styles.buttonPressed]}>
+                <Text style={styles.emptyButtonText}>İlk parçanı ekle</Text>
               </Pressable>
-            )}
-          </Animated.View>
-        </View>
-      )}
-    </SafeAreaView>
+            </View>
+          ) : (
+            <>
+              {items.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Bugün ne giydin?</Text>
+                  <Text style={styles.sectionNote}>
+                    Dokun, Giydim sayılsın ✨ Tekrar dokunursan geri alınır.
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.stripScroll}
+                    contentContainerStyle={styles.strip}>
+                    {items.map((item) => (
+                      <QuickWearButton
+                        key={item.id}
+                        item={item}
+                        wornToday={item.wearDates.includes(today)}
+                        onPress={() => handleQuickWear(item)}
+                      />
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
+              <View style={styles.row}>
+                <StatTile label="Dolabındaki parça" value={isLoaded ? String(items.length) : '…'} />
+                <StatTile
+                  label="Bu ay giyim"
+                  value={String(stats.wearsThisMonth)}
+                  caption={stats.wearsThisMonth > 0 ? 'harikasın ✨' : 'ilk "Giydim" seni bekliyor'}
+                />
+              </View>
+
+              {forgotten && forgottenMessage && (
+                <HighlightCard
+                  eyebrow="UNUTULAN PARÇA"
+                  item={forgotten.item}
+                  message={forgottenMessage}
+                  extra={lossText(forgotten.item.price, forgotten.days)}
+                  tone="warning"
+                  onPress={() => openItem(forgotten.item)}
+                />
+              )}
+
+              {star && (
+                <HighlightCard
+                  eyebrow="DOLABININ YILDIZI ⭐"
+                  item={star}
+                  message={`${wearCount(star)} kere giydin, ${formatTL(costPerWear(star))} /giyim. ${comparisonText(costPerWear(star))}`}
+                  onPress={() => openItem(star)}
+                />
+              )}
+            </>
+          )}
+        </ScrollView>
+
+        {/* Check-in balonu: sekme çubuğunun hemen üstünde belirir */}
+        {toast && (
+          <View style={styles.toastWrap} pointerEvents="box-none">
+            <Animated.View
+              key={toast.id}
+              entering={FadeInDown.springify()}
+              exiting={FadeOutDown}
+              style={styles.toast}>
+              <Text style={styles.toastText}>{toast.text}</Text>
+              {toast.undoItemId && (
+                <Pressable onPress={handleUndo} hitSlop={8}>
+                  <Text style={styles.toastUndo}>Geri al</Text>
+                </Pressable>
+              )}
+            </Animated.View>
+          </View>
+        )}
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
@@ -263,12 +298,14 @@ function HighlightCard({
   eyebrow,
   item,
   message,
+  extra,
   tone = 'default',
   onPress,
 }: {
   eyebrow: string;
   item: ClothingItem;
   message: string;
+  extra?: string | null; // Mesajın altında pembe vurgulu ek satır (ör. Utanç Duvarı zararı)
   tone?: 'default' | 'warning';
   onPress: () => void;
 }) {
@@ -300,6 +337,7 @@ function HighlightCard({
           {item.name}
         </Text>
         <Text style={styles.highlightMessage}>{message}</Text>
+        {extra && <Text style={styles.highlightExtra}>{extra}</Text>}
       </View>
       <SymbolView
         name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
@@ -313,7 +351,6 @@ function HighlightCard({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     paddingHorizontal: Spacing.four,
@@ -466,6 +503,11 @@ const styles = StyleSheet.create({
   highlightName: {
     ...Typography.heading,
     color: colors.text,
+  },
+  highlightExtra: {
+    ...Typography.bodyBold,
+    color: colors.primary,
+    marginTop: Spacing.one,
   },
   highlightMessage: {
     ...Typography.body,

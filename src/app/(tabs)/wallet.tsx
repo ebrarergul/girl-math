@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatTL } from '@/components/clothing-card';
 import { StatTile } from '@/components/stat-tile';
+import { ScreenBackground } from '@/components/screen-background';
 import {
   BottomTabInset,
   Colors,
@@ -34,111 +35,128 @@ export default function WalletScreen() {
   const isEmpty = isLoaded && items.length === 0;
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.label}>GIRL MATH</Text>
-          <Text style={styles.title}>Cüzdanım</Text>
-        </View>
-
-        {isEmpty ? (
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <SymbolView
-                name={{ ios: 'creditcard', android: 'account_balance_wallet', web: 'wallet' }}
-                tintColor={colors.primary}
-                size={34}
-                weight="light"
-              />
+    <ScreenBackground>
+      <SafeAreaView style={styles.screen} edges={['top']}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <View style={styles.headerText}>
+              <Text style={styles.label}>GIRL MATH</Text>
+              <Text style={styles.title}>Cüzdanım</Text>
             </View>
-            <Text style={styles.emptyTitle}>Cüzdanın seni bekliyor</Text>
-            <Text style={styles.emptyText}>
-              Dolabına parça ekledikçe Girl Math hesapların burada belirecek.
-            </Text>
-            <Pressable
-              onPress={() => router.push('/add-item')}
-              style={({ pressed }) => [styles.emptyButton, pressed && styles.emptyButtonPressed]}>
-              <Text style={styles.emptyButtonText}>İlk parçanı ekle</Text>
-            </Pressable>
+            {/* Dolap kartını Story olarak paylaş (dolap boşken paylaşacak bir şey yok) */}
+            {!isEmpty && isLoaded && (
+              <Pressable
+                onPress={() => router.push('/share')}
+                accessibilityLabel="Dolabını paylaş"
+                style={({ pressed }) => [styles.shareButton, pressed && styles.emptyButtonPressed]}>
+                <SymbolView
+                  name={{ ios: 'square.and.arrow.up', android: 'share', web: 'share' }}
+                  tintColor={colors.onPrimary}
+                  size={20}
+                  weight="bold"
+                />
+              </Pressable>
+            )}
           </View>
-        ) : (
-          <>
-            {/* Dolap değeri: rakam dergi yazı tipinde, ₺ sade yazı tipinde */}
-            <View style={styles.hero}>
-              <Text style={styles.heroLabel}>DOLAP DEĞERİN</Text>
-              <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
-                {stats.totalValue.toLocaleString('tr-TR')}
-                <Text style={styles.heroCurrency}> ₺</Text>
+
+          {isEmpty ? (
+            <View style={styles.empty}>
+              <View style={styles.emptyIcon}>
+                <SymbolView
+                  name={{ ios: 'creditcard', android: 'account_balance_wallet', web: 'wallet' }}
+                  tintColor={colors.primary}
+                  size={34}
+                  weight="light"
+                />
+              </View>
+              <Text style={styles.emptyTitle}>Cüzdanın seni bekliyor</Text>
+              <Text style={styles.emptyText}>
+                Dolabına parça ekledikçe Girl Math hesapların burada belirecek.
               </Text>
-              <Text style={styles.heroNote}>{stats.totalItems} parça</Text>
-              <View style={styles.divider} />
-              <Text style={styles.starbucks}>
-                Dolabın {starbucksIndexText(stats.totalValue)}
-              </Text>
+              <Pressable
+                onPress={() => router.push('/add-item')}
+                style={({ pressed }) => [styles.emptyButton, pressed && styles.emptyButtonPressed]}>
+                <Text style={styles.emptyButtonText}>İlk parçanı ekle</Text>
+              </Pressable>
             </View>
+          ) : (
+            <>
+              {/* Dolap değeri: rakam dergi yazı tipinde, ₺ sade yazı tipinde */}
+              <View style={styles.hero}>
+                <Text style={styles.heroLabel}>DOLAP DEĞERİN</Text>
+                <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
+                  {stats.totalValue.toLocaleString('tr-TR')}
+                  <Text style={styles.heroCurrency}> ₺</Text>
+                </Text>
+                <Text style={styles.heroNote}>{stats.totalItems} parça</Text>
+                <View style={styles.divider} />
+                <Text style={styles.starbucks}>
+                  Dolabın {starbucksIndexText(stats.totalValue)}
+                </Text>
+              </View>
 
-            <StatTile
-              label="GIRL MATH kazancın"
-              value={formatTL(stats.girlMathSavings)}
-              caption="Giydikçe kazandığın. Bankan bunu tanımıyor ama biz tanıyoruz 💅"
-              tone="primary"
-            />
+              <StatTile
+                label="GIRL MATH kazancın"
+                value={formatTL(stats.girlMathSavings)}
+                caption="Giydikçe kazandığın. Bankan bunu tanımıyor ama biz tanıyoruz 💅"
+                tone="primary"
+              />
 
-            <View style={styles.row}>
-              <StatTile
-                label="Ortalama maliyet"
-                value={
-                  stats.averageCostPerWear === null ? '—' : formatTL(stats.averageCostPerWear)
-                }
-                caption="giyim başına"
-              />
-              <StatTile
-                label="Toplam giyim"
-                value={String(stats.totalWears)}
-                caption={`bu ay ${stats.wearsThisMonth}`}
-              />
-            </View>
-            <View style={styles.row}>
-              <StatTile
-                label="Amorti edilen"
-                value={`${stats.paidOffCount} / ${stats.totalItems}`}
-                caption="parça resmen bedava"
-              />
-              <StatTile
-                label="Hiç giyilmeyen"
-                value={String(stats.neverWornCount)}
-                caption="parça sırasını bekliyor"
-              />
-            </View>
-          </>
-        )}
+              <View style={styles.row}>
+                <StatTile
+                  label="Ortalama maliyet"
+                  value={
+                    stats.averageCostPerWear === null ? '—' : formatTL(stats.averageCostPerWear)
+                  }
+                  caption="giyim başına"
+                />
+                <StatTile
+                  label="Toplam giyim"
+                  value={String(stats.totalWears)}
+                  caption={`bu ay ${stats.wearsThisMonth}`}
+                />
+              </View>
+              <View style={styles.row}>
+                <StatTile
+                  label="Amorti edilen"
+                  value={`${stats.paidOffCount} / ${stats.totalItems}`}
+                  caption="parça resmen bedava"
+                />
+                <StatTile
+                  label="Hiç giyilmeyen"
+                  value={String(stats.neverWornCount)}
+                  caption="parça sırasını bekliyor"
+                />
+              </View>
+            </>
+          )}
 
-        {/* "Almalı mıyım?" dolap boşken de görünür: ilk alışverişten önce de işe yarar */}
-        {isLoaded && (
-          <Pressable
-            onPress={() => router.push('/should-i-buy')}
-            style={({ pressed }) => [styles.askCard, pressed && styles.askCardPressed]}>
-            <Text style={styles.askEmoji}>🤔</Text>
-            <View style={styles.askBody}>
-              <Text style={styles.askTitle}>Almalı mıyım?</Text>
-              <Text style={styles.askText}>{"Almadan önce Girl Math'e sor"}</Text>
-            </View>
-            <SymbolView
-              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-              tintColor={colors.primary}
-              size={14}
-            />
-          </Pressable>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+          {/* "Almalı mıyım?" dolap boşken de görünür: ilk alışverişten önce de işe yarar */}
+          {isLoaded && (
+            <Pressable
+              onPress={() => router.push('/should-i-buy')}
+              style={({ pressed }) => [styles.askCard, pressed && styles.askCardPressed]}>
+              <Text style={styles.askEmoji}>🤔</Text>
+              <View style={styles.askBody}>
+                <Text style={styles.askTitle}>Almalı mıyım?</Text>
+                <Text style={styles.askText}>{"Almadan önce Girl Math'e sor"}</Text>
+              </View>
+              <SymbolView
+                name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+                tintColor={colors.primary}
+                size={14}
+              />
+            </Pressable>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     paddingHorizontal: Spacing.four,
@@ -146,9 +164,23 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
     paddingTop: Spacing.four,
     paddingBottom: Spacing.one,
+  },
+  headerText: {
     gap: Spacing.one,
+  },
+  shareButton: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.button,
   },
   label: {
     ...Typography.label,
