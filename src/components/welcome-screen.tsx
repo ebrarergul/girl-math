@@ -29,7 +29,7 @@ export function WelcomeScreen({ onStart }: Props) {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.emoji}>🎀</Text>
-          <Text style={styles.label}>Girl Math</Text>
+          <Text style={styles.label}>GIRL MATH</Text>
           <Text style={styles.title}>Hoş geldin aşko!</Text>
           <Text style={styles.subtitle}>
             Dolabındaki her parçanın gerçek maliyetini birlikte hesaplayalım.

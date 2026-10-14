@@ -24,7 +24,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatTL } from '@/components/clothing-card';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { comparisonText } from '@/lib/comparisons';
 import { costPerWear, daysSinceLastWear, isPaidOff, wearCount } from '@/lib/girl-math';
@@ -178,8 +178,10 @@ export default function ItemDetailScreen() {
             <Text style={styles.name}>{item.name}</Text>
             <View style={styles.priceBox}>
               {cost < item.price && <Text style={styles.oldPrice}>{formatTL(item.price)}</Text>}
+              {/* Rakam dergi yazı tipinde; ₺ sade yazı tipinde (dergi yazı tipinde "Ł" gibi görünüyor) */}
               <Animated.Text style={[styles.cost, costAnimatedStyle]}>
-                {formatTL(cost)}
+                {cost.toLocaleString('tr-TR')}
+                <Text style={styles.costCurrency}> ₺</Text>
               </Animated.Text>
               <Text style={styles.perWear}>giyim başına</Text>
             </View>
@@ -267,7 +269,8 @@ export default function ItemDetailScreen() {
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.fact}>
-      <Text style={styles.factLabel}>{label}</Text>
+      {/* Türkçe kurala göre büyük harf: "Giyim" → "GİYİM" */}
+      <Text style={styles.factLabel}>{label.toLocaleUpperCase('tr')}</Text>
       <Text style={styles.factValue}>{value}</Text>
     </View>
   );
@@ -372,6 +375,12 @@ const styles = StyleSheet.create({
   cost: {
     ...Typography.hero,
     color: colors.primary,
+  },
+  costCurrency: {
+    fontFamily: Fonts?.sans,
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: 0,
   },
   perWear: {
     ...Typography.caption,

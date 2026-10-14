@@ -101,7 +101,9 @@ export const Typography = {
   body: { fontSize: 14, lineHeight: 20, fontWeight: '500' },
   bodyBold: { fontSize: 14, lineHeight: 20, fontWeight: '700' },
   caption: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
-  label: { fontSize: 10, lineHeight: 14, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' }, // BRAND, PRICE gibi küçük etiketler
+  // Küçük etiketler. Otomatik büyük harf (textTransform) KULLANILMAZ: telefon İngilizce kuralla
+  // "Kategori"yi "KATEGORI" yapıyor. Etiket metni kodda Türkçe büyük harfle yazılır: "KATEGORİ"
+  label: { fontSize: 10, lineHeight: 14, fontWeight: '700', letterSpacing: 0.6 },
   price: { fontSize: 18, lineHeight: 22, fontWeight: '800' }, // Vurgulu (giyim başına) fiyat
   priceStrike: { fontSize: 12, lineHeight: 16, fontWeight: '500', textDecorationLine: 'line-through' }, // Üstü çizili satın alma fiyatı
   button: { fontSize: 14, lineHeight: 18, fontWeight: '800', letterSpacing: 0.5 },

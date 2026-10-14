@@ -54,7 +54,7 @@ export default function WardrobeScreen() {
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <View style={styles.titleText}>
-                <Text style={styles.label}>Girl Math</Text>
+                <Text style={styles.label}>GIRL MATH</Text>
                 <Text style={styles.title}>Dolabım</Text>
                 {isLoaded && items.length > 0 && (
                   <Text style={styles.subtitle}>{items.length} parça</Text>
@@ -93,6 +93,7 @@ export default function WardrobeScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
+              style={styles.chipScroll}
               contentContainerStyle={styles.chips}>
               {FILTERS.map((name) => {
                 const selected = name === category;
@@ -242,7 +243,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     paddingVertical: Spacing.three,
   },
+  // Hap sırası ekranın iki kenarına kadar uzansın diye listenin ve başlığın iç boşluğu kadar
+  // dışarı taşırılır; ilk hap yine başlıkla aynı hizada başlar
+  chipScroll: {
+    marginHorizontal: -(Spacing.three + Spacing.two),
+  },
   chips: {
+    paddingHorizontal: Spacing.three + Spacing.two,
     gap: Spacing.two,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.one,

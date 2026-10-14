@@ -19,13 +19,13 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <Text style={styles.label}>Girl Math</Text>
+        <Text style={styles.label}>GIRL MATH</Text>
         <Text style={styles.title}>Merhaba aşko 🎀</Text>
         <Text style={styles.subtitle}>Bugün hangi kıyafetin kendini amorti edecek?</Text>
       </View>
 
       <View style={[styles.card, Shadows.card]}>
-        <Text style={styles.cardLabel}>Dolabındaki parça</Text>
+        <Text style={styles.cardLabel}>DOLABINDAKİ PARÇA</Text>
         <Text style={styles.cardValue}>{isLoaded ? items.length : '…'}</Text>
       </View>
     </SafeAreaView>

@@ -125,7 +125,7 @@ export default function AddItemScreen() {
         )}
 
         <View style={styles.field}>
-          <Text style={styles.label}>Adı</Text>
+          <Text style={styles.label}>ADI</Text>
           <TextInput
             value={name}
             onChangeText={setName}
@@ -137,7 +137,7 @@ export default function AddItemScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Kategori</Text>
+          <Text style={styles.label}>KATEGORİ</Text>
           <View style={styles.chips}>
             {CATEGORIES.map((name) => {
               const selected = name === category;
@@ -156,7 +156,7 @@ export default function AddItemScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Fiyatı (₺)</Text>
+          <Text style={styles.label}>FİYATI (₺)</Text>
           <TextInput
             value={priceText}
             onChangeText={setPriceText}
@@ -168,7 +168,7 @@ export default function AddItemScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Hedef giyilme sayısı</Text>
+          <Text style={styles.label}>HEDEF GİYİLME SAYISI</Text>
           <TextInput
             value={targetText}
             onChangeText={setTargetText}

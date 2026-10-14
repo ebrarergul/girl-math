@@ -75,9 +75,12 @@ export function ClothingCard({ item, onPress }: Props) {
         </Text>
         <Text style={styles.category}>{item.category}</Text>
 
-        <View style={styles.priceRow}>
-          {/* Satın alma fiyatı, ancak maliyet düştüyse üstü çizili gösterilir */}
-          {cost < item.price && <Text style={styles.oldPrice}>{formatTL(item.price)}</Text>}
+        <View style={styles.priceBlock}>
+          {/* Üstü çizili satın alma fiyatı her zaman pembe fiyatın üstünde durur. Maliyet henüz
+              düşmediyse görünmez ama yerini korur: böylece bütün kartlar aynı boyda olur. */}
+          <Text style={[styles.oldPrice, cost >= item.price && styles.hidden]}>
+            {formatTL(item.price)}
+          </Text>
           <Text style={styles.cost}>
             {formatTL(cost)}
             <Text style={styles.perWear}> /giyim</Text>
@@ -165,12 +168,11 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: colors.textMuted,
   },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    flexWrap: 'wrap',
-    columnGap: Spacing.two,
+  priceBlock: {
     marginTop: Spacing.two,
+  },
+  hidden: {
+    opacity: 0,
   },
   oldPrice: {
     ...Typography.priceStrike,
