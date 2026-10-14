@@ -5,12 +5,14 @@
  * Gerçek Dolap ekranı yapılınca bu dosya ve explore.tsx'teki <DevTestPanel /> satırı silinecek.
  */
 
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { comparisonText } from '@/lib/comparisons';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
+import { photoUri, pickAndSavePhoto } from '@/lib/photos';
 
 const colors = Colors.light;
 
@@ -21,6 +23,14 @@ export function DevTestPanel() {
     addItem({ name: 'Siyah deri ceket', category: 'Dış giyim', price: 3000, photoFileName: null });
   }
 
+  async function addSampleWithPhoto() {
+    const fileName = await pickAndSavePhoto();
+    if (!fileName) {
+      return; // Kullanıcı vazgeçti
+    }
+    addItem({ name: 'Pembe elbise', category: 'Elbise', price: 1200, photoFileName: fileName });
+  }
+
   return (
     <View style={styles.panel}>
       <Text style={styles.title}>🧪 Deneme paneli (geçici)</Text>
@@ -28,12 +38,20 @@ export function DevTestPanel() {
       {!isLoaded && <Text style={styles.muted}>Yükleniyor...</Text>}
       {isLoaded && items.length === 0 && <Text style={styles.muted}>Dolap boş.</Text>}
 
-      <Pressable style={styles.primaryButton} onPress={addSample}>
-        <Text style={styles.primaryButtonText}>+ Örnek kıyafet ekle</Text>
-      </Pressable>
+      <View style={styles.row}>
+        <Pressable style={styles.primaryButton} onPress={addSample}>
+          <Text style={styles.primaryButtonText}>+ Örnek kıyafet ekle</Text>
+        </Pressable>
+        <Pressable style={styles.softButton} onPress={addSampleWithPhoto}>
+          <Text style={styles.softButtonText}>📷 Fotoğraflı ekle</Text>
+        </Pressable>
+      </View>
 
       {items.map((item) => (
         <View key={item.id} style={styles.card}>
+          {item.photoFileName && (
+            <Image source={{ uri: photoUri(item.photoFileName) }} style={styles.photo} />
+          )}
           <Text style={styles.name}>{item.name}</Text>
           <Text style={styles.priceStrike}>{item.price} TL</Text>
           <Text style={styles.price}>Giyim başına: {costPerWear(item)} TL</Text>
@@ -78,6 +96,12 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     gap: Spacing.one,
     ...Shadows.card,
+  },
+  photo: {
+    width: 120,
+    aspectRatio: 3 / 4,
+    borderRadius: Radius.md,
+    marginBottom: Spacing.two,
   },
   name: {
     ...Typography.bodyBold,

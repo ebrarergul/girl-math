@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { todayString } from '@/lib/girl-math';
+import { deletePhoto } from '@/lib/photos';
 import type { Category, ClothingItem } from '@/lib/types';
 
 // Kıyafetler telefonda bu isimle saklanır
@@ -104,7 +105,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }
 
+  // Kıyafeti siler; fotoğrafı varsa onu da telefondan siler
   function deleteItem(id: string) {
+    const item = items.find((current) => current.id === id);
+    if (item) {
+      deletePhoto(item.photoFileName);
+    }
     setItems((current) => current.filter((item) => item.id !== id));
   }
 

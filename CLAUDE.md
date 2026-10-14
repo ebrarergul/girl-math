@@ -126,6 +126,14 @@ COMPARISONS                        // Fiyat listesi (fiyatlar değişince sadece
 Kıyas cümlesi sadece kıyafet **en az 1 kere giyildiyse** gösterilir (hiç giyilmemişse
 "…düştü" demek anlamsız).
 
+**Fotoğraflar** (`@/lib/photos`)
+```tsx
+const fileName = await pickAndSavePhoto();  // Galeriyi açar, kırptırır, kopyalar; vazgeçilirse null
+addItem({ ..., photoFileName: fileName });  // Kayda sadece dosya adı gider
+<Image source={{ uri: photoUri(item.photoFileName) }} />  // Gösterirken tam adres üretilir (expo-image)
+deletePhoto(fileName)                       // Gerekirse; deleteItem() fotoğrafı zaten kendisi siler
+```
+
 **Veri tipi** (`@/lib/types`): `ClothingItem` → `id, name, category, price, photoFileName,
 wearDates, targetWears, createdAt`. Kategoriler `CATEGORIES` listesinde.
 
@@ -138,9 +146,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
-  - Gerçek hayat kıyasları (`src/lib/comparisons.ts`)
-  - Fotoğraf kaydetme yardımcısı (fotoğrafı `Paths.document`'e kopyalama, dosya adından tam yol
-    üretme) – Ebrar'ın ekleme formu bunu kullanacak
+  - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
+  - Fotoğraf kaydetme yardımcısı (`src/lib/photos.ts`) ✅
   - İstatistik hesapları (toplam dolap değeri, en çok giyilen vb.)
   - Bildirimler (expo-notifications)
   - Şablondan kalan lint hatasının düzeltilmesi
@@ -169,7 +176,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - `src/constants/theme.ts` – ortak tema
 - `src/context/app-context.tsx` – hafıza merkezi (kıyafetler + AsyncStorage)
 - `src/lib/types.ts` – veri tipleri; `src/lib/girl-math.ts` – hesaplamalar;
-  `src/lib/comparisons.ts` – gerçek hayat kıyasları ve fiyat listesi
+  `src/lib/comparisons.ts` – gerçek hayat kıyasları ve fiyat listesi;
+  `src/lib/photos.ts` – fotoğraf seçme, kaydetme, silme
 - `src/hooks/` – yardımcı hook'lar
 
 ## Bilinen durumlar
@@ -180,6 +188,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - **Expo hesabı:** Bilgisayardaki Expo CLI bir hesaba girişliyse, sadece aynı hesaptaki Expo Go
   projeyi açabilir. Bu yüzden herkes kendi bilgisayarından kendi telefonuyla test eder
   (gerekirse `npx expo logout`). İleride expo.dev'de ortak Organization kurulacak.
+- Fotoğraf izin açıklaması (iOS "fotoğraflarınıza erişmek istiyor" metni) henüz `app.json`'a
+  eklenmedi. Expo Go'da gerekmiyor; 7. aşamada (App Store) eklenecek.
 - Sözleşme bir kez onaylanınca bir daha çıkmaz. Tekrar görmek için Expo Go silinip yüklenir.
 - "Could not resolve host: github.com" hatası internet takılmasıdır; tekrar push denenir.
 
