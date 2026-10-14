@@ -137,6 +137,18 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Şablondan kalan lint hatasının düzeltilmesi
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
 
+## Aynı anda çalışma kuralları (çakışmayı önlemek için)
+1. **Ortak dosyalar:** `CLAUDE.md`, `src/app/_layout.tsx`, `package.json`, `package-lock.json`
+   ikimizi de ilgilendirir. Bunlardan birine dokunmadan (veya yeni paket kurmadan) önce diğerine
+   haber verilir. Claude da bu dosyaları değiştirmeden önce kullanıcıya hatırlatır.
+2. **Hazır araçlar:** `useApp()`, `girl-math.ts` fonksiyonları ve `types.ts` alanlarına yeni şey
+   eklemek serbest. Var olan bir şeyin adını değiştirmek veya silmek diğerinin ekranını bozar;
+   önce haber verilir.
+3. **Sık sık pull/push:** Her çalışmaya başlarken `git pull origin main`, her küçük iş bitince
+   push. Push "rejected" derse: önce `git pull origin main`, sonra tekrar `git push origin main`.
+- Terminalde **"CONFLICT"** çıkarsa durulur ve çıktı Claude'a yapıştırılır, birlikte çözülür.
+  Hiçbir şey kaybolmaz; `git reset --hard` veya `--force` gibi komutlar kullanılmaz.
+
 ## Dosya yapısı
 - `src/app/` – ekranlar. `_layout.tsx`: AppProvider + sözleşme kontrolü + sekmeler.
   `index.tsx`, `explore.tsx` hâlâ Expo şablonu (Ebrar değiştirecek).
