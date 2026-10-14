@@ -8,7 +8,9 @@
 
 ## Çalışma kuralları
 - Her zaman Türkçe yaz.
-- Her adımda ne yaptığını ve nedenini basitçe açıkla.
+- **Çok basit anlat:** Yazılım deneyimimiz az. Her adımda ne yaptığını ve nedenini tane tane,
+  herkesin anlayacağı şekilde açıkla. Teknik bir terim kullanırsan bir cümleyle ne demek
+  olduğunu söyle, mümkünse günlük hayattan bir benzetme yap. Adımları numaralı ve kısa yaz.
 - Büyük değişiklikleri yapmadan önce sor. Her değişiklikten önce ne yapacağını kısaca söyle.
 - **Adım adım ilerle:** Tek seferde tek küçük adım yap. Adım bitince ne değiştiğini ve nasıl
   test edileceğini söyle, sonra dur. Kullanıcı "tamam" demeden bir sonraki adıma, dosya
@@ -16,10 +18,14 @@
 - Yeni paket gerekirse her zaman `npx expo install ...` kullan (npm install <paket> değil).
 - Bir iş bittiğinde nasıl test edileceğini adım adım yaz.
 - Bitirmeden önce `npx tsc --noEmit` ve `npx expo lint` çalıştır.
+- Terminal komutlarını **tek tek** ver (her biri ayrı kod bloğunda). Birden fazla satır birlikte
+  yapıştırılınca PowerShell bunları birleştirip hata veriyor.
 - **Git kuralı:** Her aşamanın sonunda GitHub'a push etmeyi hatırlat. Komutları hem Mac
   (Ebrar) hem Windows (Onur) için yaz ve diğer kişinin değişiklikleri nasıl çekeceğini
   (`git pull`, gerekirse ardından `npm install`) açıkla. Commit ve push'u kullanıcı
   istemeden kendin yapma.
+- **Çalışmaya başlamadan önce mutlaka `git pull origin main`** (package.json değiştiyse ardından
+  `npm install`). Böylece iki kişinin değişiklikleri çakışmaz.
 - Kod hem Windows'ta hem Mac'te çalışmalı: sabit dosya yolu (C:\..., /Users/...) yazma,
   import'larda `@/...` kullan, platforma özel komutlardan kaçın.
 - Aynı anda aynı dosyayı düzenlemekten kaçınıyoruz: ekranlar/bileşenler genelde Ebrar'da,
@@ -52,6 +58,13 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - **Fotoğraflar:** expo-image-picker ile seçilir, expo-file-system'in File/Paths API'siyle
   `Paths.document` altına kopyalanır. Kayıtta tam yol değil **sadece dosya adı** tutulur,
   tam yol çalışma anında üretilir (iOS'ta güncelleme sonrası klasör yolu değişebiliyor).
+- **Veri:** Kıyafetler `src/context/app-context.tsx` içindeki AppContext'te tutulur ve her
+  değişiklikte AsyncStorage'a (`girlmath.items` anahtarı) otomatik kaydedilir. Ekranlar
+  AsyncStorage'a doğrudan yazmaz, hep `useApp()` kullanır.
+- Giyilme sayısı ayrıca tutulmaz, `wearDates.length` ile hesaplanır.
+- Hedef giyilme sayısı girilmezse varsayılan **30** (#30wears), `DEFAULT_TARGET_WEARS`.
+- Kategoriler: Üst, Alt, Elbise, Dış giyim, Ayakkabı, Çanta, Aksesuar (`src/lib/types.ts`
+  içindeki `CATEGORIES` listesi).
 - OCR gibi Expo Go'da olmayan yerel modüller "development build" gerektirir; bu tür
   paketleri eklemeden önce mutlaka sor.
 
@@ -79,11 +92,74 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   tek bir dosyada tutulur; fiyatlar değiştikçe sadece orası güncellenir. Maliyet, kendisine
   eşit ya da altındaki en pahalı kalemle eşleştirilir.
 
+## Hazır araçlar (ekranlar bunları kullanır, yeniden yazılmaz)
+Kıyafet verisi ve hesaplar hazır. Ekran yaparken bunları **çağır**, aynısını yeniden yazma.
+
+**Kıyafetler – `useApp()`** (`@/context/app-context`)
+```tsx
+const { items, isLoaded, addItem, wearItem, undoWear, deleteItem } = useApp();
+
+items                 // Dolaptaki tüm kıyafetler (ClothingItem listesi, en yeni en başta)
+isLoaded              // Telefondaki kayıtlar okundu mu? false iken "Yükleniyor" gösterilebilir
+addItem({ name: 'Siyah deri ceket', category: 'Dış giyim', price: 3000, photoFileName: null })
+                      // targetWears verilmezse 30 olur; id, wearDates, createdAt otomatik
+wearItem(item.id)     // "Giydim": bugünün tarihini ekler
+undoWear(item.id)     // "Geri al": son tarihi siler
+deleteItem(item.id)   // Kıyafeti siler
+```
+
+**Hesaplar** (`@/lib/girl-math`)
+```tsx
+costPerWear(item)        // Giyilme başına maliyet, tam TL (hiç giyilmediyse fiyat)
+wearCount(item)          // Kaç kere giyildi
+isPaidOff(item)          // Hedefe ulaştı mı ("amorti edildi")
+daysSinceLastWear(item)  // Son giyilmeden bu yana kaç gün (hiç giyilmediyse eklendiği günden)
+todayString()            // Bugün, "2026-10-14" biçiminde
+```
+
+**Veri tipi** (`@/lib/types`): `ClothingItem` → `id, name, category, price, photoFileName,
+wearDates, targetWears, createdAt`. Kategoriler `CATEGORIES` listesinde.
+
+Örnek kullanım için `src/components/dev-test-panel.tsx` dosyasına bakılabilir.
+
+## Görev dağılımı
+Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki kişi dokunmaz.
+- **Ebrar (ekranlar – `src/app/`, `src/components/`):**
+  - 3. aşama: sekmeler (Ana sayfa, Dolap, Cüzdan), şablon ekranlarının temizlenmesi
+  - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu
+  - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
+- **Onur (mantık – `src/lib/`, `src/context/`):**
+  - Gerçek hayat kıyasları (`src/lib/comparisons.ts`)
+  - Fotoğraf kaydetme yardımcısı (fotoğrafı `Paths.document`'e kopyalama, dosya adından tam yol
+    üretme) – Ebrar'ın ekleme formu bunu kullanacak
+  - İstatistik hesapları (toplam dolap değeri, en çok giyilen vb.)
+  - Bildirimler (expo-notifications)
+  - Şablondan kalan lint hatasının düzeltilmesi
+- Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
+
 ## Dosya yapısı
-- `src/app/` – ekranlar (şu an Expo şablonu: index, explore)
+- `src/app/` – ekranlar. `_layout.tsx`: AppProvider + sözleşme kontrolü + sekmeler.
+  `index.tsx`, `explore.tsx` hâlâ Expo şablonu (Ebrar değiştirecek).
 - `src/components/` – tekrar kullanılan bileşenler (şablondan gelenler de burada)
+  - `agreement-screen.tsx` – Girl Math Kullanım Sözleşmesi ekranı
+  - `app-tabs.tsx` – alt sekmeler (bordo renkli)
+  - `dev-test-panel.tsx` – **GEÇİCİ** deneme paneli (Explore'da). Gerçek Dolap ekranı yapılınca
+    bu dosya ve `explore.tsx`'teki `<DevTestPanel />` satırı silinecek.
 - `src/constants/theme.ts` – ortak tema
+- `src/context/app-context.tsx` – hafıza merkezi (kıyafetler + AsyncStorage)
+- `src/lib/types.ts` – veri tipleri; `src/lib/girl-math.ts` – hesaplamalar
 - `src/hooks/` – yardımcı hook'lar
+
+## Bilinen durumlar
+- `npx expo lint` şablondan gelen `src/hooks/use-color-scheme.web.ts` içinde 1 hata veriyor.
+  Sadece web'i ilgilendirir, iPhone'u etkilemez. Düzeltilecek (Onur).
+- `npm install` sonrası "29 vulnerabilities" ve "npm warn" yazıları normal.
+  **`npm audit fix --force` çalıştırılmaz** (paket sürümlerini bozar).
+- **Expo hesabı:** Bilgisayardaki Expo CLI bir hesaba girişliyse, sadece aynı hesaptaki Expo Go
+  projeyi açabilir. Bu yüzden herkes kendi bilgisayarından kendi telefonuyla test eder
+  (gerekirse `npx expo logout`). İleride expo.dev'de ortak Organization kurulacak.
+- Sözleşme bir kez onaylanınca bir daha çıkmaz. Tekrar görmek için Expo Go silinip yüklenir.
+- "Could not resolve host: github.com" hatası internet takılmasıdır; tekrar push denenir.
 
 ## Eski proje
 Onur'un bilgisayarında Masaüstündeki `girl-math-app` klasörü önceki deneme. Orada çalışan
@@ -92,10 +168,11 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
 
 ## Sıradaki işler
 1. Ortak tema dosyası ✅
-2. Veri modeli ve AppContext (kıyafetler, giyilme tarihleri, AsyncStorage) – Onur
+2. Veri modeli ve AppContext (kıyafetler, giyilme tarihleri, AsyncStorage) – Onur ✅
+   (+ Kullanım Sözleşmesi açılış ekranı ✅)
 3. Welcome ekranı ve sekme yapısı (Ana sayfa, Dolap, Cüzdan) – Ebrar
-4. Dolap ekranı ve kıyafet ekleme (fotoğraflı)
-5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications)
+4. Dolap ekranı ve kıyafet ekleme (fotoğraflı) – ekranlar Ebrar, fotoğraf kaydetme Onur
+5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur
 6. Ekstra özellikler (Starbucks Endeksi, Dolap Tarotu, Kahoot, OCR)
 7. App Store hazırlığı (Apple Developer hesabı, EAS Build/Xcode, TestFlight, gizlilik
    politikası, izin metinleri)
