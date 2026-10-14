@@ -134,6 +134,22 @@ addItem({ ..., photoFileName: fileName });  // Kayda sadece dosya adı gider
 deletePhoto(fileName)                       // Gerekirse; deleteItem() fotoğrafı zaten kendisi siler
 ```
 
+**Dolap istatistikleri** (`@/lib/stats`) – Cüzdan ve Ana sayfa için
+```tsx
+const stats = getWardrobeStats(items);
+stats.totalItems          // Toplam parça
+stats.totalValue          // Dolap değeri (TL)
+stats.totalWears          // Toplam giyilme
+stats.averageCostPerWear  // Ortalama giyim başına maliyet (TL); hiç giyilme yoksa null
+stats.paidOffCount        // Amorti edilen parça sayısı
+stats.neverWornCount      // Hiç giyilmeyen parça sayısı
+stats.mostWorn            // En çok giyilen kıyafet; yoksa null
+stats.forgotten           // { item, days }: en uzun süredir giyilmeyen; dolap boşsa null
+stats.wearsThisMonth      // Bu ayki giyilme sayısı
+stats.girlMathSavings     // Şaka istatistik "Girl Math kazancın": Σ(fiyat − giyim başına maliyet)
+```
+Dolap boşken de çalışır (0 / null döner), ekran null durumlarını kontrol etmeli.
+
 **Veri tipi** (`@/lib/types`): `ClothingItem` → `id, name, category, price, photoFileName,
 wearDates, targetWears, createdAt`. Kategoriler `CATEGORIES` listesinde.
 
@@ -148,7 +164,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
   - Fotoğraf kaydetme yardımcısı (`src/lib/photos.ts`) ✅
-  - İstatistik hesapları (toplam dolap değeri, en çok giyilen vb.)
+  - İstatistik hesapları (`src/lib/stats.ts`) ✅
   - Bildirimler (expo-notifications)
   - Şablondan kalan lint hatasının düzeltilmesi ✅
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
@@ -177,7 +193,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - `src/context/app-context.tsx` – hafıza merkezi (kıyafetler + AsyncStorage)
 - `src/lib/types.ts` – veri tipleri; `src/lib/girl-math.ts` – hesaplamalar;
   `src/lib/comparisons.ts` – gerçek hayat kıyasları ve fiyat listesi;
-  `src/lib/photos.ts` – fotoğraf seçme, kaydetme, silme
+  `src/lib/photos.ts` – fotoğraf seçme, kaydetme, silme;
+  `src/lib/stats.ts` – dolap istatistikleri
 - `src/hooks/` – yardımcı hook'lar
 
 ## Bilinen durumlar
