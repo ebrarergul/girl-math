@@ -1,8 +1,8 @@
 /**
- * TEST EKRANI (GEÇİCİ)
+ * TEST EKRANI (SADECE GELİŞTİRMEDE)
  *
- * Sadece Onur'un deneme panelini gösterir. Gerçek Dolap ekranı bitince bu dosya,
- * dev-test-panel.tsx ve app-tabs.tsx'teki "Test" sekmesi birlikte silinecek.
+ * Sadece Onur'un deneme panelini gösterir. Sekmesi __DEV__ ile korunur: Expo Go'da
+ * görünür, App Store sürümünde gizlenir.
  */
 
 import { ScrollView, StyleSheet } from 'react-native';

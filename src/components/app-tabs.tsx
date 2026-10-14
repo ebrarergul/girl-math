@@ -32,11 +32,14 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      {/* GEÇİCİ: Onur'un deneme paneli. Gerçek Dolap ekranı bitince bu sekme silinecek. */}
-      <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Test</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="wrench.and.screwdriver" md="build" />
-      </NativeTabs.Trigger>
+      {/* Onur'un deneme paneli. __DEV__ sadece geliştirmede (Expo Go) doğrudur,
+          App Store sürümünde bu sekme otomatik olarak gizlenir. */}
+      {__DEV__ && (
+        <NativeTabs.Trigger name="explore">
+          <NativeTabs.Trigger.Label>Test</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon sf="wrench.and.screwdriver" md="build" />
+        </NativeTabs.Trigger>
+      )}
     </NativeTabs>
   );
 }

@@ -30,9 +30,12 @@ export default function AppTabs() {
           <TabTrigger name="wallet" href="/wallet" asChild>
             <TabButton>Cüzdan</TabButton>
           </TabTrigger>
-          <TabTrigger name="explore" href="/explore" asChild>
-            <TabButton>Test</TabButton>
-          </TabTrigger>
+          {/* Deneme paneli sadece geliştirmede görünür */}
+          {__DEV__ && (
+            <TabTrigger name="explore" href="/explore" asChild>
+              <TabButton>Test</TabButton>
+            </TabTrigger>
+          )}
         </CustomTabList>
       </TabList>
     </Tabs>

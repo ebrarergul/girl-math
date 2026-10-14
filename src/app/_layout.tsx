@@ -1,12 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 
 import { AgreementScreen } from '@/components/agreement-screen';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
 import { WelcomeScreen } from '@/components/welcome-screen';
 import { AppProvider } from '@/context/app-context';
 
@@ -53,7 +52,12 @@ export default function TabLayout() {
         {accepted === true && welcomeSeen === false && (
           <WelcomeScreen onStart={handleWelcomeStart} />
         )}
-        {accepted === true && welcomeSeen === true && <AppTabs />}
+        {/* Sayfa destesi: en altta sekmeler, detay/ekleme sayfaları bunun üstüne açılır */}
+        {accepted === true && welcomeSeen === true && (
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+        )}
       </ThemeProvider>
     </AppProvider>
   );

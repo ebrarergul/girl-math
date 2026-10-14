@@ -2,7 +2,7 @@
  * GIRL MATH – ORTAK TEMA DOSYASI
  *
  * Uygulamadaki tüm renkler, köşe yuvarlaklıkları, boşluklar, gölgeler ve yazı
- * stilleri BURADAN gelir. Ekranlarda '#BE123C' gibi renk kodlarını elle yazmayın;
+ * stilleri BURADAN gelir. Ekranlarda '#D61F69' gibi renk kodlarını elle yazmayın;
  * bunun yerine şöyle kullanın:
  *
  *   import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
@@ -16,13 +16,14 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
-// Marka paleti: referans tasarımlardaki pembe / koyu kırmızı (bordo) / fildişi tonlar
+// Marka paleti: "Hot Pink" – canlı fuşya pembe + pembemsi beyaz zemin, iOS sadeliğinde
 const Palette = {
-  bordeaux: '#BE123C', // Ana marka rengi: butonlar, seçili kategori, vurgulu fiyat
-  bordeauxDark: '#9F1239', // Basılı buton, koyu vurgu
-  blush: '#FFE4E6', // Açık pembe: rozetler, seçili arka plan
-  rose: '#FBCFD6', // Orta pembe: büyük görsel alanları, kart üst bantları
-  ivory: '#FAF7F5', // Sıcak fildişi zemin
+  hotPink: '#D61F69', // Ana marka rengi: butonlar, seçili kategori, vurgulu fiyat (beyaz yazı okunur)
+  hotPinkDark: '#B0144F', // Basılı buton, koyu vurgu
+  neonPink: '#FF5C93', // Sadece süs: kalp rozeti, parıltı, geçiş. Üstüne yazı konmaz (okunmaz)
+  blush: '#FFE4EE', // Açık pembe: rozetler, seçili arka plan
+  rose: '#FFC8DC', // Orta pembe: büyük görsel alanları, fotoğraf yer tutucusu
+  pinkWhite: '#FFF7FA', // Pembemsi beyaz zemin
   white: '#FFFFFF',
   ink: '#18181B', // Ana yazı
   slate: '#71717A', // İkincil yazı
@@ -37,7 +38,7 @@ const Palette = {
 const light = {
   // Expo şablonunun kullandığı anahtarlar (ThemedText, ThemedView, sekmeler)
   text: Palette.ink,
-  background: Palette.ivory,
+  background: Palette.pinkWhite,
   backgroundElement: Palette.linen,
   backgroundSelected: Palette.blush,
   textSecondary: Palette.slate,
@@ -46,10 +47,11 @@ const light = {
   textMuted: Palette.mist,
   card: Palette.white,
   border: Palette.sand,
-  primary: Palette.bordeaux,
-  primaryPressed: Palette.bordeauxDark,
-  onPrimary: Palette.white, // Bordo zemin üstündeki yazı/ikon rengi
+  primary: Palette.hotPink,
+  primaryPressed: Palette.hotPinkDark,
+  onPrimary: Palette.white, // Pembe zemin üstündeki yazı/ikon rengi
   primarySoft: Palette.blush,
+  highlight: Palette.neonPink, // Süs rengi (kalp, parıltı); üstüne yazı konmaz
   accent: Palette.rose,
   success: Palette.green,
   warning: Palette.amber,
@@ -92,8 +94,9 @@ export const Fonts = Platform.select({
 
 // Hazır yazı stilleri: style={Typography.title} gibi kullanılır, renk ayrıca verilir
 export const Typography = {
-  hero: { fontSize: 32, lineHeight: 38, fontWeight: '800', letterSpacing: -0.8 }, // Büyük istatistik / karşılama
-  title: { fontSize: 26, lineHeight: 32, fontWeight: '800', letterSpacing: -0.5 }, // Ekran başlığı
+  // hero ve title "editorial" tırnaklı yazı tipiyle (iPhone'da New York): moda dergisi havası
+  hero: { fontFamily: Fonts?.serif, fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: -0.6 }, // Büyük istatistik / karşılama
+  title: { fontFamily: Fonts?.serif, fontSize: 28, lineHeight: 34, fontWeight: '700', letterSpacing: -0.4 }, // Ekran başlığı
   heading: { fontSize: 18, lineHeight: 24, fontWeight: '800', letterSpacing: -0.3 }, // Bölüm başlığı
   body: { fontSize: 14, lineHeight: 20, fontWeight: '500' },
   bodyBold: { fontSize: 14, lineHeight: 20, fontWeight: '700' },
@@ -133,7 +136,7 @@ export const Shadows = {
     elevation: 2,
   },
   button: {
-    shadowColor: Palette.bordeaux,
+    shadowColor: Palette.hotPink,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.28,
     shadowRadius: 10,

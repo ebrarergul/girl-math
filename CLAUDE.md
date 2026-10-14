@@ -80,13 +80,21 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - Tüm renk, yazı stili, boşluk, köşe ve gölgeler `src/constants/theme.ts` içinde.
   **Ekranlarda renk kodu elle yazılmaz**, `Colors.light.primary`, `Typography.title`,
   `Radius.lg`, `Shadows.card` gibi tema değerleri kullanılır.
-- Dil: pembe / koyu kırmızı (bordo `#BE123C`) / fildişi zemin (`#FAF7F5`), beyaz kartlar,
-  bol yuvarlak köşe, yumuşak gölge, minimalist ve "lüks editorial" his.
+- Dil: **"Hot Pink"** – canlı fuşya pembe (`primary` `#D61F69`) / pembemsi beyaz zemin
+  (`#FFF7FA`), beyaz kartlar, bol yuvarlak köşe, yumuşak gölge. TikTok'a uygun canlı ama
+  **iOS sadeliğinde**. (Eskiden bordo `#BE123C` idi; Ekim 2026'da daha canlı pembeye geçildi.)
+- Neon pembe (`highlight` `#FF5C93`) sadece süs içindir (kalp, parıltı); **üstüne yazı konmaz**,
+  beyaz yazı okunmuyor. Butonlarda `primary` kullanılır (beyaz yazı kontrastı 4.9).
+- Büyük başlıklar (`Typography.title`, `Typography.hero`) iPhone'un **New York** tırnaklı
+  yazı tipiyle (editorial/dergi havası); diğer yazılar sade sistem yazı tipi.
+- Simgeler iPhone'un SF Symbols setinden (`expo-symbols`'ın `SymbolView`'u), pembe ve ince
+  çizgili. Yer tutucularda emoji değil simge kullanılır; eğlenceli **mesajlarda** emoji serbest.
+- Kıyafet fotoğrafları 3:4 dikey kırpılır, kart ve detaydaki fotoğraf alanları da 3:4.
 - Referans tasarımlardan alınan kalıplar: "Find your Favorite Items!" tarzı büyük başlık,
-  arama + filtre butonu, seçili olanı bordo dolgulu kategori hapları/kutuları, 2 sütunlu
-  ürün kartları ve köşede kalp rozeti, detay sayfasında solda bilgi rozetleri ve sağda
-  büyük fotoğraf, **üstü çizili satın alma fiyatı + bordo renkli güncel giyim maliyeti**,
-  bordo hap şeklinde ana buton.
+  arama kutusu, seçili olanı pembe dolgulu kategori hapları, 2 sütunlu ürün kartları ve
+  köşede kalp rozeti (amorti edilince), detay sayfasında pembe üst alanda solda bilgi
+  satırları ve sağda büyük fotoğraf, **üstü çizili satın alma fiyatı + pembe güncel giyim
+  maliyeti**, pembe hap şeklinde ana buton.
 
 ## Girl Math hesaplama mantığı
 - Giyilme başına maliyet = `fiyat / giyilmeSayısı`. Hiç giyilmediyse maliyet = fiyat.
@@ -180,7 +188,8 @@ wearDates, targetWears, createdAt`. Kategoriler `CATEGORIES` listesinde.
 Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki kişi dokunmaz.
 - **Ebrar (ekranlar – `src/app/`, `src/components/`):**
   - 3. aşama: sekmeler (Ana sayfa, Dolap, Cüzdan), şablon ekranlarının temizlenmesi
-  - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu
+  - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu ✅
+  - Sırada: kıyafet düzenleme ekranı (Onur'un `updateItem`'ına bağlı), Ana sayfa ve Cüzdan
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -189,6 +198,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Bildirimler (`src/lib/notifications.ts`) ✅
   - Şablondan kalan lint hatasının düzeltilmesi ✅
   - 6. aşama mantıkları: Starbucks Endeksi ✅, Zaman Aşımı, Dolap Tarotu, Dolap Kahoot'u
+  - Sırada: `useApp()`'e kıyafet düzenlemek için `updateItem` (ad, kategori, fiyat, hedef,
+    fotoğraf değişebilsin; giyim geçmişi korunsun)
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
 
 ## Aynı anda çalışma kuralları (çakışmayı önlemek için)
@@ -204,19 +215,33 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   Hiçbir şey kaybolmaz; `git reset --hard` veya `--force` gibi komutlar kullanılmaz.
 
 ## Dosya yapısı
-- `src/app/` – ekranlar. `_layout.tsx`: AppProvider + sözleşme ve Welcome kontrolü + sekmeler.
-  - `index.tsx` – Ana sayfa (şimdilik başlık + dolaptaki parça sayısı kartı, taslak)
-  - `wardrobe.tsx` – Dolap (şimdilik sadece başlık)
-  - `wallet.tsx` – Cüzdan (şimdilik sadece başlık)
-  - `explore.tsx` – **GEÇİCİ** "Test" sekmesi, sadece `<DevTestPanel />` gösterir
+- `src/app/` – ekranlar. `_layout.tsx`: AppProvider + sözleşme ve Welcome kontrolü + **Stack**
+  (sayfa destesi: en altta sekmeler, diğer sayfalar bunun üstüne açılır, sola kaydırınca kapanır).
+  - `(tabs)/` – sekme ekranları. Parantezli klasör adresi etkilemez (Dolap yine `/wardrobe`).
+    `(tabs)/_layout.tsx` bu ekranları `AppTabs` ile alt sekmelerde gösterir.
+    - `index.tsx` – Ana sayfa (şimdilik başlık + dolaptaki parça sayısı kartı, taslak)
+    - `wardrobe.tsx` – Dolap: büyük başlık + pembe "+" butonu, arama, kategori hapları,
+      2 sütunlu `ClothingCard`'lar, boş dolap mesajı
+    - `wallet.tsx` – Cüzdan (şimdilik sadece başlık)
+    - `explore.tsx` – "Test" sekmesi, sadece `<DevTestPanel />` gösterir (sadece geliştirmede)
+  - `add-item.tsx` – kıyafet ekleme formu (fotoğraf, ad, kategori, fiyat, hedef). Kaydetmeden
+    çıkılırsa seçilen fotoğrafı siler.
+  - `item/[id].tsx` – kıyafet detay sayfası: bilgi satırları + büyük fotoğraf, maliyet, kıyas
+    cümlesi, hedef çubuğu, Starbucks Endeksi, silme; altta "Giydim ✨" ve ↩ geri al.
+    "Giydim"de maliyet rakamı zıplar (reanimated) ve kutlama balonu çıkar (mesajlar `handleWear`'da).
+  - Sayfa başlığı/geri butonu her sayfanın kendi içinde `<Stack.Screen options={...} />` ile
+    ayarlanır; bu yüzden yeni sayfa eklemek için ortak `_layout.tsx`'e dokunmak gerekmez.
 - `src/components/` – tekrar kullanılan bileşenler (şablondan gelenler de burada)
   - `agreement-screen.tsx` – Girl Math Kullanım Sözleşmesi ekranı
   - `welcome-screen.tsx` – Welcome karşılama ekranı (sözleşmeden sonra bir kez)
-  - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Cüzdan, Test (bordo, SF Symbols simgeleri).
+  - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Cüzdan, Test (pembe, SF Symbols simgeleri).
     `app-tabs.web.tsx` aynı sekmelerin web sürümü.
-  - `dev-test-panel.tsx` – **GEÇİCİ** deneme paneli (Test sekmesinde). Gerçek Dolap ekranı
-    yapılınca bu dosya, `explore.tsx` ve `app-tabs.tsx`/`app-tabs.web.tsx`'teki "Test" sekmesi
-    birlikte silinecek.
+  - `clothing-card.tsx` – Dolap'taki kıyafet kartı (3:4 fotoğraf, "3/30 giyim" rozeti, ince hedef
+    çubuğu, amorti ♥, üstü çizili fiyat + pembe "/giyim" maliyet). Ayrıca `formatTL(3000)` →
+    "3.000 ₺" yardımcısı burada; fiyat gösteren her ekran bunu kullanır.
+  - `dev-test-panel.tsx` – Onur'un deneme paneli (Test sekmesinde). Ekip kararıyla (seçenek C)
+    silinmedi: Test sekmesi `__DEV__ &&` ile sarılı, Expo Go'da görünür, App Store sürümünde
+    otomatik gizlenir. Onur yeni özellikleri ve "🔔 Test bildirimi"ni burada dener.
 - `src/constants/theme.ts` – ortak tema
 - `src/context/app-context.tsx` – hafıza merkezi (kıyafetler + AsyncStorage)
 - `src/lib/types.ts` – veri tipleri; `src/lib/girl-math.ts` – hesaplamalar;
@@ -243,6 +268,10 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - Sözleşme ve Welcome ekranı birer kez görülünce bir daha çıkmaz. Tekrar görmek için Expo Go
   silinip yüklenir.
 - "Could not resolve host: github.com" hatası internet takılmasıdır; tekrar push denenir.
+- Yeni bir sayfa dosyası eklenince `npx tsc --noEmit` "... is not assignable to type ..." gibi
+  bir sayfa adresi hatası verebilir. Kod yanlış değildir: Expo'nun sayfa listesi
+  (`.expo/types`) eskidir. Bir kez `npx expo start` çalıştırınca kendiliğinden düzelir.
+- Açılış ekranı (splash) rengi `app.json`'da `#FFF7FA`; Expo Go'da görünmez, gerçek uygulamada görünür.
 
 ## Eski proje
 Onur'un bilgisayarında Masaüstündeki `girl-math-app` klasörü önceki deneme. Orada çalışan
@@ -254,7 +283,13 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
 2. Veri modeli ve AppContext (kıyafetler, giyilme tarihleri, AsyncStorage) – Onur ✅
    (+ Kullanım Sözleşmesi açılış ekranı ✅)
 3. Welcome ekranı ve sekme yapısı (Ana sayfa, Dolap, Cüzdan) – Ebrar ✅
-4. Dolap ekranı ve kıyafet ekleme (fotoğraflı) – ekranlar Ebrar, fotoğraf kaydetme Onur
+4. Dolap ekranı ve kıyafet ekleme (fotoğraflı) – ekranlar Ebrar, fotoğraf kaydetme Onur ✅
+   (+ detay sayfası, Hot Pink tema, editorial başlıklar ✅)
+   - Sırada: kıyafet düzenleme (Onur: `updateItem`, Ebrar: düzenleme ekranı)
+   - Sonra: Ana sayfa ve Cüzdan'ı `getWardrobeStats` ile doldurmak
+   - Fikirler: karta basılı tutunca hızlı "Giydim", "Giydim"de titreşim (`expo-haptics`, yeni
+     paket), sıralama butonu (en pahalı / en az giyilen / amortiye en yakın), pembe geçişli
+     arka plan (`expo-linear-gradient`, yeni paket)
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
 6. Ekstra özellikler (Starbucks Endeksi, Dolap Tarotu, Kahoot, OCR)
 7. App Store hazırlığı (Apple Developer hesabı, EAS Build/Xcode, TestFlight, gizlilik
