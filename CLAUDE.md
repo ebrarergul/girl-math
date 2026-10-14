@@ -150,7 +150,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Fotoğraf kaydetme yardımcısı (`src/lib/photos.ts`) ✅
   - İstatistik hesapları (toplam dolap değeri, en çok giyilen vb.)
   - Bildirimler (expo-notifications)
-  - Şablondan kalan lint hatasının düzeltilmesi
+  - Şablondan kalan lint hatasının düzeltilmesi ✅
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
 
 ## Aynı anda çalışma kuralları (çakışmayı önlemek için)
@@ -181,8 +181,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - `src/hooks/` – yardımcı hook'lar
 
 ## Bilinen durumlar
-- `npx expo lint` şablondan gelen `src/hooks/use-color-scheme.web.ts` içinde 1 hata veriyor.
-  Sadece web'i ilgilendirir, iPhone'u etkilemez. Düzeltilecek (Onur).
+- `src/hooks/use-color-scheme.web.ts` şimdilik her zaman `'light'` döner (sadece açık tema).
+  Karanlık mod eklenince yeniden düzenlenecek. `npx expo lint` şu an 0 hata veriyor.
 - `npm install` sonrası "29 vulnerabilities" ve "npm warn" yazıları normal.
   **`npm audit fix --force` çalıştırılmaz** (paket sürümlerini bozar).
 - **Expo hesabı:** Bilgisayardaki Expo CLI bir hesaba girişliyse, sadece aynı hesaptaki Expo Go
