@@ -117,6 +117,15 @@ daysSinceLastWear(item)  // Son giyilmeden bu yana kaç gün (hiç giyilmediyse 
 todayString()            // Bugün, "2026-10-14" biçiminde
 ```
 
+**Gerçek hayat kıyası** (`@/lib/comparisons`)
+```tsx
+comparisonText(costPerWear(item))  // "Maliyeti bir filtre kahveye düştü! ☕" ya da "Resmen bedava! 🎉"
+findComparison(cost)               // Eşleşen kalem ({ emoji, name, phrase, price }) ya da null
+COMPARISONS                        // Fiyat listesi (fiyatlar değişince sadece burası güncellenir)
+```
+Kıyas cümlesi sadece kıyafet **en az 1 kere giyildiyse** gösterilir (hiç giyilmemişse
+"…düştü" demek anlamsız).
+
 **Veri tipi** (`@/lib/types`): `ClothingItem` → `id, name, category, price, photoFileName,
 wearDates, targetWears, createdAt`. Kategoriler `CATEGORIES` listesinde.
 
@@ -159,7 +168,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     bu dosya ve `explore.tsx`'teki `<DevTestPanel />` satırı silinecek.
 - `src/constants/theme.ts` – ortak tema
 - `src/context/app-context.tsx` – hafıza merkezi (kıyafetler + AsyncStorage)
-- `src/lib/types.ts` – veri tipleri; `src/lib/girl-math.ts` – hesaplamalar
+- `src/lib/types.ts` – veri tipleri; `src/lib/girl-math.ts` – hesaplamalar;
+  `src/lib/comparisons.ts` – gerçek hayat kıyasları ve fiyat listesi
 - `src/hooks/` – yardımcı hook'lar
 
 ## Bilinen durumlar

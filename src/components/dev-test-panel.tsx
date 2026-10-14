@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
+import { comparisonText } from '@/lib/comparisons';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
 
 const colors = Colors.light;
@@ -40,6 +41,9 @@ export function DevTestPanel() {
             Giyilme: {wearCount(item)} / {item.targetWears}
             {isPaidOff(item) ? ' · Amorti edildi 🎉' : ''}
           </Text>
+          {wearCount(item) > 0 && (
+            <Text style={styles.comparison}>{comparisonText(costPerWear(item))}</Text>
+          )}
 
           <View style={styles.row}>
             <Pressable style={styles.primaryButton} onPress={() => wearItem(item.id)}>
@@ -85,6 +89,10 @@ const styles = StyleSheet.create({
   },
   price: {
     ...Typography.price,
+    color: colors.primary,
+  },
+  comparison: {
+    ...Typography.bodyBold,
     color: colors.primary,
   },
   muted: {
