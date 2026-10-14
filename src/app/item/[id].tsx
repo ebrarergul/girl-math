@@ -24,10 +24,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { formatTL } from '@/components/clothing-card';
+import { INFINITE_COST, formatTL, itemComparisonText } from '@/components/clothing-card';
 import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
-import { comparisonText } from '@/lib/comparisons';
 import { costPerWear, daysSinceLastWear, isPaidOff, wearCount } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
 import { starbucksIndexList } from '@/lib/starbucks-index';
@@ -121,7 +120,7 @@ export default function ItemDetailScreen() {
     if (newWears === item!.targetWears) {
       showToast('Amorti edildi! Bu parça artık resmen bedava 💅');
     } else if (newWears === 1) {
-      showToast('İlk giyim! 🎉 Bir dahakine maliyet yarıya düşecek');
+      showToast(`İlk giyim! 🎉 Maliyet ∞ → ${formatTL(newCost)} oldu`);
     } else if (cost - newCost > 0) {
       showToast(`${formatTL(cost - newCost)} indirim kazandın 💸`);
     } else {
@@ -212,10 +211,11 @@ export default function ItemDetailScreen() {
             <Text style={styles.name}>{item.name}</Text>
             <View style={styles.priceBox}>
               {cost < item.price && <Text style={styles.oldPrice}>{formatTL(item.price)}</Text>}
-              {/* Rakam dergi yazı tipinde; ₺ sade yazı tipinde (dergi yazı tipinde "Ł" gibi görünüyor) */}
+              {/* Rakam dergi yazı tipinde; ₺ sade yazı tipinde (dergi yazı tipinde "Ł" gibi görünüyor).
+                  Hiç giyilmediyse ∞ (sonsuz) */}
               <Animated.Text style={[styles.cost, costAnimatedStyle]}>
-                {cost.toLocaleString('tr-TR')}
-                <Text style={styles.costCurrency}> ₺</Text>
+                {wears === 0 ? INFINITE_COST : cost.toLocaleString('tr-TR')}
+                {wears > 0 && <Text style={styles.costCurrency}> ₺</Text>}
               </Animated.Text>
               <Text style={styles.perWear}>giyim başına</Text>
             </View>
@@ -224,7 +224,8 @@ export default function ItemDetailScreen() {
           {/* Kıyas cümlesi sadece en az 1 kere giyildiyse anlamlı */}
           <View style={styles.compareCard}>
             <Text style={styles.compareText}>
-              {wears > 0 ? comparisonText(cost) : 'Henüz hiç giymedin. İlk "Giydim" seni bekliyor ✨'}
+              {itemComparisonText(item) ??
+                'Giymediğin sürece maliyeti sonsuz 😱 İlk "Giydim" ile düşmeye başlasın!'}
             </Text>
           </View>
 

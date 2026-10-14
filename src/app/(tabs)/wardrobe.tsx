@@ -3,6 +3,7 @@
  *
  * Dolaptaki kıyafetleri 2 sütunlu kartlar halinde gösterir. Üstte arama kutusu, sıralama
  * butonu ve kategori hapları var. Dolap boşsa "ilk parçanı ekle" mesajı çıkar.
+ * Karta basılı tutunca hızlı Giydim (Ana sayfa şeridiyle aynı kural: tekrar basılı tutunca geri al).
  */
 
 import { useRouter } from 'expo-router';
@@ -21,6 +22,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClothingCard } from '@/components/clothing-card';
+import { useQuickWear } from '@/components/quick-wear';
 import { ScreenBackground } from '@/components/screen-background';
 import { BottomTabInset, Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
@@ -65,6 +67,7 @@ function sortItems(list: ClothingItem[], sort: SortKey): ClothingItem[] {
 export default function WardrobeScreen() {
   const router = useRouter();
   const { items, isLoaded } = useApp();
+  const { toggleWear, toastView } = useQuickWear();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category | typeof ALL>(ALL);
   const [sort, setSort] = useState<SortKey>('newest');
@@ -110,7 +113,9 @@ export default function WardrobeScreen() {
                   <Text style={styles.label}>GIRL MATH</Text>
                   <Text style={styles.title}>Dolabım</Text>
                   {isLoaded && items.length > 0 && (
-                    <Text style={styles.subtitle}>{items.length} parça</Text>
+                    <Text style={styles.subtitle}>
+                      {items.length} parça · Basılı tut, Giydim sayılsın
+                    </Text>
                   )}
                 </View>
                 <Pressable
@@ -229,12 +234,14 @@ export default function WardrobeScreen() {
               <ClothingCard
                 item={item}
                 onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } })}
+                onLongPress={() => toggleWear(item)}
               />
             ) : (
               <View style={styles.spacer} />
             )
           }
         />
+        {toastView}
       </SafeAreaView>
     </ScreenBackground>
   );

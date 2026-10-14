@@ -14,9 +14,8 @@ import { SymbolView } from 'expo-symbols';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { formatTL } from '@/components/clothing-card';
+import { INFINITE_COST, formatTL, itemComparisonText } from '@/components/clothing-card';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
-import { comparisonText } from '@/lib/comparisons';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
 import { starbucksIndexText } from '@/lib/starbucks-index';
@@ -41,11 +40,12 @@ function CardFrame({ width, children }: { width: number; children: ReactNode }) 
 }
 
 // Büyük rakam: rakam dergi yazı tipinde, ₺ sade yazı tipinde (dergi yazı tipinde "Ł" gibi görünüyor)
-function BigAmount({ value, suffix }: { value: number; suffix?: string }) {
+// value null ise ∞ (sonsuz) yazılır: hiç giyilmemiş parçanın giyim başına maliyeti
+function BigAmount({ value, suffix }: { value: number | null; suffix?: string }) {
   return (
     <Text style={styles.bigAmount} numberOfLines={1} adjustsFontSizeToFit>
-      {value.toLocaleString('tr-TR')}
-      <Text style={styles.bigCurrency}> ₺</Text>
+      {value === null ? INFINITE_COST : value.toLocaleString('tr-TR')}
+      {value !== null && <Text style={styles.bigCurrency}> ₺</Text>}
       {suffix && <Text style={styles.bigSuffix}> {suffix}</Text>}
     </Text>
   );
@@ -80,10 +80,10 @@ export function ItemShareCard({ item, width }: { item: ClothingItem; width: numb
         <Text style={styles.lead} numberOfLines={1}>
           “{item.name}” artık
         </Text>
-        <BigAmount value={cost} suffix="/giyim" />
+        <BigAmount value={wears > 0 ? cost : null} suffix="/giyim" />
         {cost < item.price && <Text style={styles.strike}>{formatTL(item.price)} yerine</Text>}
         <Text style={styles.punchline}>
-          {wears > 0 ? comparisonText(cost) : 'Daha yeni aldım, takipte kalın 👀'}
+          {itemComparisonText(item) ?? 'Daha yeni aldım, takipte kalın 👀'}
         </Text>
         {wears > 0 && <Text style={styles.note}>{wears} kere giydim ✨</Text>}
       </View>

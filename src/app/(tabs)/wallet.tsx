@@ -23,6 +23,8 @@ import {
   Typography,
 } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
+import { findComparison } from '@/lib/comparisons';
+import { todayString } from '@/lib/girl-math';
 import { starbucksIndexText } from '@/lib/starbucks-index';
 import { getWardrobeStats } from '@/lib/stats';
 
@@ -33,6 +35,12 @@ export default function WalletScreen() {
   const { items, isLoaded } = useApp();
   const stats = getWardrobeStats(items);
   const isEmpty = isLoaded && items.length === 0;
+
+  // Bu ay dolaba giren: bu ay eklenen parçaların sayısı ve toplam fiyatı (aylık harcama özeti)
+  const thisMonth = todayString().slice(0, 7); // Örn: "2026-10"
+  const addedThisMonth = items.filter((item) => item.createdAt.startsWith(thisMonth));
+  const spentThisMonth = addedThisMonth.reduce((sum, item) => sum + item.price, 0);
+  const spentMatch = findComparison(spentThisMonth);
 
   return (
     <ScreenBackground>
@@ -100,6 +108,20 @@ export default function WalletScreen() {
                 value={formatTL(stats.girlMathSavings)}
                 caption="Giydikçe kazandığın. Bankan bunu tanımıyor ama biz tanıyoruz 💅"
                 tone="primary"
+              />
+
+              <StatTile
+                label="Bu ay dolaba giren"
+                value={formatTL(spentThisMonth)}
+                caption={
+                  addedThisMonth.length === 0
+                    ? 'Bu ay hiç alışveriş yok, cüzdanın sana minnettar 🫶'
+                    : `${addedThisMonth.length} yeni parça 🛍️${
+                        spentMatch
+                          ? ` · ${Math.floor(spentThisMonth / spentMatch.price)} ${spentMatch.unit} ${spentMatch.emoji} demek`
+                          : ''
+                      }`
+                }
               />
 
               <View style={styles.row}>

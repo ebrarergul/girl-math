@@ -5,6 +5,7 @@
  * 3 kısa kartla anlatır. Kullanıcı alttaki butona basınca onStart çağrılır.
  */
 
+import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -14,10 +15,15 @@ import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme'
 const colors = Colors.light;
 
 // Nasıl çalışır kartları. Yeni kart eklemek için bu listeye bir satır eklemek yeterli.
-const STEPS = [
-  { emoji: '👗', title: 'Dolabını ekle', text: 'Kıyafetlerini fotoğrafı ve fiyatıyla kaydet.' },
-  { emoji: '✨', title: '"Giydim"e bas', text: 'Her giydiğinde tek dokunuşla işaretle.' },
-  { emoji: '☕', title: 'Maliyet düşsün', text: 'Giydikçe ucuzlasın, sonunda resmen bedava olsun.' },
+// symbol: kartın solundaki pembe iPhone simgesi (SF Symbols)
+const STEPS: { symbol: SFSymbol; title: string; text: string }[] = [
+  { symbol: 'hanger', title: 'Dolabını ekle', text: 'Kıyafetlerini fotoğrafı ve fiyatıyla kaydet.' },
+  { symbol: 'sparkles', title: '"Giydim"e bas', text: 'Her giydiğinde tek dokunuşla işaretle.' },
+  {
+    symbol: 'cup.and.saucer.fill',
+    title: 'Maliyet düşsün',
+    text: 'Giydikçe ucuzlasın, sonunda resmen bedava olsun.',
+  },
 ];
 
 type Props = {
@@ -41,7 +47,7 @@ export function WelcomeScreen({ onStart }: Props) {
           {STEPS.map((step, index) => (
             <View key={index} style={styles.card}>
               <View style={styles.iconCircle}>
-                <Text style={styles.iconText}>{step.emoji}</Text>
+                <SymbolView name={step.symbol} tintColor={colors.primary} size={24} />
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.cardTitle}>{step.title}</Text>
@@ -112,10 +118,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconText: {
-    fontSize: 24,
-    lineHeight: 30,
   },
   cardBody: {
     flex: 1,

@@ -33,6 +33,10 @@ const Palette = {
   green: '#10B981', // "Amorti edildi" / başarı
   amber: '#F59E0B', // "Hedefe doğru" / uyarı
   red: '#EF4444', // Silme / hata
+  // Krom/gümüş (Y2K): referans taslaktaki pembe çanta + krom detay havası
+  chromeLight: '#FAFAFB',
+  chromeMid: '#E4E5EA',
+  chromeDark: '#C3C6CE',
 } as const;
 
 const light = {
@@ -129,6 +133,12 @@ export const Radius = {
 } as const;
 
 // Gölgeler: style={[styles.kart, Shadows.card]} gibi eklenir
+// Hazır renk geçişleri (expo-linear-gradient'e colors={Gradients.chrome} diye verilir)
+export const Gradients = {
+  // Metal parlaması gibi dalgalanan gümüş: Dolap Tarotu kartının arkası
+  chrome: [Palette.chromeMid, Palette.chromeLight, Palette.chromeDark, Palette.chromeLight] as const,
+};
+
 export const Shadows = {
   card: {
     shadowColor: Palette.ink,

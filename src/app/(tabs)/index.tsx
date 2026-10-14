@@ -1,123 +1,137 @@
 /**
  * ANA SAYFA
  *
- * Her gün açılan "bugün" ekranı: selamlama, "Bugün ne giydin?" hızlı check-in şeridi,
- * iki küçük istatistik, "Unutulan parça"
- * uyarısı (Utanç Duvarı'nın ilk hali) ve "Dolabının yıldızı" (en çok giyilen) kartı. Dolap boşsa ekleme
- * butonu çıkar. Tüm sayılar getWardrobeStats'tan gelir.
- * İleride: "Günün kombini" kartı (Onur'un kombin motoru hazır olunca).
+ * Her gün açılan "bugün" ekranı:
+ * - Saate göre selamlama ve bugünün tarihi
+ * - Pembe "vitrin" kartı: her gün farklı bir Girl Math gerçeği; dokununca sıradakine geçer
+ * - "Bugün ne giydin?" hızlı check-in şeridi (ışık düğmesi gibi: dokun ✓, tekrar dokun geri al)
+ * - Dolap Tarotu: günün kartı, ince şerit (dokununca döner, dolaptan bir parça önerir)
+ * - "Unutulan parça" (Utanç Duvarı'nın ilk hali) ve "Dolabının yıldızı" (en çok giyilen) kartları
+ * Dolap boşsa ekleme butonu çıkar. Tüm sayılar getWardrobeStats'tan gelir.
+ * İleride: vitrin kartının yerine "Günün kombini" (Onur'un kombin motoru hazır olunca).
  */
 
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
-import { useEffect, useRef, useState } from 'react';
+import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { formatTL } from '@/components/clothing-card';
-import { StatTile } from '@/components/stat-tile';
+import { FORGOTTEN_DAYS, formatTL, lossText } from '@/components/clothing-card';
 import { ScreenBackground } from '@/components/screen-background';
-import { BottomTabInset, Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { useQuickWear } from '@/components/quick-wear';
+import { TarotCard } from '@/components/tarot-card';
+import {
+  BottomTabInset,
+  Colors,
+  Fonts,
+  Gradients,
+  Radius,
+  Shadows,
+  Spacing,
+  Typography,
+} from '@/constants/theme';
 import { useApp } from '@/context/app-context';
-import { comparisonText, findComparison } from '@/lib/comparisons';
 import { costPerWear, todayString, wearCount } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
-import { getWardrobeStats } from '@/lib/stats';
+import { starbucksIndexText } from '@/lib/starbucks-index';
+import { getWardrobeStats, type WardrobeStats } from '@/lib/stats';
 import type { ClothingItem } from '@/lib/types';
 
 const colors = Colors.light;
 
-// Bu kadar gün giyilmeyen parça "unutulmuş" sayılır ve Ana sayfada uyarı çıkar
-const FORGOTTEN_DAYS = 7;
-
-// Utanç Duvarı "zarar" hesabı: bir kıyafetin parası 1 yılda "eritilmeli"; giyilmeden geçen
-// her gün fiyatın 1/365'i boşa gider. Günlük tutar sadece anlamlıysa (≥ 10 ₺) gösterilir,
-// asıl vurgu zamanla büyüyen toplam zarardadır.
-const LOSS_YEAR_DAYS = 365;
-const MIN_DAILY_LOSS_TO_SHOW = 10;
-
-// Örn: "📉 Sana günlük 16 ₺ zarar yazıyor. Şimdiye kadar boşa giden: 986 ₺ ≈ Brunch 🥞"
-// Boşa giden tutar en ucuz kıyas kaleminden bile azsa null döner (satır gösterilmez).
-function lossText(price: number, days: number): string | null {
-  const daily = price / LOSS_YEAR_DAYS;
-  const total = Math.round(daily * days);
-  const match = findComparison(total);
-  if (days <= 0 || !match) {
-    return null;
-  }
-  const dailyPart =
-    daily >= MIN_DAILY_LOSS_TO_SHOW
-      ? `Sana günlük ${formatTL(Math.round(daily))} zarar yazıyor. `
-      : '';
-  return `📉 ${dailyPart}Şimdiye kadar boşa giden: ${formatTL(total)} ≈ ${match.name} ${match.emoji}`;
+// Saate göre selamlama
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return 'Günaydın aşko ☀️';
+  if (hour >= 12 && hour < 18) return 'Merhaba aşko 🎀';
+  return 'İyi akşamlar aşko 🌙';
 }
-// Check-in balonunun ekranda kalma süresi (milisaniye); "Geri al"a basmaya yetecek kadar
-const TOAST_DURATION = 4000;
 
-type Toast = { id: number; text: string; undoItemId: string | null };
+// Bugünün tarihi, Türkçe büyük harfle: "14 EKİM SALI"
+function todayLabel(): string {
+  return new Date()
+    .toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' })
+    .replace(',', '')
+    .toLocaleUpperCase('tr');
+}
+
+// Yılın kaçıncı günü (vitrin kartı her gün başka bir gerçekle başlasın diye)
+function dayOfYear(): number {
+  const now = new Date();
+  return Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+}
+
+// Vitrin kartındaki bir "Girl Math gerçeği"
+type Fact = { label: string; value: number; currency: boolean; suffix?: string; text: string };
+
+function buildFacts(stats: WardrobeStats): Fact[] {
+  const facts: Fact[] = [
+    {
+      label: 'BU AY',
+      value: stats.wearsThisMonth,
+      currency: false,
+      suffix: 'kere giydin ✨',
+      text:
+        stats.wearsThisMonth > 0
+          ? 'Her "Giydim" maliyeti biraz daha eritiyor. Devam aşko!'
+          : 'Bu ay ilk "Giydim" seni bekliyor. Aşağıdan bir parçaya dokun!',
+    },
+    {
+      label: 'GIRL MATH KAZANCIN',
+      value: stats.girlMathSavings,
+      currency: true,
+      text: 'Giydikçe kazandığın. Bankan bunu tanımıyor ama biz tanıyoruz 💅',
+    },
+    {
+      label: 'DOLABIN',
+      value: stats.totalValue,
+      currency: true,
+      text: `Dolabın ${starbucksIndexText(stats.totalValue)}`,
+    },
+  ];
+  if (stats.averageCostPerWear !== null) {
+    facts.push({
+      label: 'ORTALAMA GİYİM MALİYETİN',
+      value: stats.averageCostPerWear,
+      currency: true,
+      text: 'Dolabındaki bir parçayı bir kere giymek sana ortalama bu kadara geliyor.',
+    });
+  }
+  if (stats.paidOffCount > 0) {
+    facts.push({
+      label: 'RESMEN BEDAVA',
+      value: stats.paidOffCount,
+      currency: false,
+      suffix: 'parça ♥',
+      text: 'Bu parçalar kendini amorti etti. Ekonomi dehasısın!',
+    });
+  }
+  return facts;
+}
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { items, isLoaded, wearItem, undoWear } = useApp();
+  const { items, isLoaded } = useApp();
   const stats = getWardrobeStats(items);
   const isEmpty = isLoaded && items.length === 0;
   const today = todayString();
 
-  // Check-in balonu (detay sayfasındakiyle aynı mantık, ek olarak "Geri al" düğmesi var)
-  const [toast, setToast] = useState<Toast | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const toastCount = useRef(0);
-  useEffect(() => {
-    return () => {
-      if (toastTimer.current) clearTimeout(toastTimer.current);
-    };
-  }, []);
+  // Vitrin kartı: her gün farklı gerçekle başlar, dokundukça sıradakine geçer
+  const facts = buildFacts(stats);
+  const [factOffset, setFactOffset] = useState(0);
+  const fact = facts[(dayOfYear() + factOffset) % facts.length];
 
-  function showToast(text: string, undoItemId: string | null = null) {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastCount.current += 1;
-    setToast({ id: toastCount.current, text, undoItemId });
-    toastTimer.current = setTimeout(() => setToast(null), TOAST_DURATION);
+  function nextFact() {
+    Haptics.selectionAsync();
+    setFactOffset((current) => current + 1);
   }
 
-  // "Bugün ne giydin?" şeridi ışık düğmesi gibi çalışır: bir dokunuş ✓ koyar (Giydim),
-  // ✓ olana tekrar dokunmak bugünkü giyimi geri alır (✓ kalkar).
-  function handleQuickWear(item: ClothingItem) {
-    const name = `“${item.name}”`;
-    if (item.wearDates.includes(today)) {
-      undoWear(item.id);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      showToast(`${name} bugünden çıkarıldı ↩`);
-      return;
-    }
-    const newWears = wearCount(item) + 1;
-    wearItem(item.id);
-    // Titreşim: hedefe ulaştıysa "başarı" titreşimi, değilse tek bir "tık"
-    if (newWears === item.targetWears) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    if (newWears === item.targetWears) {
-      showToast(`${name} amorti edildi, resmen bedava 💅`, item.id);
-    } else if (newWears === 1) {
-      showToast(`${name} ilk kez giyildi 🎉`, item.id);
-    } else {
-      showToast(`${name} artık ${formatTL(Math.round(item.price / newWears))} /giyim 💸`, item.id);
-    }
-  }
-
-  function handleUndo() {
-    if (toast?.undoItemId) {
-      undoWear(toast.undoItemId);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast(null);
-  }
+  // Hızlı Giydim (ortak): dokun ✓, tekrar dokun geri al; balonda "Geri al"
+  const { toggleWear, toastView } = useQuickWear();
 
   function openItem(item: ClothingItem) {
     router.push({ pathname: '/item/[id]', params: { id: item.id } });
@@ -143,8 +157,8 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.screen} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <Text style={styles.label}>GIRL MATH</Text>
-            <Text style={styles.title}>Merhaba aşko 🎀</Text>
+            <Text style={styles.label}>{todayLabel()}</Text>
+            <Text style={styles.title}>{greeting()}</Text>
             <Text style={styles.subtitle}>Bugün hangi kıyafetin kendini amorti edecek?</Text>
           </View>
 
@@ -170,6 +184,32 @@ export default function HomeScreen() {
             </View>
           ) : (
             <>
+              {/* Vitrin kartı: dokununca sıradaki Girl Math gerçeği */}
+              {isLoaded && (
+                <Pressable
+                  onPress={nextFact}
+                  accessibilityLabel="Sıradaki Girl Math gerçeği"
+                  style={({ pressed }) => [styles.heroWrap, pressed && styles.heroPressed]}>
+                  <LinearGradient
+                    colors={[colors.primaryPressed, colors.primary]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.hero}>
+                    <View style={styles.heroSparkle}>
+                      <SymbolView name="sparkles" tintColor={colors.onPrimary} size={36} />
+                    </View>
+                    <Text style={styles.heroLabel}>{fact.label}</Text>
+                    <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
+                      {fact.value.toLocaleString('tr-TR')}
+                      {fact.currency && <Text style={styles.heroCurrency}> ₺</Text>}
+                      {fact.suffix && <Text style={styles.heroSuffix}> {fact.suffix}</Text>}
+                    </Text>
+                    <Text style={styles.heroText}>{fact.text}</Text>
+                    <Text style={styles.heroHint}>Dokun, sıradaki gerçek →</Text>
+                  </LinearGradient>
+                </Pressable>
+              )}
+
               {items.length > 0 && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Bugün ne giydin?</Text>
@@ -186,25 +226,19 @@ export default function HomeScreen() {
                         key={item.id}
                         item={item}
                         wornToday={item.wearDates.includes(today)}
-                        onPress={() => handleQuickWear(item)}
+                        onPress={() => toggleWear(item)}
                       />
                     ))}
                   </ScrollView>
                 </View>
               )}
 
-              <View style={styles.row}>
-                <StatTile label="Dolabındaki parça" value={isLoaded ? String(items.length) : '…'} />
-                <StatTile
-                  label="Bu ay giyim"
-                  value={String(stats.wearsThisMonth)}
-                  caption={stats.wearsThisMonth > 0 ? 'harikasın ✨' : 'ilk "Giydim" seni bekliyor'}
-                />
-              </View>
+              {items.length > 0 && <TarotCard items={items} onOpenItem={openItem} />}
 
               {forgotten && forgottenMessage && (
                 <HighlightCard
                   eyebrow="UNUTULAN PARÇA"
+                  icon="clock.badge.exclamationmark"
                   item={forgotten.item}
                   message={forgottenMessage}
                   extra={lossText(forgotten.item.price, forgotten.days)}
@@ -212,12 +246,22 @@ export default function HomeScreen() {
                   onPress={() => openItem(forgotten.item)}
                 />
               )}
+              {forgotten && forgottenMessage && (
+                <Pressable
+                  onPress={() => router.push('/shame-wall')}
+                  hitSlop={8}
+                  style={styles.wallLink}>
+                  <Text style={styles.wallLinkText}>{"Utanç Duvarı'nın tamamı →"}</Text>
+                </Pressable>
+              )}
 
               {star && (
                 <HighlightCard
-                  eyebrow="DOLABININ YILDIZI ⭐"
+                  eyebrow="DOLABININ YILDIZI"
+                  icon="star.fill"
+                  medal
                   item={star}
-                  message={`${wearCount(star)} kere giydin, ${formatTL(costPerWear(star))} /giyim. ${comparisonText(costPerWear(star))}`}
+                  message={`${wearCount(star)} kere giydin · ${formatTL(costPerWear(star))} /giyim`}
                   onPress={() => openItem(star)}
                 />
               )}
@@ -225,23 +269,7 @@ export default function HomeScreen() {
           )}
         </ScrollView>
 
-        {/* Check-in balonu: sekme çubuğunun hemen üstünde belirir */}
-        {toast && (
-          <View style={styles.toastWrap} pointerEvents="box-none">
-            <Animated.View
-              key={toast.id}
-              entering={FadeInDown.springify()}
-              exiting={FadeOutDown}
-              style={styles.toast}>
-              <Text style={styles.toastText}>{toast.text}</Text>
-              {toast.undoItemId && (
-                <Pressable onPress={handleUndo} hitSlop={8}>
-                  <Text style={styles.toastUndo}>Geri al</Text>
-                </Pressable>
-              )}
-            </Animated.View>
-          </View>
-        )}
+        {toastView}
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -296,17 +324,21 @@ function QuickWearButton({
 // Fotoğraflı vurgu kartı: solda küçük fotoğraf, sağda başlık, kıyafet adı ve mesaj
 function HighlightCard({
   eyebrow,
+  icon,
   item,
   message,
   extra,
   tone = 'default',
+  medal = false,
   onPress,
 }: {
   eyebrow: string;
+  icon?: SFSymbol; // Başlığın yanındaki küçük pembe simge
   item: ClothingItem;
   message: string;
   extra?: string | null; // Mesajın altında pembe vurgulu ek satır (ör. Utanç Duvarı zararı)
   tone?: 'default' | 'warning';
+  medal?: boolean; // Fotoğrafın köşesinde gümüş "yıldız madalyası" (ödül rozeti)
   onPress: () => void;
 }) {
   const uri = photoUri(item.photoFileName);
@@ -319,20 +351,36 @@ function HighlightCard({
         tone === 'warning' && styles.highlightWarning,
         pressed && styles.highlightPressed,
       ]}>
-      <View style={styles.thumb}>
-        {uri ? (
-          <Image source={{ uri }} style={styles.thumbImage} contentFit="cover" />
-        ) : (
-          <SymbolView
-            name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
-            tintColor={colors.primary}
-            size={24}
-            weight="light"
-          />
+      {/* Fotoğraf + (isteğe bağlı) köşeden taşan gümüş madalya */}
+      <View>
+        <View style={styles.thumb}>
+          {uri ? (
+            <Image source={{ uri }} style={styles.thumbImage} contentFit="cover" />
+          ) : (
+            <SymbolView
+              name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
+              tintColor={colors.primary}
+              size={24}
+              weight="light"
+            />
+          )}
+        </View>
+        {medal && (
+          <LinearGradient
+            colors={Gradients.chrome}
+            locations={[0, 0.35, 0.7, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.medal}>
+            <SymbolView name="star.fill" tintColor={colors.primary} size={13} />
+          </LinearGradient>
         )}
       </View>
       <View style={styles.highlightBody}>
-        <Text style={styles.eyebrow}>{eyebrow}</Text>
+        <View style={styles.eyebrowRow}>
+          {icon && <SymbolView name={icon} tintColor={colors.primary} size={11} />}
+          <Text style={styles.eyebrow}>{eyebrow}</Text>
+        </View>
         <Text style={styles.highlightName} numberOfLines={1}>
           {item.name}
         </Text>
@@ -378,6 +426,64 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.three,
   },
+  wallLink: {
+    alignSelf: 'flex-end',
+    marginTop: -Spacing.two,
+  },
+  wallLinkText: {
+    ...Typography.bodyBold,
+    color: colors.primary,
+  },
+  heroWrap: {
+    borderRadius: Radius.xl,
+    ...Shadows.button,
+  },
+  heroPressed: {
+    transform: [{ scale: 0.98 }],
+  },
+  hero: {
+    borderRadius: Radius.xl,
+    padding: Spacing.four,
+    gap: Spacing.one,
+    overflow: 'hidden',
+  },
+  heroSparkle: {
+    position: 'absolute',
+    right: Spacing.four,
+    top: Spacing.four,
+    opacity: 0.35,
+  },
+  heroLabel: {
+    ...Typography.label,
+    color: colors.primarySoft,
+  },
+  heroValue: {
+    ...Typography.hero,
+    fontSize: 44,
+    lineHeight: 52,
+    color: colors.onPrimary,
+  },
+  heroCurrency: {
+    fontFamily: Fonts?.sans,
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: 0,
+  },
+  heroSuffix: {
+    fontFamily: Fonts?.sans,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0,
+  },
+  heroText: {
+    ...Typography.bodyBold,
+    color: colors.onPrimary,
+  },
+  heroHint: {
+    ...Typography.caption,
+    color: colors.primarySoft,
+    marginTop: Spacing.two,
+  },
   section: {
     gap: Spacing.half,
   },
@@ -400,14 +506,14 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   quick: {
-    width: 76,
+    width: 96,
     gap: Spacing.one,
   },
   quickPressed: {
     transform: [{ scale: 0.94 }],
   },
   quickPhoto: {
-    width: 76,
+    width: 96,
     aspectRatio: 3 / 4,
     borderRadius: Radius.md,
     backgroundColor: colors.primarySoft,
@@ -437,32 +543,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
   },
-  toastWrap: {
-    position: 'absolute',
-    left: Spacing.four,
-    right: Spacing.four,
-    bottom: BottomTabInset + Spacing.five,
-    alignItems: 'center',
-  },
-  toast: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    backgroundColor: colors.text,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    ...Shadows.card,
-  },
-  toastText: {
-    ...Typography.bodyBold,
-    color: colors.card,
-    flexShrink: 1,
-  },
-  toastUndo: {
-    ...Typography.bodyBold,
-    color: colors.highlight,
-  },
   highlight: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -478,6 +558,20 @@ const styles = StyleSheet.create({
   },
   highlightPressed: {
     transform: [{ scale: 0.98 }],
+  },
+  // Gümüş yıldız madalyası: fotoğrafın sağ üst köşesinden biraz dışarı taşar
+  medal: {
+    position: 'absolute',
+    top: -Spacing.two,
+    right: -Spacing.two,
+    width: 30,
+    height: 30,
+    borderRadius: Radius.pill,
+    borderWidth: 2,
+    borderColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.card,
   },
   thumb: {
     width: 64,
@@ -495,6 +589,11 @@ const styles = StyleSheet.create({
   highlightBody: {
     flex: 1,
     gap: Spacing.half,
+  },
+  eyebrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
   },
   eyebrow: {
     ...Typography.label,

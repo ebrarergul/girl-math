@@ -41,7 +41,7 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   ("o 3000 liralık elbiseyi 6 aydır 1 kere giydin, acil giy ya da sat!").
 - Sonraki özellikler: etiket okuyan OCR kamera, Starbucks Endeksi (fırsat maliyeti
   simülatörü), "Zaman Aşımı = Bedava" modülü, günlük kombin öneren Dolap Tarotu,
-  haftalık hafıza testi Dolap Kahoot'u, paylaşılabilir istatistik kartı.
+  haftalık hafıza testi Dolap Kahoot'u, paylaşılabilir istatistik kartı (✅ Story kartı).
 - Gelir modeli (ileride): Freemium; ilk 10-15 parça ücretsiz, sınırsız ekleme ve detaylı
   analiz için aylık ~29 TL Premium.
 
@@ -51,8 +51,11 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   görüntüsü cihaza **kaydedilmez** (gizlilik). Development build gerektirir.
 - **Utanç Duvarı (zarar yazma uyarıları):** Aylardır giyilmeyen pahalı parçalar için hafif
   sataşan uyarılar, **günlük zarar** hesabıyla: "O pembe elbise 60 gündür askıda ve sana
-  günlük 50 TL zarar yazıyor. Ya bu hafta sonu giy ya da satışa koy!" (Takılma bildirimi
-  bunun ilk hali; günlük zarar hesabı henüz yok.)
+  günlük 50 TL zarar yazıyor. Ya bu hafta sonu giy ya da satışa koy!" ✅ Ekranda var:
+  Ana sayfada "Unutulan parça" kartı + `src/app/shame-wall.tsx` (Utanç Duvarı sayfası).
+  Zarar = fiyat ÷ 365 × giyilmeden geçen gün (`lossAmount`/`lossText`, `clothing-card.tsx`);
+  günlük tutar sadece ≥ 10 ₺ ise yazılır, asıl vurgu biriken zarar + kıyas ("≈ Brunch 🥞").
+  Takılma **bildirimi** (Onur) bu hesabı henüz kullanmıyor; istenirse oradan çağrılabilir.
 - **Starbucks Endeksi (fırsat maliyeti simülatörü):** Asıl amaç **satın almadan önce** karar
   desteği: kullanıcı alacağı ürünün fiyatını girer → "Bunu alırsan 25 iced latte ve
   arkadaşlarınla iki akşam yemeğinden vazgeçiyorsun; değer mi?" ✅ "Almalı mıyım?" ekranı
@@ -62,7 +65,10 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   maliyeti 0 TL; bedavaya harika görünüyorsun!" bildirimi.
 - **Dolap Tarotu (günün enerjisi):** Sabah sanal kart çekilir; kartın temasına göre dolaptaki
   **unutulmuş ya da farklı** bir parça önerilir (Asılan Adam → "Olaylara farklı açıdan bakma
-  vakti"). Kombin öneri motorunun eğlenceli yüzü olabilir.
+  vakti"). Kombin öneri motorunun eğlenceli yüzü olabilir. ✅ Görünüşü hazır:
+  `src/components/tarot-card.tsx` (Ana sayfada gümüş şerit, dokununca dönen kart, 9 kartlık
+  deste, günde bir kart). Öneriyi şimdilik **GEÇİCİ** `pickTarotItem()` yapıyor; Onur'un
+  kombin motoru gelince sadece o fonksiyonun içi değişecek.
 - **Dolap Kahoot'u (haftalık hafıza testi):** Hafta sonları süreli mini yarışma: "Bu ceketi en
   son ne zaman giydin?", "En çok hangi rengi giyerek kâr ettin?". Başarıya "Tasarruf
   Kraliçesi" gibi rozetler.
@@ -130,6 +136,12 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   (`Fonts.sans`) ve biraz küçük yazılır (detay ve Cüzdan'daki büyük rakamlar böyle).
 - Mesajlarda kıyafet adı Türkçe ek almasın diye tırnak içinde **özne** yapılır:
   "“Ceket” 23 gündür askıda 👀" (❌ "Ceketi 23 gündür giymedin").
+- **Gümüş (krom, Y2K)** = "ödül ve büyü" rengi: `Gradients.chrome` (theme.ts). Büyük gümüş
+  tek yer Dolap Tarotu kapağı; küçük gümüş vurgu "Dolabının yıldızı" madalyası. Her yeri
+  gümüş yapılmaz, yoksa özelliğini kaybeder.
+- Sekmeler, Welcome ve Sözleşme'de zemin `ScreenBackground` (üstten süzülen açık pembe ışık);
+  detay ve form sayfaları sade (düz zemin).
+- Ana sayfada tek büyük odak noktası (pembe vitrin kartı) olur; diğerleri daha küçük kalır.
 - Simgeler iPhone'un SF Symbols setinden (`expo-symbols`'ın `SymbolView`'u), pembe ve ince
   çizgili. Yer tutucularda emoji değil simge kullanılır; eğlenceli **mesajlarda** emoji serbest.
 - Kıyafet fotoğrafları 3:4 dikey kırpılır, kart ve detaydaki fotoğraf alanları da 3:4.
@@ -140,8 +152,14 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   maliyeti**, pembe hap şeklinde ana buton.
 
 ## Girl Math hesaplama mantığı
-- Giyilme başına maliyet = `fiyat / giyilmeSayısı`. Hiç giyilmediyse maliyet = fiyat.
-  Ekranda tam TL'ye yuvarlanır.
+- Giyilme başına maliyet = `fiyat / giyilmeSayısı`. Hiç giyilmediyse **hesapta** maliyet =
+  fiyat (`costPerWear`, istatistikler/bildirimler buna göre). Ama **ekranda** hiç giyilmemiş
+  parçanın maliyeti **"∞"** (sonsuz) gösterilir (`costLabel`, `INFINITE_COST`): böylece ilk
+  giyimde rakam ∞ → fiyat diye düşer. Kartta bir sonraki adımın ipucu da yazar
+  ("1. giyimde → 2.500 ₺", "2. giyimde → 1.250 ₺"). Ekranda tam TL'ye yuvarlanır.
+- Kıyas cümlesi (`itemComparisonText`): 0 giyimde yok, 1 giyimde "Şimdilik bir konser bileti
+  değerinde 🎤 İkinci giyimde yarıya düşecek!" (maliyet düşmediği için "düştü" denmez),
+  2+ giyimde "Maliyeti bir maniküre düştü! 💅".
 - Yeni eklenen kıyafet `0` giyilme ile başlar.
 - Her "Giydim" basışında o günün tarihi kaydedilir (`wearDates` listesi). "Uzun süredir
   giyilmedi" uyarısı ve istatistikler bu tarihlerden hesaplanır.
@@ -237,7 +255,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu ✅
   - Ana sayfa ve Cüzdan ✅
   - Kıyafet düzenleme ✅ (`updateItem`'ı da Ebrar ekledi, Onur'un haberi var), Dolap sıralama
-    butonu ✅, "Almalı mıyım?" ekranı ✅
+    butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, Dolap Tarotu
+    görünüşü ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅
   - Sonra: ekleme formunda renk seçici, Ana sayfada "Günün kombini" kartı (Onur'un motoruna bağlı)
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
@@ -250,7 +269,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - `updateItem` – Onur bugün çalışmadığı için Ebrar ekledi (`app-context.tsx`, kural 2: yeni
     şey eklemek serbest). Onur kontrol eder; adını değiştirmek/silmek düzenleme ekranını bozar.
   - Sonra: `ClothingItem`'a renk bilgisi ve kombin öneri motoru (`src/lib/outfits.ts`) –
-    ayrıntılar "Özellik detayları"nda
+    ayrıntılar "Özellik detayları"nda. Motor hazır olunca `tarot-card.tsx` içindeki **GEÇİCİ**
+    `pickTarotItem()` fonksiyonunun içi motorla değiştirilir (görünüşe dokunmadan).
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
 
 ## Aynı anda çalışma kuralları (çakışmayı önlemek için)
@@ -270,19 +290,22 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   (sayfa destesi: en altta sekmeler, diğer sayfalar bunun üstüne açılır, sola kaydırınca kapanır).
   - `(tabs)/` – sekme ekranları. Parantezli klasör adresi etkilemez (Dolap yine `/wardrobe`).
     `(tabs)/_layout.tsx` bu ekranları `AppTabs` ile alt sekmelerde gösterir.
-    - `index.tsx` – Ana sayfa ("bugün" ekranı): selamlama; **"Bugün ne giydin?"** şeridi
-      (küçük fotoğraflar; dokununca Giydim + ✓, ✓'ye tekrar dokununca bugünkü giyim geri
-      alınır – ışık düğmesi gibi; balonda "Geri al"); parça sayısı + bu ay giyim kutuları;
-      **"Unutulan parça"** kartı (hiç giyilmediyse ya da `FORGOTTEN_DAYS` = 7+ gündür
-      giyilmediyse; Utanç Duvarı'nın ilk hali); **"Dolabının yıldızı"** (en çok giyilen,
-      tüm zamanlar). Dolap boşsa ekleme butonu. "Günün kombini" kartı Onur'un kombin motoru
-      bitince eklenecek.
+    - `index.tsx` – Ana sayfa ("bugün" ekranı), yukarıdan aşağı: tarih + saate göre selamlama
+      ("Günaydın / Merhaba / İyi akşamlar aşko"); pembe **vitrin kartı** (her gün farklı bir
+      Girl Math gerçeği, dokununca sıradakine geçer – `buildFacts`); **"Bugün ne giydin?"**
+      şeridi (dokun ✓ Giydim, tekrar dokun geri al); **Dolap Tarotu** şeridi; **"Unutulan
+      parça"** kartı + "Utanç Duvarı'nın tamamı →"; **"Dolabının yıldızı"** (en çok giyilen,
+      fotoğrafında gümüş yıldız madalyası). Dolap boşsa ekleme butonu. Onur'un kombin motoru
+      gelince vitrin kartının yerine/yanına "Günün kombini" gelebilir.
     - `wardrobe.tsx` – Dolap: büyük başlık + pembe "+" butonu, arama + sıralama butonu
       (En yeni / En pahalı / En az giyilen / Amortiye en yakın; varsayılan dışındaysa buton
-      pembe), kategori hapları, 2 sütunlu `ClothingCard`'lar, boş dolap mesajı
+      pembe), kategori hapları, 2 sütunlu `ClothingCard`'lar, boş dolap mesajı. Karta kısa
+      dokunuş detayı açar, **basılı tutmak hızlı Giydim** (tekrar basılı tutmak geri alır).
     - `wallet.tsx` – Cüzdan ("para" ekranı): dolap değeri + Starbucks Endeksi cümlesi,
       pembe "GIRL MATH kazancın" kutusu, 2×2 kutu (ortalama maliyet, toplam giyim, amorti
-      edilen, hiç giyilmeyen). Dolap boşsa ekleme butonu.
+      edilen, hiç giyilmeyen) + **"Bu ay dolaba giren"** (bu ay eklenen parçaların satın alma
+      fiyatları toplamı), en altta "Almalı mıyım?" kartı, başlığın yanında Story paylaş butonu.
+      Dolap boşsa ekleme butonu.
     - `explore.tsx` – "Test" sekmesi, sadece `<DevTestPanel />` gösterir (sadece geliştirmede)
   - `add-item.tsx` – kıyafet ekleme **ve düzenleme** formu (fotoğraf, ad, kategori, fiyat, hedef).
     Parametresiz: yeni parça (`addItem`). `params: { id }`: düzenleme, form dolu gelir
@@ -295,6 +318,11 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - `item/[id].tsx` – kıyafet detay sayfası (sağ üstte "Düzenle"): bilgi satırları + büyük fotoğraf, maliyet, kıyas
     cümlesi, hedef çubuğu, Starbucks Endeksi, silme; altta "Giydim ✨" ve ↩ geri al.
     "Giydim"de maliyet rakamı zıplar (reanimated) ve kutlama balonu çıkar (mesajlar `handleWear`'da).
+  - `share.tsx` – Story paylaşımı: kartın önizlemesi + "Story'de paylaş" (fotoğrafını çeker,
+    paylaşım penceresini açar). `params: { id }` → kıyafet kartı (detaydaki paylaş simgesi),
+    parametresiz → dolap kartı (Cüzdan'daki paylaş butonu).
+  - `shame-wall.tsx` – Utanç Duvarı: toplam boşa giden + unutulan bütün parçalar (en çok
+    zarar yazandan aza).
   - Sayfa başlığı/geri butonu her sayfanın kendi içinde `<Stack.Screen options={...} />` ile
     ayarlanır; bu yüzden yeni sayfa eklemek için ortak `_layout.tsx`'e dokunmak gerekmez.
 - `src/components/` – tekrar kullanılan bileşenler (şablondan gelenler de burada)
@@ -302,11 +330,20 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - `welcome-screen.tsx` – Welcome karşılama ekranı (sözleşmeden sonra bir kez)
   - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Cüzdan, Test (pembe, SF Symbols simgeleri).
     `app-tabs.web.tsx` aynı sekmelerin web sürümü.
+  - `quick-wear.tsx` – ortak hızlı Giydim: `useQuickWear()` → `{ toggleWear, toastView }`
+    (ışık düğmesi: giyilmediyse Giydim + titreşim + "Geri al"lı balon, bugün giyildiyse geri al).
+    Ana sayfa şeridi ve Dolap'ta basılı tutma kullanır.
+  - `tarot-card.tsx` – Dolap Tarotu (gümüş şerit, dönen kart, deste `DECK`, GEÇİCİ `pickTarotItem`)
+  - `share-card.tsx` – Story kartları (`ItemShareCard`, `WardrobeShareCard`, pembe geçişli 9:16)
+  - `screen-background.tsx` – sekmeler, Welcome ve Sözleşme'nin "üstten pembe ışık" zemini
   - `stat-tile.tsx` – küçük istatistik kutusu (etiket, büyük değer, açıklama; `tone="primary"`
     pembe dolgulu). Ana sayfa ve Cüzdan kullanır. Etiketi Türkçe kuralla büyük harfe çevirir.
   - `clothing-card.tsx` – Dolap'taki kıyafet kartı (3:4 fotoğraf, "3/30 giyim" rozeti, ince hedef
     çubuğu, amorti ♥, üstü çizili fiyat + pembe "/giyim" maliyet). Ayrıca `formatTL(3000)` →
-    "3.000 ₺" yardımcısı burada; fiyat gösteren her ekran bunu kullanır.
+    "3.000 ₺" yardımcısı burada; fiyat gösteren her ekran bunu kullanır. Diğer ortak ekran
+    yardımcıları da burada: `costLabel`/`INFINITE_COST` (∞ gösterimi), `itemComparisonText`,
+    `FORGOTTEN_DAYS`, `lossAmount`, `lossText`, `shameWallItems`. Bugün giyilen kartta rozet
+    pembe "✓ 4/30 giyim" olur.
   - `dev-test-panel.tsx` – Onur'un deneme paneli (Test sekmesinde). Ekip kararıyla (seçenek C)
     silinmedi: Test sekmesi `__DEV__ &&` ile sarılı, Expo Go'da görünür, App Store sürümünde
     otomatik gizlenir. Onur yeni özellikleri ve "🔔 Test bildirimi"ni burada dener.
@@ -339,6 +376,9 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - Yeni bir sayfa dosyası eklenince `npx tsc --noEmit` "... is not assignable to type ..." gibi
   bir sayfa adresi hatası verebilir. Kod yanlış değildir: Expo'nun sayfa listesi
   (`.expo/types`) eskidir. Bir kez `npx expo start` çalıştırınca kendiliğinden düzelir.
+- Ebrar'ın eklediği paketler (Ekim 2026): `react-native-view-shot`, `expo-sharing` (Story
+  paylaşımı), `expo-haptics` (titreşim), `expo-linear-gradient` (renk geçişleri). Hepsi Expo
+  Go'da çalışır. `expo-sharing` app.json'a kendi satırını ekledi. Pull sonrası `npm install`.
 - Açılış ekranı (splash) rengi `app.json`'da `#FFF7FA`; Expo Go'da görünmez, gerçek uygulamada görünür.
 
 ## Eski proje
@@ -355,11 +395,14 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
    (+ detay sayfası, Hot Pink tema, editorial başlıklar ✅)
    - Kıyafet düzenleme ✅, Dolap sıralama ✅, "Almalı mıyım?" ✅
    - Ana sayfa ve Cüzdan `getWardrobeStats` ile dolduruldu ✅
-   - Fikirler: "Giydim"de titreşim (`expo-haptics`, yeni paket), pembe geçişli arka plan
-     (`expo-linear-gradient`, yeni paket), Welcome kartlarındaki emojileri simgeye çevirmek
-     (şimdilik bilerek emoji bırakıldı), "Aldım!" ile eklenince doğrudan Dolap'a dönmek
+   - Story paylaşım kartı, titreşim, pembe geçişli zemin, Utanç Duvarı, Dolap Tarotu (görünüş),
+     hızlı Giydim, ∞ maliyet gösterimi, "Bu ay dolaba giren", Ana sayfa yenilemesi ✅
+   - Sırada: **uygulama simgesi ve açılış logosu** (hâlâ Expo'nun varsayılanı; Ebrar 1024×1024
+     tasarlayacak), Onur'un kombin motoru → "Günün kombini" + Tarot önerisi + renk seçici,
+     Ayarlar ekranı, Premium/ücretsiz sınır ekranı, karanlık mod
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
-6. Ekstra özellikler (Starbucks simülatörü, kombin önerisi, Dolap Tarotu, Kahoot, Zaman Aşımı,
-   Utanç Duvarı, OCR) – ayrıntılar "Özellik detayları" bölümünde
+6. Ekstra özellikler – Starbucks simülatörü ✅, Utanç Duvarı ✅, Dolap Tarotu (görünüş ✅, öneri
+   Onur'un motoruna bağlı), kombin önerisi, Kahoot, Zaman Aşımı, OCR – ayrıntılar "Özellik
+   detayları" bölümünde
 7. App Store hazırlığı (Apple Developer hesabı, EAS Build/Xcode, TestFlight, gizlilik
    politikası, izin metinleri)
