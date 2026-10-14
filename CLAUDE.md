@@ -94,7 +94,7 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   giyilmedi" uyarısı ve istatistikler bu tarihlerden hesaplanır.
 - Her kıyafetin bir hedef giyilme sayısı (`targetWears`) vardır. Ona ulaşınca
   "amorti edildi" sayılır.
-- Gerçek hayat kıyasları (filtre kahve, iced latte, simit, metro bileti vb.) ve fiyatları
+- Gerçek hayat kıyasları (filtre kahve, iced latte, Spotify, taksi vb.) ve fiyatları
   tek bir dosyada tutulur; fiyatlar değiştikçe sadece orası güncellenir. Maliyet, kendisine
   eşit ya da altındaki en pahalı kalemle eşleştirilir.
 
@@ -131,6 +131,12 @@ COMPARISONS                        // Fiyat listesi (fiyatlar değişince sadece
 ```
 Kıyas cümlesi sadece kıyafet **en az 1 kere giyildiyse** gösterilir (hiç giyilmemişse
 "…düştü" demek anlamsız).
+
+**Starbucks Endeksi** (`@/lib/starbucks-index`) – fiyatı günlük harcamalara çevirir
+```tsx
+starbucksIndexText(item.price)  // "= 11 iced latte 🧋 ya da 15 filtre kahve ☕" (aynı fiyat hep aynı cümle)
+starbucksIndexList(item.price)  // [{ comparison, count }, ...] en pahalıdan ucuza (detay ekranı için)
+```
 
 **Fotoğraflar** (`@/lib/photos`)
 ```tsx
@@ -180,6 +186,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - İstatistik hesapları (`src/lib/stats.ts`) ✅
   - Bildirimler (`src/lib/notifications.ts`) ✅
   - Şablondan kalan lint hatasının düzeltilmesi ✅
+  - 6. aşama mantıkları: Starbucks Endeksi ✅, Zaman Aşımı, Dolap Tarotu, Dolap Kahoot'u
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
 
 ## Aynı anda çalışma kuralları (çakışmayı önlemek için)
@@ -208,7 +215,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   `src/lib/comparisons.ts` – gerçek hayat kıyasları ve fiyat listesi;
   `src/lib/photos.ts` – fotoğraf seçme, kaydetme, silme;
   `src/lib/stats.ts` – dolap istatistikleri;
-  `src/lib/notifications.ts` – bildirim mesajları, izin ve kurma araçları
+  `src/lib/notifications.ts` – bildirim mesajları, izin ve kurma araçları;
+  `src/lib/starbucks-index.ts` – Starbucks Endeksi (fiyat = kaç iced latte)
 - `src/hooks/` – yardımcı hook'lar
 
 ## Bilinen durumlar
