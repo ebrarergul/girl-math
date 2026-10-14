@@ -6,12 +6,13 @@
  */
 
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { comparisonText } from '@/lib/comparisons';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
+import { sendTestNotification } from '@/lib/notifications';
 import { photoUri, pickAndSavePhoto } from '@/lib/photos';
 
 const colors = Colors.light;
@@ -31,6 +32,13 @@ export function DevTestPanel() {
     addItem({ name: 'Pembe elbise', category: 'Elbise', price: 1200, photoFileName: fileName });
   }
 
+  async function testNotification() {
+    const sent = await sendTestNotification();
+    if (!sent) {
+      Alert.alert('Bildirim izni yok', 'Ayarlar > Expo Go > Bildirimler kısmından izin verebilirsin.');
+    }
+  }
+
   return (
     <View style={styles.panel}>
       <Text style={styles.title}>🧪 Deneme paneli (geçici)</Text>
@@ -46,6 +54,9 @@ export function DevTestPanel() {
           <Text style={styles.softButtonText}>📷 Fotoğraflı ekle</Text>
         </Pressable>
       </View>
+      <Pressable style={styles.softButton} onPress={testNotification}>
+        <Text style={styles.softButtonText}>🔔 Test bildirimi (5 sn)</Text>
+      </Pressable>
 
       {items.map((item) => (
         <View key={item.id} style={styles.card}>

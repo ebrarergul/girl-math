@@ -12,8 +12,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-import { todayString } from '@/lib/girl-math';
+import { todayString, wearCount } from '@/lib/girl-math';
+import {
+  requestNotificationPermission,
+  scheduleDailyReminder,
+  scheduleForgottenReminder,
+  sendPaidOffNotification,
+} from '@/lib/notifications';
 import { deletePhoto } from '@/lib/photos';
+import { getWardrobeStats } from '@/lib/stats';
 import type { Category, ClothingItem } from '@/lib/types';
 
 // Kıyafetler telefonda bu isimle saklanır
@@ -47,6 +54,12 @@ function createId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+// Takılma ve günlük bildirimleri güncel kıyafet listesine göre yeniden kurar
+async function refreshReminders(items: ClothingItem[]): Promise<void> {
+  await scheduleDailyReminder();
+  await scheduleForgottenReminder(getWardrobeStats(items).forgotten);
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ClothingItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -73,6 +86,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }, [items, isLoaded]);
 
+  // 3) Liste her değiştiğinde bildirimleri yeniden kur (izin yoksa hiçbir şey yapmaz)
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+    refreshReminders(items).catch((error) => console.warn('Bildirimler kurulamadı:', error));
+  }, [items, isLoaded]);
+
   function addItem(newItem: NewClothingItem) {
     const item: ClothingItem = {
       id: createId(),
@@ -85,10 +106,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
       createdAt: todayString(),
     };
     setItems((current) => [item, ...current]);
+
+    // Bildirim izni istenir. iPhone pencereyi sadece ilk seferde gösterir, sonra tekrar sormaz.
+    // İzin verilirse bildirimler hemen kurulur.
+    const nextItems = [item, ...items];
+    requestNotificationPermission()
+      .then((granted) => (granted ? refreshReminders(nextItems) : undefined))
+      .catch((error) => console.warn('Bildirim izni istenemedi:', error));
   }
 
   // "Giydim": bugünün tarihini listeye ekler
   function wearItem(id: string) {
+    // Bu "Giydim" ile hedefe ulaşıyorsa ödül bildirimi gönder
+    const item = items.find((current) => current.id === id);
+    if (item && wearCount(item) + 1 === item.targetWears) {
+      const wornItem = { ...item, wearDates: [...item.wearDates, todayString()] };
+      sendPaidOffNotification(wornItem).catch((error) =>
+        console.warn('Ödül bildirimi gönderilemedi:', error)
+      );
+    }
+
     setItems((current) =>
       current.map((item) =>
         item.id === id ? { ...item, wearDates: [...item.wearDates, todayString()] } : item

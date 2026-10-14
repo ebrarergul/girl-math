@@ -65,6 +65,12 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - Hedef giyilme sayısı girilmezse varsayılan **30** (#30wears), `DEFAULT_TARGET_WEARS`.
 - Kategoriler: Üst, Alt, Elbise, Dış giyim, Ayakkabı, Çanta, Aksesuar (`src/lib/types.ts`
   içindeki `CATEGORIES` listesi).
+- **Bildirimler** (yerel, sunucusuz – `src/lib/notifications.ts`): 3 tür var.
+  1) Ödül: kıyafet "Giydim" ile tam hedefe ulaştığında hemen (sadece 1 kere).
+  2) Takılma: en uzun süredir giyilmeyen kıyafet için 3 gün sonra 20:00; bildirim günü en az
+     14 gündür giyilmemiş olmalı. 3) Günlük hatırlatma: her akşam 20:00.
+  Mesajlar Türkçe ek gerektirmeyecek şekilde yazılır (kıyafet adı "ceketi/elbiseyi" sorunu).
+  İzin, kıyafet eklenince istenir (iPhone pencereyi sadece 1 kere gösterir).
 - OCR gibi Expo Go'da olmayan yerel modüller "development build" gerektirir; bu tür
   paketleri eklemeden önce mutlaka sor.
 
@@ -150,6 +156,13 @@ stats.girlMathSavings     // Şaka istatistik "Girl Math kazancın": Σ(fiyat �
 ```
 Dolap boşken de çalışır (0 / null döner), ekran null durumlarını kontrol etmeli.
 
+**Bildirimler** (`@/lib/notifications`) – çoğu **otomatik**, ekranların bir şey yapmasına gerek yok
+- AppContext kendisi hallediyor: `addItem` izin ister, `wearItem` hedefe ulaşınca ödül gönderir,
+  liste değişince günlük + takılma bildirimleri yeniden kurulur.
+- Ekranlar sadece gerekirse: `requestNotificationPermission()` (ör. bir "Bildirimleri aç"
+  butonu), `sendTestNotification()` (5 sn sonra deneme bildirimi).
+- Mesajlar ve saat (20:00) bu dosyanın en üstündeki listelerde; değiştirmek için sadece orası.
+
 **Veri tipi** (`@/lib/types`): `ClothingItem` → `id, name, category, price, photoFileName,
 wearDates, targetWears, createdAt`. Kategoriler `CATEGORIES` listesinde.
 
@@ -165,7 +178,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
   - Fotoğraf kaydetme yardımcısı (`src/lib/photos.ts`) ✅
   - İstatistik hesapları (`src/lib/stats.ts`) ✅
-  - Bildirimler (expo-notifications)
+  - Bildirimler (`src/lib/notifications.ts`) ✅
   - Şablondan kalan lint hatasının düzeltilmesi ✅
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
 
@@ -194,7 +207,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - `src/lib/types.ts` – veri tipleri; `src/lib/girl-math.ts` – hesaplamalar;
   `src/lib/comparisons.ts` – gerçek hayat kıyasları ve fiyat listesi;
   `src/lib/photos.ts` – fotoğraf seçme, kaydetme, silme;
-  `src/lib/stats.ts` – dolap istatistikleri
+  `src/lib/stats.ts` – dolap istatistikleri;
+  `src/lib/notifications.ts` – bildirim mesajları, izin ve kurma araçları
 - `src/hooks/` – yardımcı hook'lar
 
 ## Bilinen durumlar
@@ -207,6 +221,9 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   (gerekirse `npx expo logout`). İleride expo.dev'de ortak Organization kurulacak.
 - Fotoğraf izin açıklaması (iOS "fotoğraflarınıza erişmek istiyor" metni) henüz `app.json`'a
   eklenmedi. Expo Go'da gerekmiyor; 7. aşamada (App Store) eklenecek.
+- Expo Go'da bildirim izni penceresinde "Girl Math" değil "Expo Go" yazar; normal. Gerçek
+  uygulamada (App Store) kendi adımız çıkar. Takılma bildirimi 14+ gün gerektirdiği için hızlı
+  test edilemez; deneme panelindeki "🔔 Test bildirimi" butonu kullanılır.
 - Sözleşme bir kez onaylanınca bir daha çıkmaz. Tekrar görmek için Expo Go silinip yüklenir.
 - "Could not resolve host: github.com" hatası internet takılmasıdır; tekrar push denenir.
 
@@ -221,7 +238,7 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
    (+ Kullanım Sözleşmesi açılış ekranı ✅)
 3. Welcome ekranı ve sekme yapısı (Ana sayfa, Dolap, Cüzdan) – Ebrar
 4. Dolap ekranı ve kıyafet ekleme (fotoğraflı) – ekranlar Ebrar, fotoğraf kaydetme Onur
-5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur
+5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
 6. Ekstra özellikler (Starbucks Endeksi, Dolap Tarotu, Kahoot, OCR)
 7. App Store hazırlığı (Apple Developer hesabı, EAS Build/Xcode, TestFlight, gizlilik
    politikası, izin metinleri)
