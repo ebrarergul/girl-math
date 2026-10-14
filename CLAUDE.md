@@ -53,7 +53,9 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   premium) gerekirse eklenir.
 - **İlk açılış ekranı "Girl Math Kullanım Sözleşmesi"** (`src/components/agreement-screen.tsx`).
   Onaylanınca AsyncStorage'a `girlmath.agreementAccepted = true` yazılır, bir daha gösterilmez.
-  İleride gelecek Welcome/giriş adımları bu sözleşmeden *sonra* gelir.
+  Sonra bir kez **Welcome karşılama ekranı** (`src/components/welcome-screen.tsx`) gelir;
+  "Hadi başlayalım"a basılınca `girlmath.welcomeSeen = true` yazılır. Sıra: Sözleşme → Welcome
+  → sekmeler. Kullanıcı adını sormak sonraya bırakıldı.
 - **Sadece açık tema** (app.json: `"userInterfaceStyle": "light"`). Karanlık mod sonra.
 - **Fotoğraflar:** expo-image-picker ile seçilir, expo-file-system'in File/Paths API'siyle
   `Paths.document` altına kopyalanır. Kayıtta tam yol değil **sadece dosya adı** tutulur,
@@ -202,13 +204,14 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   Hiçbir şey kaybolmaz; `git reset --hard` veya `--force` gibi komutlar kullanılmaz.
 
 ## Dosya yapısı
-- `src/app/` – ekranlar. `_layout.tsx`: AppProvider + sözleşme kontrolü + sekmeler.
+- `src/app/` – ekranlar. `_layout.tsx`: AppProvider + sözleşme ve Welcome kontrolü + sekmeler.
   - `index.tsx` – Ana sayfa (şimdilik başlık + dolaptaki parça sayısı kartı, taslak)
   - `wardrobe.tsx` – Dolap (şimdilik sadece başlık)
   - `wallet.tsx` – Cüzdan (şimdilik sadece başlık)
   - `explore.tsx` – **GEÇİCİ** "Test" sekmesi, sadece `<DevTestPanel />` gösterir
 - `src/components/` – tekrar kullanılan bileşenler (şablondan gelenler de burada)
   - `agreement-screen.tsx` – Girl Math Kullanım Sözleşmesi ekranı
+  - `welcome-screen.tsx` – Welcome karşılama ekranı (sözleşmeden sonra bir kez)
   - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Cüzdan, Test (bordo, SF Symbols simgeleri).
     `app-tabs.web.tsx` aynı sekmelerin web sürümü.
   - `dev-test-panel.tsx` – **GEÇİCİ** deneme paneli (Test sekmesinde). Gerçek Dolap ekranı
@@ -237,7 +240,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - Expo Go'da bildirim izni penceresinde "Girl Math" değil "Expo Go" yazar; normal. Gerçek
   uygulamada (App Store) kendi adımız çıkar. Takılma bildirimi 14+ gün gerektirdiği için hızlı
   test edilemez; deneme panelindeki "🔔 Test bildirimi" butonu kullanılır.
-- Sözleşme bir kez onaylanınca bir daha çıkmaz. Tekrar görmek için Expo Go silinip yüklenir.
+- Sözleşme ve Welcome ekranı birer kez görülünce bir daha çıkmaz. Tekrar görmek için Expo Go
+  silinip yüklenir.
 - "Could not resolve host: github.com" hatası internet takılmasıdır; tekrar push denenir.
 
 ## Eski proje
@@ -249,8 +253,7 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
 1. Ortak tema dosyası ✅
 2. Veri modeli ve AppContext (kıyafetler, giyilme tarihleri, AsyncStorage) – Onur ✅
    (+ Kullanım Sözleşmesi açılış ekranı ✅)
-3. Welcome ekranı ve sekme yapısı (Ana sayfa, Dolap, Cüzdan) – Ebrar
-   (sekmeler ✅, şablon temizliği ✅, Welcome ekranı sırada)
+3. Welcome ekranı ve sekme yapısı (Ana sayfa, Dolap, Cüzdan) – Ebrar ✅
 4. Dolap ekranı ve kıyafet ekleme (fotoğraflı) – ekranlar Ebrar, fotoğraf kaydetme Onur
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
 6. Ekstra özellikler (Starbucks Endeksi, Dolap Tarotu, Kahoot, OCR)
