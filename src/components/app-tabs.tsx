@@ -3,6 +3,7 @@ import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 
+// Simgeler: "sf" iPhone'un kendi simge seti (SF Symbols), "md" Android'in simge seti (Material)
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
@@ -14,19 +15,27 @@ export default function AppTabs() {
       indicatorColor={colors.primarySoft}
       labelStyle={{ selected: { color: colors.primary } }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Ana sayfa</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="wardrobe">
+        <NativeTabs.Trigger.Label>Dolap</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="hanger" md="checkroom" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="wallet">
+        <NativeTabs.Trigger.Label>Cüzdan</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
+          sf={{ default: 'creditcard', selected: 'creditcard.fill' }}
+          md="account_balance_wallet"
         />
       </NativeTabs.Trigger>
 
+      {/* GEÇİCİ: Onur'un deneme paneli. Gerçek Dolap ekranı bitince bu sekme silinecek. */}
       <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Label>Test</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="wrench.and.screwdriver" md="build" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

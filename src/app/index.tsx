@@ -1,98 +1,72 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+/**
+ * ANA SAYFA
+ *
+ * Şimdilik büyük başlık ve dolaptaki parça sayısını gösteren tek bir kart var.
+ * İleride buraya günün kombini, bildirimler ve kısa istatistikler gelecek.
+ */
+
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { useApp } from '@/context/app-context';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+const colors = Colors.light;
 
 export default function HomeScreen() {
+  const { items, isLoaded } = useApp();
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.header}>
+        <Text style={styles.label}>Girl Math</Text>
+        <Text style={styles.title}>Merhaba aşko 🎀</Text>
+        <Text style={styles.subtitle}>Bugün hangi kıyafetin kendini amorti edecek?</Text>
+      </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <View style={[styles.card, Shadows.card]}>
+        <Text style={styles.cardLabel}>Dolabındaki parça</Text>
+        <Text style={styles.cardValue}>{isLoaded ? items.length : '…'}</Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
+    backgroundColor: colors.background,
     paddingHorizontal: Spacing.four,
     gap: Spacing.four,
   },
+  header: {
+    paddingTop: Spacing.four,
+    gap: Spacing.one,
+  },
+  label: {
+    ...Typography.label,
+    color: colors.primary,
+  },
   title: {
-    textAlign: 'center',
+    ...Typography.title,
+    color: colors.text,
   },
-  code: {
-    textTransform: 'uppercase',
+  subtitle: {
+    ...Typography.body,
+    color: colors.textSecondary,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    padding: Spacing.four,
+    gap: Spacing.one,
+  },
+  cardLabel: {
+    ...Typography.label,
+    color: colors.textSecondary,
+  },
+  cardValue: {
+    ...Typography.hero,
+    color: colors.primary,
   },
 });

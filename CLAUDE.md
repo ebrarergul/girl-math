@@ -203,12 +203,17 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 
 ## Dosya yapısı
 - `src/app/` – ekranlar. `_layout.tsx`: AppProvider + sözleşme kontrolü + sekmeler.
-  `index.tsx`, `explore.tsx` hâlâ Expo şablonu (Ebrar değiştirecek).
+  - `index.tsx` – Ana sayfa (şimdilik başlık + dolaptaki parça sayısı kartı, taslak)
+  - `wardrobe.tsx` – Dolap (şimdilik sadece başlık)
+  - `wallet.tsx` – Cüzdan (şimdilik sadece başlık)
+  - `explore.tsx` – **GEÇİCİ** "Test" sekmesi, sadece `<DevTestPanel />` gösterir
 - `src/components/` – tekrar kullanılan bileşenler (şablondan gelenler de burada)
   - `agreement-screen.tsx` – Girl Math Kullanım Sözleşmesi ekranı
-  - `app-tabs.tsx` – alt sekmeler (bordo renkli)
-  - `dev-test-panel.tsx` – **GEÇİCİ** deneme paneli (Explore'da). Gerçek Dolap ekranı yapılınca
-    bu dosya ve `explore.tsx`'teki `<DevTestPanel />` satırı silinecek.
+  - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Cüzdan, Test (bordo, SF Symbols simgeleri).
+    `app-tabs.web.tsx` aynı sekmelerin web sürümü.
+  - `dev-test-panel.tsx` – **GEÇİCİ** deneme paneli (Test sekmesinde). Gerçek Dolap ekranı
+    yapılınca bu dosya, `explore.tsx` ve `app-tabs.tsx`/`app-tabs.web.tsx`'teki "Test" sekmesi
+    birlikte silinecek.
 - `src/constants/theme.ts` – ortak tema
 - `src/context/app-context.tsx` – hafıza merkezi (kıyafetler + AsyncStorage)
 - `src/lib/types.ts` – veri tipleri; `src/lib/girl-math.ts` – hesaplamalar;
@@ -245,6 +250,7 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
 2. Veri modeli ve AppContext (kıyafetler, giyilme tarihleri, AsyncStorage) – Onur ✅
    (+ Kullanım Sözleşmesi açılış ekranı ✅)
 3. Welcome ekranı ve sekme yapısı (Ana sayfa, Dolap, Cüzdan) – Ebrar
+   (sekmeler ✅, şablon temizliği ✅, Welcome ekranı sırada)
 4. Dolap ekranı ve kıyafet ekleme (fotoğraflı) – ekranlar Ebrar, fotoğraf kaydetme Onur
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
 6. Ekstra özellikler (Starbucks Endeksi, Dolap Tarotu, Kahoot, OCR)
