@@ -45,6 +45,41 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - Gelir modeli (ileride): Freemium; ilk 10-15 parça ücretsiz, sınırsız ekleme ve detaylı
   analiz için aylık ~29 TL Premium.
 
+## Özellik detayları (proje fikri PDF'lerinden – bir özelliği yaparken buna uyulur)
+- **Akıllı Etiket Okuyucu (OCR):** Eklerken kamera ikonuyla mağaza etiketi okutulur; Apple'ın
+  metin tarama teknolojisiyle marka ("ZARA") ve fiyat ("2000 TL") forma dolar. Etiket
+  görüntüsü cihaza **kaydedilmez** (gizlilik). Development build gerektirir.
+- **Utanç Duvarı (zarar yazma uyarıları):** Aylardır giyilmeyen pahalı parçalar için hafif
+  sataşan uyarılar, **günlük zarar** hesabıyla: "O pembe elbise 60 gündür askıda ve sana
+  günlük 50 TL zarar yazıyor. Ya bu hafta sonu giy ya da satışa koy!" (Takılma bildirimi
+  bunun ilk hali; günlük zarar hesabı henüz yok.)
+- **Starbucks Endeksi (fırsat maliyeti simülatörü):** Asıl amaç **satın almadan önce** karar
+  desteği: kullanıcı alacağı ürünün fiyatını girer → "Bunu alırsan 25 iced latte ve
+  arkadaşlarınla iki akşam yemeğinden vazgeçiyorsun; değer mi?" (Şu an sadece dolaptaki
+  kıyafetin fiyatını çeviriyor; simülatör ekranı henüz yok.)
+- **Zaman Aşımı = Bedava (etkinlik modu):** Kıyafet "Etkinlik için alındı" etiketi ve
+  etkinlik tarihiyle kaydedilir. O gün: "Bu elbisenin parası hesaptan çoktan çıktı. Bugünkü
+  maliyeti 0 TL; bedavaya harika görünüyorsun!" bildirimi.
+- **Dolap Tarotu (günün enerjisi):** Sabah sanal kart çekilir; kartın temasına göre dolaptaki
+  **unutulmuş ya da farklı** bir parça önerilir (Asılan Adam → "Olaylara farklı açıdan bakma
+  vakti"). Kombin öneri motorunun eğlenceli yüzü olabilir.
+- **Dolap Kahoot'u (haftalık hafıza testi):** Hafta sonları süreli mini yarışma: "Bu ceketi en
+  son ne zaman giydin?", "En çok hangi rengi giyerek kâr ettin?". Başarıya "Tasarruf
+  Kraliçesi" gibi rozetler.
+- **Kombin önerisi (Ebrar'ın fikri, makara dışı "işe yarar" özellik):** Renk ve kategoriye
+  göre kombin: Üst + Alt + Ayakkabı (+ Çanta) ya da Elbise + Ayakkabı (+ Dış giyim). Renk
+  uyumu basit kurallarla (nötrler her şeyle; aynı rengin tonları; tamamlayıcı renkler),
+  internet/yapay zekâ gerekmez. **Girl Math dokunuşu:** unutulan ve amortiye en uzak parçalar
+  öne çıkar ("Bugün bunu giyersen ceketin 500 TL'ye düşer!"). Aynı motor Ana sayfada
+  "Günün kombini", Tarot'ta mistik öneri olarak kullanılır. Trend takibi sunucu/yapay zekâ
+  gerektirdiği için sonraya; ara çözüm elle güncellenen "sezonun trend renkleri" listesi.
+  Gerekenler: `ClothingItem`'a renk bilgisi + kombin motoru `src/lib/outfits.ts` (Onur),
+  ekleme formunda renk seçici + Ana sayfada "Günün kombini" kartı (Ebrar).
+- **Diğer mantıklı fikirler:** "Almalı mıyım?" hesaplayıcısı (fiyat girilir → "kaç kere
+  giyersen bir kahve fiyatına düşer?"), aylardır giyilmeyenlerden "satmayı düşün" listesi,
+  aylık harcama özeti. Premium'daki "hangi rengi daha çok giyiyorum" analizi de renk
+  bilgisine dayanır.
+
 ## Kesinleşmiş kararlar
 - **Teknoloji:** Expo (React Native), SDK 57, expo-router (ekranlar `src/app` içinde),
   TypeScript, React Compiler açık. Test: iPhone'da Expo Go (`npx expo start -c`).
@@ -190,6 +225,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 3. aşama: sekmeler (Ana sayfa, Dolap, Cüzdan), şablon ekranlarının temizlenmesi
   - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu ✅
   - Sırada: kıyafet düzenleme ekranı (Onur'un `updateItem`'ına bağlı), Ana sayfa ve Cüzdan
+  - Sonra: ekleme formunda renk seçici, Ana sayfada "Günün kombini" kartı (Onur'un motoruna bağlı)
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -200,6 +236,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 6. aşama mantıkları: Starbucks Endeksi ✅, Zaman Aşımı, Dolap Tarotu, Dolap Kahoot'u
   - Sırada: `useApp()`'e kıyafet düzenlemek için `updateItem` (ad, kategori, fiyat, hedef,
     fotoğraf değişebilsin; giyim geçmişi korunsun)
+  - Sonra: `ClothingItem`'a renk bilgisi ve kombin öneri motoru (`src/lib/outfits.ts`) –
+    ayrıntılar "Özellik detayları"nda
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
 
 ## Aynı anda çalışma kuralları (çakışmayı önlemek için)
@@ -291,6 +329,7 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
      paket), sıralama butonu (en pahalı / en az giyilen / amortiye en yakın), pembe geçişli
      arka plan (`expo-linear-gradient`, yeni paket)
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
-6. Ekstra özellikler (Starbucks Endeksi, Dolap Tarotu, Kahoot, OCR)
+6. Ekstra özellikler (Starbucks simülatörü, kombin önerisi, Dolap Tarotu, Kahoot, Zaman Aşımı,
+   Utanç Duvarı, OCR) – ayrıntılar "Özellik detayları" bölümünde
 7. App Store hazırlığı (Apple Developer hesabı, EAS Build/Xcode, TestFlight, gizlilik
    politikası, izin metinleri)
