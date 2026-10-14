@@ -1,13 +1,16 @@
 /**
- * KIYAFET EKLEME FORMU
+ * KIYAFET EKLEME / DÜZENLEME FORMU
  *
- * Dolap ekranındaki "+" butonuyla açılır. Fotoğraf, ad, kategori, fiyat ve isteğe bağlı
- * hedef giyilme sayısı girilir. "Dolabıma ekle"ye basınca addItem() ile kaydedilir ve
- * Dolap'a geri dönülür.
+ * İki modu var:
+ * - Ekleme: Dolap'taki "+" ile boş açılır. "Dolabıma ekle" → addItem().
+ * - Düzenleme: detay sayfasındaki "Düzenle" ile kıyafetin kimliği (id) verilerek açılır,
+ *   form o kıyafetin bilgileriyle dolu gelir. "Kaydet" → updateItem(); giyim geçmişi korunur.
+ * "Almalı mıyım?" ekranından fiyat (price) verilerek de açılabilir: fiyat dolu gelir.
+ * Fotoğraf, ad, kategori, fiyat ve isteğe bağlı hedef giyilme sayısı girilir.
  */
 
 import { Image } from 'expo-image';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -27,15 +30,24 @@ function parseAmount(text: string): number {
 
 export default function AddItemScreen() {
   const router = useRouter();
-  const { addItem } = useApp();
+  const { id, price: priceParam } = useLocalSearchParams<{ id?: string; price?: string }>();
+  const { items, addItem, updateItem } = useApp();
 
-  const [photoFileName, setPhotoFileName] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<Category | null>(null);
-  const [priceText, setPriceText] = useState('');
-  const [targetText, setTargetText] = useState('');
+  // Kimlik verildiyse düzenleme modu: form bu kıyafetin bilgileriyle başlar
+  const editing = id ? items.find((item) => item.id === id) : undefined;
 
-  // Kaydetmeden çıkılırsa seçilen fotoğraf telefonda boşuna yer kaplamasın diye silinir
+  const [photoFileName, setPhotoFileName] = useState<string | null>(
+    editing?.photoFileName ?? null,
+  );
+  const [name, setName] = useState(editing?.name ?? '');
+  const [category, setCategory] = useState<Category | null>(editing?.category ?? null);
+  const [priceText, setPriceText] = useState(
+    editing ? String(editing.price) : (priceParam ?? ''),
+  );
+  const [targetText, setTargetText] = useState(editing ? String(editing.targetWears) : '');
+
+  // Kaydetmeden çıkılırsa bu formda YENİ seçilen fotoğraf telefonda boşuna yer kaplamasın diye
+  // silinir. Düzenlemede kıyafetin eski fotoğrafına dokunulmaz (o, kaydedince updateItem'da silinir).
   const photoRef = useRef<string | null>(null);
   const savedRef = useRef(false);
   useEffect(() => {
@@ -70,13 +82,18 @@ export default function AddItemScreen() {
     if (!isValid || category === null) {
       return;
     }
-    addItem({
+    const values = {
       name: name.trim(),
       category,
       price: Math.round(price),
       photoFileName,
       targetWears: target,
-    });
+    };
+    if (editing) {
+      updateItem(editing.id, values);
+    } else {
+      addItem(values);
+    }
     savedRef.current = true;
     router.back();
   }
@@ -87,8 +104,8 @@ export default function AddItemScreen() {
     <SafeAreaView style={styles.screen} edges={['bottom']}>
       <Stack.Screen
         options={{
-          title: 'Yeni parça',
-          headerBackTitle: 'Dolap',
+          title: editing ? 'Parçayı düzenle' : 'Yeni parça',
+          headerBackTitle: editing ? 'Geri' : 'Dolap',
           headerTintColor: colors.primary,
           headerTitleStyle: { color: colors.text },
           headerStyle: { backgroundColor: colors.background },
@@ -192,7 +209,7 @@ export default function AddItemScreen() {
             !isValid && styles.buttonDisabled,
             pressed && styles.buttonPressed,
           ]}>
-          <Text style={styles.buttonText}>Dolabıma ekle 💖</Text>
+          <Text style={styles.buttonText}>{editing ? 'Kaydet 💖' : 'Dolabıma ekle 💖'}</Text>
         </Pressable>
       </View>
     </SafeAreaView>

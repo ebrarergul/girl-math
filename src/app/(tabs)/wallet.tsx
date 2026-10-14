@@ -112,6 +112,24 @@ export default function WalletScreen() {
             </View>
           </>
         )}
+
+        {/* "Almalı mıyım?" dolap boşken de görünür: ilk alışverişten önce de işe yarar */}
+        {isLoaded && (
+          <Pressable
+            onPress={() => router.push('/should-i-buy')}
+            style={({ pressed }) => [styles.askCard, pressed && styles.askCardPressed]}>
+            <Text style={styles.askEmoji}>🤔</Text>
+            <View style={styles.askBody}>
+              <Text style={styles.askTitle}>Almalı mıyım?</Text>
+              <Text style={styles.askText}>{"Almadan önce Girl Math'e sor"}</Text>
+            </View>
+            <SymbolView
+              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+              tintColor={colors.primary}
+              size={14}
+            />
+          </Pressable>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -179,6 +197,36 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: Spacing.three,
+  },
+  askCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    padding: Spacing.three,
+    ...Shadows.card,
+  },
+  askCardPressed: {
+    transform: [{ scale: 0.98 }],
+  },
+  askEmoji: {
+    fontSize: 28,
+    lineHeight: 34,
+  },
+  askBody: {
+    flex: 1,
+    gap: Spacing.half,
+  },
+  askTitle: {
+    ...Typography.heading,
+    color: colors.text,
+  },
+  askText: {
+    ...Typography.body,
+    color: colors.textSecondary,
   },
   empty: {
     alignItems: 'center',

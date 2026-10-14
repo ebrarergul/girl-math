@@ -55,8 +55,8 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   bunun ilk hali; günlük zarar hesabı henüz yok.)
 - **Starbucks Endeksi (fırsat maliyeti simülatörü):** Asıl amaç **satın almadan önce** karar
   desteği: kullanıcı alacağı ürünün fiyatını girer → "Bunu alırsan 25 iced latte ve
-  arkadaşlarınla iki akşam yemeğinden vazgeçiyorsun; değer mi?" (Şu an sadece dolaptaki
-  kıyafetin fiyatını çeviriyor; simülatör ekranı henüz yok.)
+  arkadaşlarınla iki akşam yemeğinden vazgeçiyorsun; değer mi?" ✅ "Almalı mıyım?" ekranı
+  (`src/app/should-i-buy.tsx`, Cüzdan'dan açılır) bunu yapıyor.
 - **Zaman Aşımı = Bedava (etkinlik modu):** Kıyafet "Etkinlik için alındı" etiketi ve
   etkinlik tarihiyle kaydedilir. O gün: "Bu elbisenin parası hesaptan çoktan çıktı. Bugünkü
   maliyeti 0 TL; bedavaya harika görünüyorsun!" bildirimi.
@@ -75,8 +75,8 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   gerektirdiği için sonraya; ara çözüm elle güncellenen "sezonun trend renkleri" listesi.
   Gerekenler: `ClothingItem`'a renk bilgisi + kombin motoru `src/lib/outfits.ts` (Onur),
   ekleme formunda renk seçici + Ana sayfada "Günün kombini" kartı (Ebrar).
-- **Diğer mantıklı fikirler:** "Almalı mıyım?" hesaplayıcısı (fiyat girilir → "kaç kere
-  giyersen bir kahve fiyatına düşer?"), aylardır giyilmeyenlerden "satmayı düşün" listesi,
+- **Diğer mantıklı fikirler:** "Almalı mıyım?" hesaplayıcısı ✅ (Starbucks simülatörüyle
+  birleştirildi: "kaç kere giyersen bir kahve fiyatına düşer?"), aylardır giyilmeyenlerden "satmayı düşün" listesi,
   aylık harcama özeti. Premium'daki "hangi rengi daha çok giyiyorum" analizi de renk
   bilgisine dayanır.
 
@@ -156,7 +156,7 @@ Kıyafet verisi ve hesaplar hazır. Ekran yaparken bunları **çağır**, aynıs
 
 **Kıyafetler – `useApp()`** (`@/context/app-context`)
 ```tsx
-const { items, isLoaded, addItem, wearItem, undoWear, deleteItem } = useApp();
+const { items, isLoaded, addItem, wearItem, undoWear, deleteItem, updateItem } = useApp();
 
 items                 // Dolaptaki tüm kıyafetler (ClothingItem listesi, en yeni en başta)
 isLoaded              // Telefondaki kayıtlar okundu mu? false iken "Yükleniyor" gösterilebilir
@@ -165,6 +165,9 @@ addItem({ name: 'Siyah deri ceket', category: 'Dış giyim', price: 3000, photoF
 wearItem(item.id)     // "Giydim": bugünün tarihini ekler
 undoWear(item.id)     // "Geri al": son tarihi siler
 deleteItem(item.id)   // Kıyafeti siler
+updateItem(item.id, { price: 2500 })  // Düzenler: sadece verilen alanlar değişir
+                      // (name, category, price, photoFileName, targetWears). Giyim geçmişi,
+                      // id ve createdAt korunur. Fotoğraf değiştiyse eskisi silinir.
 ```
 
 **Hesaplar** (`@/lib/girl-math`)
@@ -233,7 +236,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 3. aşama: sekmeler (Ana sayfa, Dolap, Cüzdan), şablon ekranlarının temizlenmesi
   - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu ✅
   - Ana sayfa ve Cüzdan ✅
-  - Sırada: kıyafet düzenleme ekranı (Onur'un `updateItem`'ına bağlı)
+  - Kıyafet düzenleme ✅ (`updateItem`'ı da Ebrar ekledi, Onur'un haberi var), Dolap sıralama
+    butonu ✅, "Almalı mıyım?" ekranı ✅
   - Sonra: ekleme formunda renk seçici, Ana sayfada "Günün kombini" kartı (Onur'un motoruna bağlı)
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
@@ -243,8 +247,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Bildirimler (`src/lib/notifications.ts`) ✅
   - Şablondan kalan lint hatasının düzeltilmesi ✅
   - 6. aşama mantıkları: Starbucks Endeksi ✅, Zaman Aşımı, Dolap Tarotu, Dolap Kahoot'u
-  - Sırada: `useApp()`'e kıyafet düzenlemek için `updateItem` (ad, kategori, fiyat, hedef,
-    fotoğraf değişebilsin; giyim geçmişi korunsun)
+  - `updateItem` – Onur bugün çalışmadığı için Ebrar ekledi (`app-context.tsx`, kural 2: yeni
+    şey eklemek serbest). Onur kontrol eder; adını değiştirmek/silmek düzenleme ekranını bozar.
   - Sonra: `ClothingItem`'a renk bilgisi ve kombin öneri motoru (`src/lib/outfits.ts`) –
     ayrıntılar "Özellik detayları"nda
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
@@ -273,15 +277,22 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
       giyilmediyse; Utanç Duvarı'nın ilk hali); **"Dolabının yıldızı"** (en çok giyilen,
       tüm zamanlar). Dolap boşsa ekleme butonu. "Günün kombini" kartı Onur'un kombin motoru
       bitince eklenecek.
-    - `wardrobe.tsx` – Dolap: büyük başlık + pembe "+" butonu, arama, kategori hapları,
-      2 sütunlu `ClothingCard`'lar, boş dolap mesajı
+    - `wardrobe.tsx` – Dolap: büyük başlık + pembe "+" butonu, arama + sıralama butonu
+      (En yeni / En pahalı / En az giyilen / Amortiye en yakın; varsayılan dışındaysa buton
+      pembe), kategori hapları, 2 sütunlu `ClothingCard`'lar, boş dolap mesajı
     - `wallet.tsx` – Cüzdan ("para" ekranı): dolap değeri + Starbucks Endeksi cümlesi,
       pembe "GIRL MATH kazancın" kutusu, 2×2 kutu (ortalama maliyet, toplam giyim, amorti
       edilen, hiç giyilmeyen). Dolap boşsa ekleme butonu.
     - `explore.tsx` – "Test" sekmesi, sadece `<DevTestPanel />` gösterir (sadece geliştirmede)
-  - `add-item.tsx` – kıyafet ekleme formu (fotoğraf, ad, kategori, fiyat, hedef). Kaydetmeden
-    çıkılırsa seçilen fotoğrafı siler.
-  - `item/[id].tsx` – kıyafet detay sayfası: bilgi satırları + büyük fotoğraf, maliyet, kıyas
+  - `add-item.tsx` – kıyafet ekleme **ve düzenleme** formu (fotoğraf, ad, kategori, fiyat, hedef).
+    Parametresiz: yeni parça (`addItem`). `params: { id }`: düzenleme, form dolu gelir
+    (`updateItem`; detaydaki "Düzenle" açar). `params: { price }`: fiyat dolu gelir ("Almalı
+    mıyım?" → "Aldım!"). Kaydetmeden çıkılırsa bu formda yeni seçilen fotoğrafı siler.
+  - `should-i-buy.tsx` – "Almalı mıyım?": fiyat + ayda kaç kere giyileceği → karar cümlesi
+    (iced latteye düşme süresine göre), "Bunu alırsan şunlardan vazgeçiyorsun" (Starbucks
+    Endeksi), "Girl Math'e göre" (Brunch/Manikür/Iced latte/Filtre kahve fiyatına düşmesi için
+    kaç giyim ve ne kadar süre). Kalemler `TARGET_NAMES` listesinde; fiyatlar comparisons.ts'ten.
+  - `item/[id].tsx` – kıyafet detay sayfası (sağ üstte "Düzenle"): bilgi satırları + büyük fotoğraf, maliyet, kıyas
     cümlesi, hedef çubuğu, Starbucks Endeksi, silme; altta "Giydim ✨" ve ↩ geri al.
     "Giydim"de maliyet rakamı zıplar (reanimated) ve kutlama balonu çıkar (mesajlar `handleWear`'da).
   - Sayfa başlığı/geri butonu her sayfanın kendi içinde `<Stack.Screen options={...} />` ile
@@ -342,11 +353,11 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
 3. Welcome ekranı ve sekme yapısı (Ana sayfa, Dolap, Cüzdan) – Ebrar ✅
 4. Dolap ekranı ve kıyafet ekleme (fotoğraflı) – ekranlar Ebrar, fotoğraf kaydetme Onur ✅
    (+ detay sayfası, Hot Pink tema, editorial başlıklar ✅)
-   - Sırada: kıyafet düzenleme (Onur: `updateItem`, Ebrar: düzenleme ekranı)
+   - Kıyafet düzenleme ✅, Dolap sıralama ✅, "Almalı mıyım?" ✅
    - Ana sayfa ve Cüzdan `getWardrobeStats` ile dolduruldu ✅
-   - Fikirler: karta basılı tutunca hızlı "Giydim", "Giydim"de titreşim (`expo-haptics`, yeni
-     paket), sıralama butonu (en pahalı / en az giyilen / amortiye en yakın), pembe geçişli
-     arka plan (`expo-linear-gradient`, yeni paket)
+   - Fikirler: "Giydim"de titreşim (`expo-haptics`, yeni paket), pembe geçişli arka plan
+     (`expo-linear-gradient`, yeni paket), Welcome kartlarındaki emojileri simgeye çevirmek
+     (şimdilik bilerek emoji bırakıldı), "Aldım!" ile eklenince doğrudan Dolap'a dönmek
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
 6. Ekstra özellikler (Starbucks simülatörü, kombin önerisi, Dolap Tarotu, Kahoot, Zaman Aşımı,
    Utanç Duvarı, OCR) – ayrıntılar "Özellik detayları" bölümünde

@@ -143,7 +143,19 @@ export default function ItemDetailScreen() {
 
   return (
     <SafeAreaView style={styles.screen} edges={['bottom']}>
-      <Stack.Screen options={headerOptions} />
+      {/* Sağ üstte "Düzenle": aynı formu bu kıyafetin bilgileriyle açar */}
+      <Stack.Screen
+        options={{
+          ...headerOptions,
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push({ pathname: '/add-item', params: { id: item.id } })}
+              hitSlop={8}>
+              <Text style={styles.editText}>Düzenle</Text>
+            </Pressable>
+          ),
+        }}
+      />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Pembe üst alan: solda bilgi rozetleri, sağda büyük fotoğraf */}
@@ -283,6 +295,12 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: Spacing.four,
+  },
+  editText: {
+    ...Typography.bodyBold,
+    fontSize: 16,
+    color: colors.primary,
+    paddingHorizontal: Spacing.two,
   },
   missing: {
     flex: 1,

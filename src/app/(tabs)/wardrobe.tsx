@@ -1,19 +1,29 @@
 /**
  * DOLAP EKRANI
  *
- * Dolaptaki kıyafetleri 2 sütunlu kartlar halinde gösterir. Üstte arama kutusu ve
- * kategori hapları var. Dolap boşsa "ilk parçanı ekle" mesajı çıkar.
+ * Dolaptaki kıyafetleri 2 sütunlu kartlar halinde gösterir. Üstte arama kutusu, sıralama
+ * butonu ve kategori hapları var. Dolap boşsa "ilk parçanı ekle" mesajı çıkar.
  */
 
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClothingCard } from '@/components/clothing-card';
 import { BottomTabInset, Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
+import { isPaidOff, wearCount } from '@/lib/girl-math';
 import { CATEGORIES, type Category, type ClothingItem } from '@/lib/types';
 
 const colors = Colors.light;
@@ -22,15 +32,56 @@ const colors = Colors.light;
 const ALL = 'Tümü' as const;
 const FILTERS = [ALL, ...CATEGORIES];
 
+// Sıralama seçenekleri. "newest" varsayılan: kıyafetler zaten en yeni en başta geliyor.
+type SortKey = 'newest' | 'priceDesc' | 'leastWorn' | 'closest';
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: 'newest', label: 'En yeni' },
+  { key: 'priceDesc', label: 'En pahalı' },
+  { key: 'leastWorn', label: 'En az giyilen' },
+  { key: 'closest', label: 'Amortiye en yakın' },
+];
+
+// Hedefe kaç giyim kaldı; amorti edilenler en sona gitsin diye çok büyük sayı sayılır
+function remainingWears(item: ClothingItem): number {
+  return isPaidOff(item) ? Number.MAX_SAFE_INTEGER : item.targetWears - wearCount(item);
+}
+
+function sortItems(list: ClothingItem[], sort: SortKey): ClothingItem[] {
+  const copy = [...list];
+  switch (sort) {
+    case 'priceDesc':
+      return copy.sort((a, b) => b.price - a.price);
+    case 'leastWorn':
+      // Eşitlikte pahalı olan önce: en çok "zarar yazan" parça en üstte
+      return copy.sort((a, b) => wearCount(a) - wearCount(b) || b.price - a.price);
+    case 'closest':
+      return copy.sort((a, b) => remainingWears(a) - remainingWears(b));
+    default:
+      return copy;
+  }
+}
+
 export default function WardrobeScreen() {
   const router = useRouter();
   const { items, isLoaded } = useApp();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category | typeof ALL>(ALL);
+  const [sort, setSort] = useState<SortKey>('newest');
+
+  // iPhone'un kendi seçim penceresiyle sıralama seçtirir
+  function openSortMenu() {
+    Alert.alert('Sırala', undefined, [
+      ...SORTS.map((option) => ({
+        text: option.key === sort ? `✓ ${option.label}` : option.label,
+        onPress: () => setSort(option.key),
+      })),
+      { text: 'Vazgeç', style: 'cancel' as const },
+    ]);
+  }
 
   // Önce kategoriye, sonra arama yazısına göre süz (büyük/küçük harf fark etmez)
   const query = search.trim().toLocaleLowerCase('tr');
-  const filtered = items.filter(
+  const filtered = sortItems(items, sort).filter(
     (item) =>
       (category === ALL || item.category === category) &&
       item.name.toLocaleLowerCase('tr').includes(query),
@@ -73,22 +124,45 @@ export default function WardrobeScreen() {
               </Pressable>
             </View>
 
-            <View style={styles.searchBox}>
-              <SymbolView
-                name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
-                tintColor={colors.textMuted}
-                size={18}
-              />
-              <TextInput
-                value={search}
-                onChangeText={setSearch}
-                placeholder="Dolabında ara"
-                placeholderTextColor={colors.textMuted}
-                style={styles.searchInput}
-                returnKeyType="search"
-                clearButtonMode="while-editing"
-              />
+            <View style={styles.searchRow}>
+              <View style={styles.searchBox}>
+                <SymbolView
+                  name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
+                  tintColor={colors.textMuted}
+                  size={18}
+                />
+                <TextInput
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Dolabında ara"
+                  placeholderTextColor={colors.textMuted}
+                  style={styles.searchInput}
+                  returnKeyType="search"
+                  clearButtonMode="while-editing"
+                />
+              </View>
+              {/* Sıralama butonu: varsayılan dışında bir sıralama seçiliyse pembe olur */}
+              <Pressable
+                onPress={openSortMenu}
+                accessibilityLabel="Sırala"
+                style={({ pressed }) => [
+                  styles.sortButton,
+                  sort !== 'newest' && styles.sortButtonActive,
+                  pressed && styles.sortButtonPressed,
+                ]}>
+                <SymbolView
+                  name={{ ios: 'arrow.up.arrow.down', android: 'sort', web: 'sort' }}
+                  tintColor={sort !== 'newest' ? colors.onPrimary : colors.text}
+                  size={18}
+                  weight="semibold"
+                />
+              </Pressable>
             </View>
+            {sort !== 'newest' && (
+              <Text style={styles.sortNote}>
+                Sıralama: {SORTS.find((option) => option.key === sort)?.label}
+              </Text>
+            )}
 
             <ScrollView
               horizontal
@@ -227,15 +301,42 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: colors.textSecondary,
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    marginTop: Spacing.three,
+  },
   searchBox: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
     backgroundColor: colors.card,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.three,
-    marginTop: Spacing.three,
     ...Shadows.card,
+  },
+  sortButton: {
+    width: 50,
+    height: 50,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.card,
+  },
+  sortButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  sortButtonPressed: {
+    transform: [{ scale: 0.94 }],
+  },
+  sortNote: {
+    ...Typography.caption,
+    color: colors.primary,
+    marginTop: Spacing.two,
+    marginLeft: Spacing.two,
   },
   searchInput: {
     flex: 1,

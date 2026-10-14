@@ -38,6 +38,10 @@ export type NewClothingItem = {
   targetWears?: number;
 };
 
+// Kıyafet düzenlerken değişebilecek bilgiler. Sadece verilen alanlar değişir;
+// giyim geçmişi (wearDates), kimlik ve eklenme tarihi hiç değişmez.
+export type ClothingItemChanges = Partial<NewClothingItem>;
+
 type AppContextValue = {
   items: ClothingItem[];
   isLoaded: boolean; // Telefondaki kayıtlar okundu mu?
@@ -45,6 +49,7 @@ type AppContextValue = {
   wearItem: (id: string) => void;
   undoWear: (id: string) => void;
   deleteItem: (id: string) => void;
+  updateItem: (id: string, changes: ClothingItemChanges) => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -151,8 +156,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setItems((current) => current.filter((item) => item.id !== id));
   }
 
+  // Kıyafeti düzenler (ad, kategori, fiyat, hedef, fotoğraf). Giyim geçmişi korunur.
+  // Fotoğraf değiştiyse eski fotoğraf telefondan silinir.
+  // (Ebrar ekledi – düzenleme ekranı için; CLAUDE.md kuralı 2: yeni şey eklemek serbest)
+  function updateItem(id: string, changes: ClothingItemChanges) {
+    const item = items.find((current) => current.id === id);
+    if (
+      item &&
+      changes.photoFileName !== undefined &&
+      changes.photoFileName !== item.photoFileName
+    ) {
+      deletePhoto(item.photoFileName);
+    }
+    setItems((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...changes } : item))
+    );
+  }
+
   return (
-    <AppContext.Provider value={{ items, isLoaded, addItem, wearItem, undoWear, deleteItem }}>
+    <AppContext.Provider
+      value={{ items, isLoaded, addItem, wearItem, undoWear, deleteItem, updateItem }}>
       {children}
     </AppContext.Provider>
   );
