@@ -122,6 +122,14 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   beyaz yazı okunmuyor. Butonlarda `primary` kullanılır (beyaz yazı kontrastı 4.9).
 - Büyük başlıklar (`Typography.title`, `Typography.hero`) iPhone'un **New York** tırnaklı
   yazı tipiyle (editorial/dergi havası); diğer yazılar sade sistem yazı tipi.
+- **Türkçe büyük harf:** Küçük etiketlerde (`Typography.label`) otomatik büyük harf
+  (`textTransform`) kullanılmaz; telefon İngilizce kuralla "Kategori"yi "KATEGORI" yapıyor.
+  Etiket kodda Türkçe büyük harfle yazılır ("KATEGORİ") ya da `metin.toLocaleUpperCase('tr')`
+  kullanılır. Dikkat: bu, İngilizce "Girl"ü "GİRL" yapar; marka adı hep elle "GIRL MATH" yazılır.
+- Büyük rakamlarda dergi yazı tipinin ₺ işareti "Ł" gibi göründüğü için ₺ sade yazı tipinde
+  (`Fonts.sans`) ve biraz küçük yazılır (detay ve Cüzdan'daki büyük rakamlar böyle).
+- Mesajlarda kıyafet adı Türkçe ek almasın diye tırnak içinde **özne** yapılır:
+  "“Ceket” 23 gündür askıda 👀" (❌ "Ceketi 23 gündür giymedin").
 - Simgeler iPhone'un SF Symbols setinden (`expo-symbols`'ın `SymbolView`'u), pembe ve ince
   çizgili. Yer tutucularda emoji değil simge kullanılır; eğlenceli **mesajlarda** emoji serbest.
 - Kıyafet fotoğrafları 3:4 dikey kırpılır, kart ve detaydaki fotoğraf alanları da 3:4.
@@ -224,7 +232,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - **Ebrar (ekranlar – `src/app/`, `src/components/`):**
   - 3. aşama: sekmeler (Ana sayfa, Dolap, Cüzdan), şablon ekranlarının temizlenmesi
   - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu ✅
-  - Sırada: kıyafet düzenleme ekranı (Onur'un `updateItem`'ına bağlı), Ana sayfa ve Cüzdan
+  - Ana sayfa ve Cüzdan ✅
+  - Sırada: kıyafet düzenleme ekranı (Onur'un `updateItem`'ına bağlı)
   - Sonra: ekleme formunda renk seçici, Ana sayfada "Günün kombini" kartı (Onur'un motoruna bağlı)
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
@@ -257,10 +266,18 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   (sayfa destesi: en altta sekmeler, diğer sayfalar bunun üstüne açılır, sola kaydırınca kapanır).
   - `(tabs)/` – sekme ekranları. Parantezli klasör adresi etkilemez (Dolap yine `/wardrobe`).
     `(tabs)/_layout.tsx` bu ekranları `AppTabs` ile alt sekmelerde gösterir.
-    - `index.tsx` – Ana sayfa (şimdilik başlık + dolaptaki parça sayısı kartı, taslak)
+    - `index.tsx` – Ana sayfa ("bugün" ekranı): selamlama; **"Bugün ne giydin?"** şeridi
+      (küçük fotoğraflar; dokununca Giydim + ✓, ✓'ye tekrar dokununca bugünkü giyim geri
+      alınır – ışık düğmesi gibi; balonda "Geri al"); parça sayısı + bu ay giyim kutuları;
+      **"Unutulan parça"** kartı (hiç giyilmediyse ya da `FORGOTTEN_DAYS` = 7+ gündür
+      giyilmediyse; Utanç Duvarı'nın ilk hali); **"Dolabının yıldızı"** (en çok giyilen,
+      tüm zamanlar). Dolap boşsa ekleme butonu. "Günün kombini" kartı Onur'un kombin motoru
+      bitince eklenecek.
     - `wardrobe.tsx` – Dolap: büyük başlık + pembe "+" butonu, arama, kategori hapları,
       2 sütunlu `ClothingCard`'lar, boş dolap mesajı
-    - `wallet.tsx` – Cüzdan (şimdilik sadece başlık)
+    - `wallet.tsx` – Cüzdan ("para" ekranı): dolap değeri + Starbucks Endeksi cümlesi,
+      pembe "GIRL MATH kazancın" kutusu, 2×2 kutu (ortalama maliyet, toplam giyim, amorti
+      edilen, hiç giyilmeyen). Dolap boşsa ekleme butonu.
     - `explore.tsx` – "Test" sekmesi, sadece `<DevTestPanel />` gösterir (sadece geliştirmede)
   - `add-item.tsx` – kıyafet ekleme formu (fotoğraf, ad, kategori, fiyat, hedef). Kaydetmeden
     çıkılırsa seçilen fotoğrafı siler.
@@ -274,6 +291,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - `welcome-screen.tsx` – Welcome karşılama ekranı (sözleşmeden sonra bir kez)
   - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Cüzdan, Test (pembe, SF Symbols simgeleri).
     `app-tabs.web.tsx` aynı sekmelerin web sürümü.
+  - `stat-tile.tsx` – küçük istatistik kutusu (etiket, büyük değer, açıklama; `tone="primary"`
+    pembe dolgulu). Ana sayfa ve Cüzdan kullanır. Etiketi Türkçe kuralla büyük harfe çevirir.
   - `clothing-card.tsx` – Dolap'taki kıyafet kartı (3:4 fotoğraf, "3/30 giyim" rozeti, ince hedef
     çubuğu, amorti ♥, üstü çizili fiyat + pembe "/giyim" maliyet). Ayrıca `formatTL(3000)` →
     "3.000 ₺" yardımcısı burada; fiyat gösteren her ekran bunu kullanır.
@@ -324,7 +343,7 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
 4. Dolap ekranı ve kıyafet ekleme (fotoğraflı) – ekranlar Ebrar, fotoğraf kaydetme Onur ✅
    (+ detay sayfası, Hot Pink tema, editorial başlıklar ✅)
    - Sırada: kıyafet düzenleme (Onur: `updateItem`, Ebrar: düzenleme ekranı)
-   - Sonra: Ana sayfa ve Cüzdan'ı `getWardrobeStats` ile doldurmak
+   - Ana sayfa ve Cüzdan `getWardrobeStats` ile dolduruldu ✅
    - Fikirler: karta basılı tutunca hızlı "Giydim", "Giydim"de titreşim (`expo-haptics`, yeni
      paket), sıralama butonu (en pahalı / en az giyilen / amortiye en yakın), pembe geçişli
      arka plan (`expo-linear-gradient`, yeni paket)
