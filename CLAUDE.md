@@ -137,8 +137,8 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - Mesajlarda kıyafet adı Türkçe ek almasın diye tırnak içinde **özne** yapılır:
   "“Ceket” 23 gündür askıda 👀" (❌ "Ceketi 23 gündür giymedin").
 - **Gümüş (krom, Y2K)** = "ödül ve büyü" rengi: `Gradients.chrome` (theme.ts). Büyük gümüş
-  tek yer Dolap Tarotu kapağı; küçük gümüş vurgu "Dolabının yıldızı" madalyası. Her yeri
-  gümüş yapılmaz, yoksa özelliğini kaybeder.
+  tek yer Dolap Tarotu kapağı ("Dolabının yıldızı"ndaki gümüş madalya estetik bulunmadığı için
+  kaldırıldı). Her yeri gümüş yapılmaz, yoksa özelliğini kaybeder.
 - Sekmeler, Welcome ve Sözleşme'de zemin `ScreenBackground` (üstten süzülen açık pembe ışık);
   detay ve form sayfaları sade (düz zemin).
 - Ana sayfada tek büyük odak noktası (pembe vitrin kartı) olur; diğerleri daha küçük kalır.
@@ -299,7 +299,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
       Girl Math gerçeği, dokununca sıradakine geçer – `buildFacts`); **"Bugün ne giydin?"**
       şeridi (dokun ✓ Giydim, tekrar dokun geri al); **Dolap Tarotu** şeridi; **"Unutulan
       parça"** kartı + "Utanç Duvarı'nın tamamı →"; **"Dolabının yıldızı"** (en çok giyilen,
-      fotoğrafında gümüş yıldız madalyası). Sağ üstte ⚙️ butonu Ayarlar'ı açar. Dolap boşsa ekleme butonu. Onur'un kombin motoru
+      başlıkta pembe ★). Sağ üstte ⚙️ butonu Ayarlar'ı açar. Dolap boşsa ekleme butonu. Onur'un kombin motoru
       gelince vitrin kartının yerine/yanına "Günün kombini" gelebilir.
     - `wardrobe.tsx` – Dolap: büyük başlık + pembe "+" butonu, arama + sıralama butonu
       (En yeni / En pahalı / En az giyilen / Amortiye en yakın; varsayılan dışındaysa buton

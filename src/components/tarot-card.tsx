@@ -189,6 +189,11 @@ export function TarotCard({ items, onOpenItem }: Props) {
       { rotateY: `${interpolate(rotation.value, [0, 180], [180, 360])}deg` },
     ],
   }));
+  // Kapalıyken alçak şerit (Ana sayfada vitrin kartıyla yarışmasın); dönerken uzar, çünkü
+  // açık yüzde kartın anlamı ve öneri var
+  const containerStyle = useAnimatedStyle(() => ({
+    height: interpolate(rotation.value, [0, 180], [CLOSED_HEIGHT, OPEN_HEIGHT]),
+  }));
 
   // Kartı çevir: kapalıysa açar, açıksa kapatır
   function flip() {
@@ -200,7 +205,7 @@ export function TarotCard({ items, onOpenItem }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={containerStyle}>
       {/* Kapalı yüz: gümüş şerit, solda minik tarot kartı arkası */}
       <Animated.View
         style={[styles.face, styles.back, backStyle]}
@@ -213,9 +218,9 @@ export function TarotCard({ items, onOpenItem }: Props) {
           style={styles.fill}>
           <Pressable onPress={flip} style={styles.row} accessibilityLabel="Günün kartını çek">
             <View style={[styles.miniCard, styles.miniCardBack]}>
-              <SymbolView name="sparkle" tintColor={colors.primary} size={12} />
-              <SymbolView name="moon.stars" tintColor={colors.primary} size={24} weight="light" />
-              <SymbolView name="sparkle" tintColor={colors.primary} size={12} />
+              <SymbolView name="sparkle" tintColor={colors.primary} size={9} />
+              <SymbolView name="moon.stars" tintColor={colors.primary} size={20} weight="light" />
+              <SymbolView name="sparkle" tintColor={colors.primary} size={9} />
             </View>
             <View style={styles.body}>
               <Text style={styles.eyebrow}>DOLAP TAROTU</Text>
@@ -270,16 +275,14 @@ export function TarotCard({ items, onOpenItem }: Props) {
           </View>
         </View>
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 }
 
-const CARD_HEIGHT = 172;
+const CLOSED_HEIGHT = 112;
+const OPEN_HEIGHT = 172;
 
 const styles = StyleSheet.create({
-  container: {
-    height: CARD_HEIGHT,
-  },
   face: {
     position: 'absolute',
     top: 0,
@@ -323,7 +326,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-evenly',
   },
+  // Kapalı şeritteki kart arkası daha küçük (aynı 2:3 oran)
   miniCardBack: {
+    width: 52,
+    height: 78,
     backgroundColor: colors.card,
     borderWidth: 1.5,
     borderColor: colors.primary,

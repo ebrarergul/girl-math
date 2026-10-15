@@ -158,7 +158,13 @@ export default function WalletScreen() {
             <Pressable
               onPress={() => router.push('/should-i-buy')}
               style={({ pressed }) => [styles.askCard, pressed && styles.askCardPressed]}>
-              <Text style={styles.askEmoji}>🤔</Text>
+              <View style={styles.askIcon}>
+                <SymbolView
+                  name={{ ios: 'bag.badge.questionmark', android: 'help', web: 'help' }}
+                  tintColor={colors.primary}
+                  size={22}
+                />
+              </View>
               <View style={styles.askBody}>
                 <Text style={styles.askTitle}>Almalı mıyım?</Text>
                 <Text style={styles.askText}>{"Almadan önce Girl Math'e sor"}</Text>
@@ -266,9 +272,14 @@ const styles = StyleSheet.create({
   askCardPressed: {
     transform: [{ scale: 0.98 }],
   },
-  askEmoji: {
-    fontSize: 28,
-    lineHeight: 34,
+  // Welcome kartlarındaki gibi: açık pembe daire içinde pembe simge
+  askIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   askBody: {
     flex: 1,

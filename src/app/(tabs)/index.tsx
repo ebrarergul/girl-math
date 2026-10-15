@@ -28,7 +28,6 @@ import {
   BottomTabInset,
   Colors,
   Fonts,
-  Gradients,
   Radius,
   Shadows,
   Spacing,
@@ -167,7 +166,7 @@ export default function HomeScreen() {
             </Pressable>
             <Text style={styles.label}>{todayLabel()}</Text>
             <Text style={styles.title}>{greeting()}</Text>
-            <Text style={styles.subtitle}>Bugün hangi kıyafetin kendini amorti edecek?</Text>
+            <Text style={styles.subtitle}>Bugün ne giysen kâr? 💅</Text>
           </View>
 
           {isEmpty ? (
@@ -267,7 +266,6 @@ export default function HomeScreen() {
                 <HighlightCard
                   eyebrow="DOLABININ YILDIZI"
                   icon="star.fill"
-                  medal
                   item={star}
                   message={`${wearCount(star)} kere giydin · ${formatTL(costPerWear(star))} /giyim`}
                   onPress={() => openItem(star)}
@@ -322,7 +320,7 @@ function QuickWearButton({
           </View>
         )}
       </View>
-      <Text style={styles.quickName} numberOfLines={1}>
+      <Text style={[styles.quickName, wornToday && styles.quickNameWorn]} numberOfLines={1}>
         {item.name}
       </Text>
     </Pressable>
@@ -337,7 +335,6 @@ function HighlightCard({
   message,
   extra,
   tone = 'default',
-  medal = false,
   onPress,
 }: {
   eyebrow: string;
@@ -346,7 +343,6 @@ function HighlightCard({
   message: string;
   extra?: string | null; // Mesajın altında pembe vurgulu ek satır (ör. Utanç Duvarı zararı)
   tone?: 'default' | 'warning';
-  medal?: boolean; // Fotoğrafın köşesinde gümüş "yıldız madalyası" (ödül rozeti)
   onPress: () => void;
 }) {
   const uri = photoUri(item.photoFileName);
@@ -359,29 +355,16 @@ function HighlightCard({
         tone === 'warning' && styles.highlightWarning,
         pressed && styles.highlightPressed,
       ]}>
-      {/* Fotoğraf + (isteğe bağlı) köşeden taşan gümüş madalya */}
-      <View>
-        <View style={styles.thumb}>
-          {uri ? (
-            <Image source={{ uri }} style={styles.thumbImage} contentFit="cover" />
-          ) : (
-            <SymbolView
-              name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
-              tintColor={colors.primary}
-              size={24}
-              weight="light"
-            />
-          )}
-        </View>
-        {medal && (
-          <LinearGradient
-            colors={Gradients.chrome}
-            locations={[0, 0.35, 0.7, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.medal}>
-            <SymbolView name="star.fill" tintColor={colors.primary} size={13} />
-          </LinearGradient>
+      <View style={styles.thumb}>
+        {uri ? (
+          <Image source={{ uri }} style={styles.thumbImage} contentFit="cover" />
+        ) : (
+          <SymbolView
+            name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
+            tintColor={colors.primary}
+            size={24}
+            weight="light"
+          />
         )}
       </View>
       <View style={styles.highlightBody}>
@@ -546,8 +529,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...Shadows.card,
   },
+  // Giyildiyse çerçeve açık pembe: asıl işaret köşedeki ✓, şerit fazla "dolu" görünmesin
   quickPhotoWorn: {
-    borderColor: colors.primary,
+    borderColor: colors.accent,
   },
   quickCheck: {
     position: 'absolute',
@@ -557,6 +541,8 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: Radius.pill,
     backgroundColor: colors.primary,
+    borderWidth: 1.5,
+    borderColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -564,6 +550,10 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  quickNameWorn: {
+    color: colors.primary,
+    fontWeight: '700',
   },
   highlight: {
     flexDirection: 'row',
@@ -580,20 +570,6 @@ const styles = StyleSheet.create({
   },
   highlightPressed: {
     transform: [{ scale: 0.98 }],
-  },
-  // Gümüş yıldız madalyası: fotoğrafın sağ üst köşesinden biraz dışarı taşar
-  medal: {
-    position: 'absolute',
-    top: -Spacing.two,
-    right: -Spacing.two,
-    width: 30,
-    height: 30,
-    borderRadius: Radius.pill,
-    borderWidth: 2,
-    borderColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.card,
   },
   thumb: {
     width: 64,

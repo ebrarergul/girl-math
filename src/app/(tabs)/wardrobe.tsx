@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: Spacing.four, // Diğer ekranlarla aynı kenar boşluğu (kartlar başlıkla hizalı)
     paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.three,
   },
@@ -260,7 +260,6 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   header: {
-    paddingHorizontal: Spacing.two,
     paddingTop: Spacing.four,
     paddingBottom: Spacing.one,
     gap: Spacing.one,
@@ -353,13 +352,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     paddingVertical: Spacing.three,
   },
-  // Hap sırası ekranın iki kenarına kadar uzansın diye listenin ve başlığın iç boşluğu kadar
-  // dışarı taşırılır; ilk hap yine başlıkla aynı hizada başlar
+  // Hap sırası ekranın iki kenarına kadar uzansın diye listenin iç boşluğu kadar dışarı
+  // taşırılır; ilk hap yine başlıkla aynı hizada başlar
   chipScroll: {
-    marginHorizontal: -(Spacing.three + Spacing.two),
+    marginHorizontal: -Spacing.four,
   },
   chips: {
-    paddingHorizontal: Spacing.three + Spacing.two,
+    paddingHorizontal: Spacing.four,
     gap: Spacing.two,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.one,
