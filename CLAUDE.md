@@ -174,7 +174,7 @@ Kıyafet verisi ve hesaplar hazır. Ekran yaparken bunları **çağır**, aynıs
 
 **Kıyafetler – `useApp()`** (`@/context/app-context`)
 ```tsx
-const { items, isLoaded, addItem, wearItem, undoWear, deleteItem, updateItem } = useApp();
+const { items, isLoaded, addItem, wearItem, undoWear, deleteItem, updateItem, resetAll } = useApp();
 
 items                 // Dolaptaki tüm kıyafetler (ClothingItem listesi, en yeni en başta)
 isLoaded              // Telefondaki kayıtlar okundu mu? false iken "Yükleniyor" gösterilebilir
@@ -186,6 +186,8 @@ deleteItem(item.id)   // Kıyafeti siler
 updateItem(item.id, { price: 2500 })  // Düzenler: sadece verilen alanlar değişir
                       // (name, category, price, photoFileName, targetWears). Giyim geçmişi,
                       // id ve createdAt korunur. Fotoğraf değiştiyse eskisi silinir.
+resetAll()            // Bütün dolabı + fotoğrafları siler (Ayarlar → "Bütün verileri sil").
+                      // Sözleşme/Welcome bilgisine dokunmaz; liste boşalınca bildirimler de iptal olur.
 ```
 
 **Hesaplar** (`@/lib/girl-math`)
@@ -256,7 +258,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Ana sayfa ve Cüzdan ✅
   - Kıyafet düzenleme ✅ (`updateItem`'ı da Ebrar ekledi, Onur'un haberi var), Dolap sıralama
     butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, Dolap Tarotu
-    görünüşü ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅
+    görünüşü ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅, Ayarlar ekranı ✅
+  - Sonra: uygulama simgesi (taslaklar beğenilmedi, ertelendi)
   - Sonra: ekleme formunda renk seçici, Ana sayfada "Günün kombini" kartı (Onur'un motoruna bağlı)
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
@@ -268,6 +271,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 6. aşama mantıkları: Starbucks Endeksi ✅, Zaman Aşımı, Dolap Tarotu, Dolap Kahoot'u
   - `updateItem` – Onur bugün çalışmadığı için Ebrar ekledi (`app-context.tsx`, kural 2: yeni
     şey eklemek serbest). Onur kontrol eder; adını değiştirmek/silmek düzenleme ekranını bozar.
+  - `resetAll` – aynı şekilde Ebrar ekledi (Ayarlar'daki "Bütün verileri sil" kullanır).
   - Sonra: `ClothingItem`'a renk bilgisi ve kombin öneri motoru (`src/lib/outfits.ts`) –
     ayrıntılar "Özellik detayları"nda. Motor hazır olunca `tarot-card.tsx` içindeki **GEÇİCİ**
     `pickTarotItem()` fonksiyonunun içi motorla değiştirilir (görünüşe dokunmadan).
@@ -295,7 +299,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
       Girl Math gerçeği, dokununca sıradakine geçer – `buildFacts`); **"Bugün ne giydin?"**
       şeridi (dokun ✓ Giydim, tekrar dokun geri al); **Dolap Tarotu** şeridi; **"Unutulan
       parça"** kartı + "Utanç Duvarı'nın tamamı →"; **"Dolabının yıldızı"** (en çok giyilen,
-      fotoğrafında gümüş yıldız madalyası). Dolap boşsa ekleme butonu. Onur'un kombin motoru
+      fotoğrafında gümüş yıldız madalyası). Sağ üstte ⚙️ butonu Ayarlar'ı açar. Dolap boşsa ekleme butonu. Onur'un kombin motoru
       gelince vitrin kartının yerine/yanına "Günün kombini" gelebilir.
     - `wardrobe.tsx` – Dolap: büyük başlık + pembe "+" butonu, arama + sıralama butonu
       (En yeni / En pahalı / En az giyilen / Amortiye en yakın; varsayılan dışındaysa buton
@@ -323,6 +327,12 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     parametresiz → dolap kartı (Cüzdan'daki paylaş butonu).
   - `shame-wall.tsx` – Utanç Duvarı: toplam boşa giden + unutulan bütün parçalar (en çok
     zarar yazandan aza).
+  - `settings.tsx` – Ayarlar (iPhone ayarları tarzı gruplar): BİLDİRİMLER (izin durumu + "Aç";
+    izin daha önce reddedildiyse iPhone Ayarları'nı açar, deneme bildirimi), GIRL MATH
+    (Kullanım Sözleşmesi, sürüm), VERİLER ("Bütün verileri sil", iki kez sorar, `resetAll`),
+    Gizlilik notu ve imza.
+  - `agreement.tsx` – Sözleşmeyi Ayarlar'dan tekrar okuma sayfası (`AgreementScreen`'i gösterir,
+    butona basınca geri döner).
   - Sayfa başlığı/geri butonu her sayfanın kendi içinde `<Stack.Screen options={...} />` ile
     ayarlanır; bu yüzden yeni sayfa eklemek için ortak `_layout.tsx`'e dokunmak gerekmez.
 - `src/components/` – tekrar kullanılan bileşenler (şablondan gelenler de burada)
@@ -365,8 +375,12 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
 - **Expo hesabı:** Bilgisayardaki Expo CLI bir hesaba girişliyse, sadece aynı hesaptaki Expo Go
   projeyi açabilir. Bu yüzden herkes kendi bilgisayarından kendi telefonuyla test eder
   (gerekirse `npx expo logout`). İleride expo.dev'de ortak Organization kurulacak.
-- Fotoğraf izin açıklaması (iOS "fotoğraflarınıza erişmek istiyor" metni) henüz `app.json`'a
-  eklenmedi. Expo Go'da gerekmiyor; 7. aşamada (App Store) eklenecek.
+- **app.json (App Store için, Ekim 2026):** uygulama adı "Girl Math"; fotoğraf izin metni
+  (expo-image-picker eklentisinde `photosPermission`, kamera/mikrofon izni kapalı); sadece
+  iPhone (`supportsTablet: false`); `ITSAppUsesNonExemptEncryption: false` (şifreleme sorusu
+  için). iOS simgesi `assets/expo.icon` klasöründen okunur (hâlâ Expo'nun varsayılanı).
+- **Bundle ID** (App Store'daki kalıcı kimlik, örn. `com.xxx.girlmath`) henüz yok. Bir kez
+  seçilince değiştirilemediği için Ebrar ve Onur birlikte karar verecek.
 - Expo Go'da bildirim izni penceresinde "Girl Math" değil "Expo Go" yazar; normal. Gerçek
   uygulamada (App Store) kendi adımız çıkar. Takılma bildirimi 14+ gün gerektirdiği için hızlı
   test edilemez; deneme panelindeki "🔔 Test bildirimi" butonu kullanılır.
@@ -397,9 +411,11 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
    - Ana sayfa ve Cüzdan `getWardrobeStats` ile dolduruldu ✅
    - Story paylaşım kartı, titreşim, pembe geçişli zemin, Utanç Duvarı, Dolap Tarotu (görünüş),
      hızlı Giydim, ∞ maliyet gösterimi, "Bu ay dolaba giren", Ana sayfa yenilemesi ✅
-   - Sırada: **uygulama simgesi ve açılış logosu** (hâlâ Expo'nun varsayılanı; Ebrar 1024×1024
-     tasarlayacak), Onur'un kombin motoru → "Günün kombini" + Tarot önerisi + renk seçici,
-     Ayarlar ekranı, Premium/ücretsiz sınır ekranı, karanlık mod
+   - Ayarlar ekranı ✅, app.json izin metinleri ✅
+   - Sırada: **uygulama simgesi ve açılış logosu** (hâlâ Expo'nun varsayılanı; pembe zemin +
+     ince askı + "Girl Math" yazılı taslaklar denendi, beğenilmedi, sonraya kaldı), Onur'un
+     kombin motoru → "Günün kombini" + Tarot önerisi + renk seçici, Premium/ücretsiz sınır
+     ekranı, karanlık mod, Bundle ID (Onur'la birlikte)
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
 6. Ekstra özellikler – Starbucks simülatörü ✅, Utanç Duvarı ✅, Dolap Tarotu (görünüş ✅, öneri
    Onur'un motoruna bağlı), kombin önerisi, Kahoot, Zaman Aşımı, OCR – ayrıntılar "Özellik

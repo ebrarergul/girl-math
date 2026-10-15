@@ -50,6 +50,7 @@ type AppContextValue = {
   undoWear: (id: string) => void;
   deleteItem: (id: string) => void;
   updateItem: (id: string, changes: ClothingItemChanges) => void;
+  resetAll: () => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -173,9 +174,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }
 
+  // Bütün dolabı siler: önce fotoğrafları telefondan, sonra listeyi. Boş liste de otomatik
+  // kaydedilir; bildirimler liste değişince kendiliğinden yeniden kurulur.
+  // Sözleşme/Welcome bilgisine dokunmaz. (Ebrar ekledi – Ayarlar'daki "Bütün verileri sil" için)
+  function resetAll() {
+    for (const item of items) {
+      deletePhoto(item.photoFileName);
+    }
+    setItems([]);
+  }
+
   return (
     <AppContext.Provider
-      value={{ items, isLoaded, addItem, wearItem, undoWear, deleteItem, updateItem }}>
+      value={{ items, isLoaded, addItem, wearItem, undoWear, deleteItem, updateItem, resetAll }}>
       {children}
     </AppContext.Provider>
   );

@@ -157,6 +157,14 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.screen} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
+            {/* Sağ üstte Ayarlar */}
+            <Pressable
+              onPress={() => router.push('/settings')}
+              accessibilityLabel="Ayarlar"
+              hitSlop={8}
+              style={({ pressed }) => [styles.settingsButton, pressed && styles.heroPressed]}>
+              <SymbolView name="gearshape.fill" tintColor={colors.primary} size={20} />
+            </Pressable>
             <Text style={styles.label}>{todayLabel()}</Text>
             <Text style={styles.title}>{greeting()}</Text>
             <Text style={styles.subtitle}>Bugün hangi kıyafetin kendini amorti edecek?</Text>
@@ -408,7 +416,21 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: Spacing.four,
     paddingBottom: Spacing.two,
+    paddingRight: Spacing.six - Spacing.two, // sağdaki ⚙️ butonuna yer: yazı onun altına girmesin
     gap: Spacing.one,
+  },
+  settingsButton: {
+    position: 'absolute',
+    right: 0,
+    top: Spacing.three,
+    width: 40,
+    height: 40,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+    ...Shadows.card,
   },
   label: {
     ...Typography.label,
