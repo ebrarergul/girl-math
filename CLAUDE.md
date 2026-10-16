@@ -281,6 +281,36 @@ Kayıt: `SavedOutfit` (`types.ts`) → `id, itemIds, name, favorite, wornDates, 
 `girlmath.outfits`. Kıyafet silinince kombinlerden çıkar; parçasız kalan kombin silinir.
 `resetAll` kombinleri de siler.
 
+**Giyim yerleri** (`@/lib/places`) – "Nereye giderken giydin?"
+```tsx
+PLACES                             // [{ name: 'Okul', emoji: '🎓' }, ...] 9 yer; placeLabel('Okul') → "🎓 Okul"
+wearItem(item.id, 'Okul')          // Yer isteğe bağlı; wearItem(item.id) eskisi gibi çalışır (yer = null)
+wearOutfit(outfit.id, 'Date')      // Kombindeki bütün parçalara aynı yer
+lastWearText(item)                 // "En son: ☕ Kahve · 3 gün önce" (detay için); hiç giyilmediyse null
+repeatWarning(item, 'Okul')        // Giydim'den ÖNCE çağır: null (sorun yok) ya da { level, message }
+                                   //   'soft' = son 14 günde 1 kez gitti (hafif hatırlatma, 2. kez)
+                                   //   'strong' = 2+ kez gitti ("Aynı insanlar görüyor kızım")
+freshAlternatives(item, 'Okul', items)  // "Bunun yerine": aynı kategori, son 14 günde oraya gitmemiş
+```
+Yer verisi `item.wearPlaces` (wearDates ile aynı sırada, yer yoksa null; eski kayıtlarda alan yok).
+Sadece AppContext değiştirir; `undoWear` son yeri de siler. Örnek akış: `dev-test-panel.tsx` → `wearAt`.
+
+**Burç yorumu** (`@/lib/zodiac`) – Tarot'un yerine; gerçek gökyüzüne göre (internetsiz hesap)
+```tsx
+const { zodiac, setZodiac } = useApp();  // Kullanıcının burcu (seçilmediyse null), telefonda saklanır
+ZODIAC_SIGNS                             // 12 burç: { name, emoji, element, ruler, start, style, luckyColors }
+setZodiac('Akrep') / setZodiac(null)     // Welcome'da ve Ayarlar'da seçtirilir ("Şimdi değil" → null)
+dailyHoroscope(zodiac, items)            // { title: '♏ Akrep · Bugün', personality, lines: [en fazla 3 cümle],
+                                         //   luckyColor, suggestion: { item, text, outfit } | null }
+weeklyHoroscope(zodiac)                  // { title, range: '12 – 18 Ekim', love, money, wardrobe }
+getSky()                                 // { moonSign, sunSign, moonPhase, mercury } – gökyüzü bilgisi
+```
+Günlük yorum: Ay'ın kullanıcının burcuna göre evi (12 ev × 2 cümle), Merkür retrosu ve burç
+sezonu (yaklaşınca), Ay evresi; şanslı renk + dolaptan o renkte parça ve etrafında kombin. Her gün
+değişir, aynı gün aynı kalır. Haftalık yorum: haftanın dolunay/yeniay/retro/Güneş girişine göre.
+Merkür retrosu tarihleri `MERCURY_RETROGRADES` listesinde (2027 sonrası eklenmeli).
+Burç seçilmediyse ekranda "Burcunu seç, yıldızlar dolabına baksın 🔮" gösterilir.
+
 Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olmayan parça da önerilir
 ("Rengini bilmiyorum ama bir dene 🤷‍♀️").
 
@@ -320,15 +350,47 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     1. Renk + kombin motoru ✅
     2. **Favori kombin arşivi:** mantık ✅ (Onur). **Sırada ekran (Ebrar):** Arşiv sayfası
        (`sortOutfits`, yıldız, ad değiştirme, sil, "Bu kombini giydim"), öneri ekranında "Kaydet 💾".
-    3. **"Nereye giderken giydin?":** Giydim'de isteğe bağlı yer (Okul, İş, Kahve ☕, Date 💘,
-       Aile, Gece 🌙, Spor, Alışveriş, Seyahat). Aynı yere aynı kıyafet sık giyilince "aynı
-       insanlar görüyor, farklı bir şey giy" uyarısı; detayda "En son burada giymiştim".
-       Yer için **yeni bir alan** eklenir, `wearDates`'e dokunulmaz.
-    4. **Tarot yerine burç yorumu:** Welcome'da **burç seçtirilir** (doğum tarihi sorulmaz).
-       Günlük/haftalık değişen, moda + girl math temalı yorumlar (sunucusuz, cümle parçalarından
-       üretilir), "şanslı renk" kombin motoruna bağlanır. Tarot şeridi burç kartına dönüşür;
-       `tarot-card.tsx`'teki **GEÇİCİ** `pickTarotItem()` bu sırada kaldırılır/değiştirilir.
+    3. **"Nereye giderken giydin?":** mantık ✅ (Onur, `src/lib/places.ts`). **Sırada ekran
+       (Ebrar):** Giydim'de isteğe bağlı yer seçme ("Geç" seçeneğiyle; hızlı Giydim yer sormaz),
+       `repeatWarning` varsa uyarı penceresi (soft: "💭 Hatırlatma", strong: "🚨") + "Bunun yerine"
+       önerileri + [Yine de giy] [Vazgeç], detayda `lastWearText` satırı.
+    4. **Tarot yerine burç yorumu:** mantık ✅ (Onur, `src/lib/zodiac.ts`, `zodiac`/`setZodiac`).
+       **Sırada ekran (Ebrar):** Welcome'da burç seçimi (12 burç + "Şimdi değil"), Ana sayfadaki
+       Tarot şeridi → burç kartı (Bugün / Bu hafta sekmeleri, şanslı renk, kombin önerisi),
+       Ayarlar'da "Burcum" satırı. `tarot-card.tsx` ve **GEÇİCİ** `pickTarotItem()` kaldırılır.
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
+
+## Yeni ekranlar için tasarım önerileri (Onur'dan – öneri, son karar Ebrar'ın)
+Hepsi mevcut tema kurallarıyla: renkler `Colors.light`, gümüş sadece `Gradients.chrome`, simgeler
+SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları `colorHex`).
+- **Renk seçici (ekleme/düzenleme formu):** 18 renk, yatay kayan küçük yuvarlaklar (~32 px).
+  Seçili olanın etrafında `primary` renkli ince halka + hafif titreşim (expo-haptics). Beyaz
+  yuvarlağa ince `border` kenarlığı (beyaz zeminde kaybolmasın). "Desenli" için çapraz çizgili
+  ya da çok renkli özel yuvarlak. Altında seçilen rengin adı `Typography.caption` ile.
+- **"Bununla ne giyerim? ✨" ekranı:** Üstte seçilen parçanın büyük fotoğrafı, altında
+  `outfitFor` kombini: parça fotoğrafları hafif üst üste binen bir "kolaj" (3:4 küçük kartlar,
+  `Shadows.card`), altında kombin cümlesi. Ardından `matchesFor` kategorileri yatay kayan
+  satırlar halinde; her kartın altında sebep cümlesi `primarySoft` zeminli küçük hap içinde.
+  `missing` varsa nazik bir satır: "Dolabında ayakkabı yok 👀". En altta "Kaydet 💾" ana buton.
+- **Kombin arşivi:** 2 sütunlu kartlar, her kartta parçaların 2×2 küçük fotoğraf ızgarası,
+  sağ üstte yıldız (favoride `highlight` dolgulu ★ – süs rengi, üstüne yazı yok). Favoriler
+  üstte ayrı başlık ("⭐ Favoriler"). Uzun basınca ad değiştir / sil menüsü.
+- **Giydim'de "Nereye?" seçimi:** alttan açılan küçük pencere, `PLACES` hapları 3'erli satırda,
+  emoji + ad; en altta soluk "Geç" bağlantısı. Seçince pencere kapanır, hafif titreşim.
+- **Tekrar uyarısı:** soft → `primarySoft` zeminli yumuşak balon, tek hafif titreşim.
+  strong → beyaz kart, üstte `warning` renkli ince şerit, iki kısa titreşim; "Bunun yerine"
+  parçaları küçük fotoğraflı hap butonlar (dokununca onu giy). Butonlar: [Yine de giy] soluk,
+  [Vazgeç] / önerilen parça vurgulu.
+- **Detayda "En son" satırı:** bilgi satırlarının arasına SF Symbol `mappin.and.ellipse` + `lastWearText`.
+- **Burç kartı (Tarot şeridinin yerine):** Tarot'taki gümüş krom (`Gradients.chrome`) burada
+  kalsın – "büyü" anı burası. Kartın üstünde burç emojisi büyük (`Typography.hero`), yanında
+  Ay evresi simgesi (SF Symbols `moonphase.*`). İki sekme hap: "Bugün" / "Bu hafta".
+  Bugün: `personality` italik küçük, `lines` madde madde, 🍀 şanslı renk = renk yuvarlağı +
+  adı, öneri parçasının küçük fotoğrafı + "Kombini gör →" (öneri ekranına gider).
+  Bu hafta: 💘 / 💸 / 👗 üç satır, her biri ayrı küçük kart. Burç seçilmediyse kart soluk +
+  "Burcunu seç, yıldızlar dolabına baksın 🔮" butonu.
+- **Welcome'da burç seçimi:** 12 burç 3×4 ızgara, her kutuda büyük emoji + ad; seçilende
+  `primary` dolgu + beyaz yazı. Altta soluk "Şimdi değil".
 
 ## Aynı anda çalışma kuralları (çakışmayı önlemek için)
 1. **Ortak dosyalar:** `CLAUDE.md`, `src/app/_layout.tsx`, `package.json`, `package-lock.json`
@@ -419,6 +481,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   `src/lib/notifications.ts` – bildirim mesajları, izin ve kurma araçları;
   `src/lib/starbucks-index.ts` – Starbucks Endeksi (fiyat = kaç iced latte);
   `src/lib/colors.ts` – kıyafet renkleri; `src/lib/outfits.ts` – kombin motoru (renk uyumu + öneri)
+  ve kombin arşivi yardımcıları; `src/lib/places.ts` – giyim yerleri, tekrar uyarısı, "en son" satırı;
+  `src/lib/zodiac.ts` – burçlar, gökyüzü hesabı (Ay, Güneş, evre, Merkür retrosu), günlük/haftalık yorum
 - `src/hooks/` – yardımcı hook'lar
 
 ## Bilinen durumlar

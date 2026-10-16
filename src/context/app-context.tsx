@@ -22,11 +22,14 @@ import {
 import { deletePhoto } from '@/lib/photos';
 import { getWardrobeStats } from '@/lib/stats';
 import type { ColorName } from '@/lib/colors';
+import type { PlaceName } from '@/lib/places';
+import type { ZodiacName } from '@/lib/zodiac';
 import type { Category, ClothingItem, SavedOutfit } from '@/lib/types';
 
 // Kıyafetler ve kombinler telefonda bu isimlerle saklanır
 const ITEMS_KEY = 'girlmath.items';
 const OUTFITS_KEY = 'girlmath.outfits';
+const ZODIAC_KEY = 'girlmath.zodiac';
 
 // Kullanıcı hedef girmezse kullanılacak hedef giyilme sayısı (#30wears)
 export const DEFAULT_TARGET_WEARS = 30;
@@ -49,7 +52,7 @@ type AppContextValue = {
   items: ClothingItem[];
   isLoaded: boolean; // Telefondaki kayıtlar okundu mu?
   addItem: (newItem: NewClothingItem) => void;
-  wearItem: (id: string) => void;
+  wearItem: (id: string, place?: PlaceName | null) => void; // Yer isteğe bağlı
   undoWear: (id: string) => void;
   deleteItem: (id: string) => void;
   updateItem: (id: string, changes: ClothingItemChanges) => void;
@@ -61,7 +64,11 @@ type AppContextValue = {
   toggleFavoriteOutfit: (id: string) => void;
   renameOutfit: (id: string, name: string | null) => void;
   deleteOutfit: (id: string) => void;
-  wearOutfit: (id: string) => void; // "Bu kombini giydim": bütün parçalara Giydim
+  wearOutfit: (id: string, place?: PlaceName | null) => void;
+
+  // Burç (Welcome'da / Ayarlar'da seçilir). Seçilmediyse null.
+  zodiac: ZodiacName | null;
+  setZodiac: (sign: ZodiacName | null) => void; // "Bu kombini giydim": bütün parçalara Giydim
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -69,6 +76,12 @@ const AppContext = createContext<AppContextValue | null>(null);
 // Her kıyafete özel kimlik üretir, örn: "lx3k9a-4f7q2"
 function createId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+// Giyim yeri listesinin sonuna yer ekler. Eski kayıtta liste yoksa önceki giyimler "yer yok" (null) sayılır.
+function withPlace(item: ClothingItem, place: PlaceName | null): (PlaceName | null)[] {
+  const places = item.wearPlaces ?? item.wearDates.map(() => null);
+  return [...places, place];
 }
 
 // Takılma ve günlük bildirimleri güncel kıyafet listesine göre yeniden kurar
@@ -80,17 +93,25 @@ async function refreshReminders(items: ClothingItem[]): Promise<void> {
 export function AppProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ClothingItem[]>([]);
   const [outfits, setOutfits] = useState<SavedOutfit[]>([]);
+  const [zodiac, setZodiacState] = useState<ZodiacName | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // 1) Uygulama açılınca telefondaki kayıtları (kıyafetler + kombinler) oku
   useEffect(() => {
-    Promise.all([AsyncStorage.getItem(ITEMS_KEY), AsyncStorage.getItem(OUTFITS_KEY)])
-      .then(([savedItems, savedOutfits]) => {
+    Promise.all([
+      AsyncStorage.getItem(ITEMS_KEY),
+      AsyncStorage.getItem(OUTFITS_KEY),
+      AsyncStorage.getItem(ZODIAC_KEY),
+    ])
+      .then(([savedItems, savedOutfits, savedZodiac]) => {
         if (savedItems) {
           setItems(JSON.parse(savedItems));
         }
         if (savedOutfits) {
           setOutfits(JSON.parse(savedOutfits));
+        }
+        if (savedZodiac) {
+          setZodiacState(savedZodiac as ZodiacName);
         }
       })
       .catch((error) => console.warn('Kayıtlar okunamadı:', error))
@@ -147,8 +168,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .catch((error) => console.warn('Bildirim izni istenemedi:', error));
   }
 
-  // "Giydim": bugünün tarihini listeye ekler
-  function wearItem(id: string) {
+  // "Giydim": bugünün tarihini (ve seçildiyse yeri) listeye ekler
+  function wearItem(id: string, place: PlaceName | null = null) {
     // Bu "Giydim" ile hedefe ulaşıyorsa ödül bildirimi gönder
     const item = items.find((current) => current.id === id);
     if (item && wearCount(item) + 1 === item.targetWears) {
@@ -160,7 +181,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     setItems((current) =>
       current.map((item) =>
-        item.id === id ? { ...item, wearDates: [...item.wearDates, todayString()] } : item
+        item.id === id
+          ? {
+              ...item,
+              wearDates: [...item.wearDates, todayString()],
+              wearPlaces: withPlace(item, place),
+            }
+          : item
       )
     );
   }
@@ -169,7 +196,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   function undoWear(id: string) {
     setItems((current) =>
       current.map((item) =>
-        item.id === id ? { ...item, wearDates: item.wearDates.slice(0, -1) } : item
+        item.id === id
+          ? {
+              ...item,
+              wearDates: item.wearDates.slice(0, -1),
+              ...(item.wearPlaces ? { wearPlaces: item.wearPlaces.slice(0, -1) } : {}),
+            }
+          : item
       )
     );
   }
@@ -206,7 +239,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  // Bütün dolabı siler: önce fotoğrafları telefondan, sonra listeyi ve kombinleri. Boş liste de otomatik
+  // Bütün dolabı siler: önce fotoğrafları telefondan, sonra listeyi, kombinleri ve burç seçimini. Boş liste de otomatik
   // kaydedilir; bildirimler liste değişince kendiliğinden yeniden kurulur.
   // Sözleşme/Welcome bilgisine dokunmaz. (Ebrar ekledi – Ayarlar'daki "Bütün verileri sil" için)
   function resetAll() {
@@ -215,6 +248,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     setItems([]);
     setOutfits([]); // (Onur ekledi – kombin arşivi de silinsin)
+    setZodiac(null); // (Onur ekledi – burç seçimi de silinsin)
+  }
+
+  // ---------- Burç ----------
+
+  // Burcu seçer ve telefona kaydeder; null verilirse seçim silinir
+  function setZodiac(sign: ZodiacName | null) {
+    setZodiacState(sign);
+    const saving = sign ? AsyncStorage.setItem(ZODIAC_KEY, sign) : AsyncStorage.removeItem(ZODIAC_KEY);
+    saving.catch((error) => console.warn('Burç kaydedilemedi:', error));
   }
 
   // ---------- Kombin arşivi ----------
@@ -257,13 +300,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   // "Bu kombini giydim": kombindeki bütün parçalara Giydim basılır, kombinin tarihi kaydedilir
-  function wearOutfit(id: string) {
+  function wearOutfit(id: string, place: PlaceName | null = null) {
     const outfit = outfits.find((current) => current.id === id);
     if (!outfit) {
       return;
     }
     for (const itemId of outfit.itemIds) {
-      wearItem(itemId);
+      wearItem(itemId, place);
     }
     setOutfits((current) =>
       current.map((outfit) =>
@@ -289,6 +332,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         renameOutfit,
         deleteOutfit,
         wearOutfit,
+        zodiac,
+        setZodiac,
       }}>
       {children}
     </AppContext.Provider>

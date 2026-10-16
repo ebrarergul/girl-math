@@ -9,13 +9,16 @@ import { Image } from 'expo-image';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { useApp } from '@/context/app-context';
+import { useApp, type NewClothingItem } from '@/context/app-context';
 import { comparisonText } from '@/lib/comparisons';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
 import { outfitFor, outfitItems, outfitName, sortOutfits } from '@/lib/outfits';
 import { sendTestNotification } from '@/lib/notifications';
 import { photoUri, pickAndSavePhoto } from '@/lib/photos';
+import { freshAlternatives, lastWearText, repeatWarning, type PlaceName } from '@/lib/places';
 import { starbucksIndexMeme, starbucksIndexText } from '@/lib/starbucks-index';
+import type { ClothingItem } from '@/lib/types';
+import { ZODIAC_SIGNS, dailyHoroscope, weeklyHoroscope } from '@/lib/zodiac';
 
 const colors = Colors.light;
 
@@ -32,7 +35,11 @@ export function DevTestPanel() {
     toggleFavoriteOutfit,
     deleteOutfit,
     wearOutfit,
+    zodiac,
+    setZodiac,
   } = useApp();
+  const daily = zodiac ? dailyHoroscope(zodiac, items) : null;
+  const weekly = zodiac ? weeklyHoroscope(zodiac) : null;
 
   function addSample() {
     addItem({ name: 'Siyah deri ceket', category: 'Dış giyim', price: 3000, photoFileName: null });
@@ -47,12 +54,21 @@ export function DevTestPanel() {
   }
 
   // Renkli örnek dolap: kombin motorunu denemek için
+  // Dolapta aynı adlı parça varsa tekrar eklemez; sonunda kaç parça eklendiğini söyler
   function addColoredSamples() {
-    addItem({ name: 'Pembe çanta', category: 'Çanta', price: 900, photoFileName: null, color: 'Pembe' });
-    addItem({ name: 'Beyaz sneaker', category: 'Ayakkabı', price: 2500, photoFileName: null, color: 'Beyaz' });
-    addItem({ name: 'Siyah etek', category: 'Alt', price: 700, photoFileName: null, color: 'Siyah' });
-    addItem({ name: 'Kot pantolon', category: 'Alt', price: 1100, photoFileName: null, color: 'Kot mavisi' });
-    addItem({ name: 'Beyaz tişört', category: 'Üst', price: 400, photoFileName: null, color: 'Beyaz' });
+    const samples: NewClothingItem[] = [
+      { name: 'Pembe çanta', category: 'Çanta', price: 900, photoFileName: null, color: 'Pembe' },
+      { name: 'Beyaz sneaker', category: 'Ayakkabı', price: 2500, photoFileName: null, color: 'Beyaz' },
+      { name: 'Siyah etek', category: 'Alt', price: 700, photoFileName: null, color: 'Siyah' },
+      { name: 'Kot pantolon', category: 'Alt', price: 1100, photoFileName: null, color: 'Kot mavisi' },
+      { name: 'Beyaz tişört', category: 'Üst', price: 400, photoFileName: null, color: 'Beyaz' },
+    ];
+    const missing = samples.filter((sample) => !items.some((item) => item.name === sample.name));
+    missing.forEach((sample) => addItem(sample));
+    Alert.alert(
+      missing.length > 0 ? `✅ ${missing.length} parça eklendi` : 'Örnek dolap zaten ekli',
+      'Aşağıdaki "Kıyafetler" listesinde görebilirsin.'
+    );
   }
 
   // Listedeki ilk kıyafete kombin önerir ve arşive kaydeder
@@ -66,6 +82,22 @@ export function DevTestPanel() {
     const names = outfit.items.map((item) => item.name).join(' + ');
     const missing = outfit.missing.length > 0 ? `\n\nEksik: ${outfit.missing.join(', ')}` : '';
     Alert.alert('✨ Kombin kaydedildi', `${names}\n\n${outfit.text}${missing}`);
+  }
+
+  // "Nereye giderken giydin?" denemesi: önce tekrar uyarısına bakar
+  function wearAt(item: ClothingItem, place: PlaceName) {
+    const warning = repeatWarning(item, place);
+    if (!warning) {
+      wearItem(item.id, place);
+      return;
+    }
+    const alternatives = freshAlternatives(item, place, items).map((other) => other.name);
+    const suggestion =
+      alternatives.length > 0 ? `\n\nBunun yerine: ${alternatives.join(' · ')}` : '';
+    Alert.alert(warning.level === 'strong' ? '🚨 Dur kızım!' : '💭 Hatırlatma', warning.message + suggestion, [
+      { text: 'Vazgeç', style: 'cancel' },
+      { text: 'Yine de giy', onPress: () => wearItem(item.id, place) },
+    ]);
   }
 
   async function testNotification() {
@@ -93,6 +125,51 @@ export function DevTestPanel() {
       <Pressable style={styles.softButton} onPress={testNotification}>
         <Text style={styles.softButtonText}>🔔 Test bildirimi (5 sn)</Text>
       </Pressable>
+
+      <Text style={styles.title}>🔮 Burç</Text>
+      <View style={styles.row}>
+        {ZODIAC_SIGNS.map((sign) => (
+          <Pressable
+            key={sign.name}
+            style={zodiac === sign.name ? styles.primaryButton : styles.softButton}
+            onPress={() => setZodiac(sign.name)}>
+            <Text style={zodiac === sign.name ? styles.primaryButtonText : styles.softButtonText}>
+              {sign.emoji} {sign.name}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      {!zodiac && <Text style={styles.muted}>Burcunu seç, yıldızlar dolabına baksın 🔮</Text>}
+      {daily && (
+        <View style={styles.card}>
+          <Text style={styles.name}>{daily.title}</Text>
+          <Text style={styles.muted}>{daily.personality}</Text>
+          {daily.lines.map((line) => (
+            <Text key={line} style={styles.horoscopeLine}>
+              {line}
+            </Text>
+          ))}
+          <Text style={styles.comparison}>🍀 Şanslı rengin: {daily.luckyColor}</Text>
+          {daily.suggestion && (
+            <>
+              <Text style={styles.horoscopeLine}>{daily.suggestion.text}</Text>
+              <Text style={styles.muted}>
+                → {daily.suggestion.outfit.items.map((item) => item.name).join(' + ')}
+              </Text>
+            </>
+          )}
+        </View>
+      )}
+      {weekly && (
+        <View style={styles.card}>
+          <Text style={styles.name}>
+            {weekly.title} ({weekly.range})
+          </Text>
+          <Text style={styles.horoscopeLine}>{weekly.love}</Text>
+          <Text style={styles.horoscopeLine}>{weekly.money}</Text>
+          <Text style={styles.horoscopeLine}>{weekly.wardrobe}</Text>
+        </View>
+      )}
 
       <Text style={styles.title}>👗 Kombin arşivi</Text>
       <View style={styles.row}>
@@ -142,6 +219,7 @@ export function DevTestPanel() {
           <Text style={styles.muted}>{starbucksIndexText(item.price)}</Text>
           <Text style={styles.muted}>{starbucksIndexMeme(item.price)}</Text>
           <Text style={styles.price}>Giyim başına: {costPerWear(item)} TL</Text>
+          {lastWearText(item) && <Text style={styles.muted}>📍 {lastWearText(item)}</Text>}
           <Text style={styles.muted}>
             Giyilme: {wearCount(item)} / {item.targetWears}
             {isPaidOff(item) ? ' · Amorti edildi 🎉' : ''}
@@ -153,6 +231,9 @@ export function DevTestPanel() {
           <View style={styles.row}>
             <Pressable style={styles.primaryButton} onPress={() => wearItem(item.id)}>
               <Text style={styles.primaryButtonText}>Giydim</Text>
+            </Pressable>
+            <Pressable style={styles.softButton} onPress={() => wearAt(item, 'Okul')}>
+              <Text style={styles.softButtonText}>🎓 Okul</Text>
             </Pressable>
             <Pressable style={styles.softButton} onPress={() => undoWear(item.id)}>
               <Text style={styles.softButtonText}>Geri al</Text>
@@ -206,6 +287,10 @@ const styles = StyleSheet.create({
     ...Typography.bodyBold,
     color: colors.primary,
   },
+  horoscopeLine: {
+    ...Typography.body,
+    color: colors.text,
+  },
   muted: {
     ...Typography.caption,
     color: colors.textSecondary,
@@ -213,6 +298,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: Spacing.two,
+    flexWrap: 'wrap',
     marginTop: Spacing.two,
   },
   primaryButton: {
