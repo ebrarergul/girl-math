@@ -21,6 +21,7 @@ import {
 } from '@/lib/notifications';
 import { deletePhoto } from '@/lib/photos';
 import { getWardrobeStats } from '@/lib/stats';
+import type { ColorName } from '@/lib/colors';
 import type { Category, ClothingItem } from '@/lib/types';
 
 // Kıyafetler telefonda bu isimle saklanır
@@ -36,6 +37,7 @@ export type NewClothingItem = {
   price: number;
   photoFileName: string | null;
   targetWears?: number;
+  color?: ColorName; // İsteğe bağlı: kıyafetin rengi (kombin önerisi için)
 };
 
 // Kıyafet düzenlerken değişebilecek bilgiler. Sadece verilen alanlar değişir;
@@ -107,6 +109,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       category: newItem.category,
       price: newItem.price,
       photoFileName: newItem.photoFileName,
+      ...(newItem.color ? { color: newItem.color } : {}),
       wearDates: [],
       targetWears: newItem.targetWears ?? DEFAULT_TARGET_WEARS,
       createdAt: todayString(),

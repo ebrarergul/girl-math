@@ -201,7 +201,8 @@ todayString()            // Bugün, "2026-10-14" biçiminde
 
 **Gerçek hayat kıyası** (`@/lib/comparisons`)
 ```tsx
-comparisonText(costPerWear(item))  // "Maliyeti bir filtre kahveye düştü! ☕" ya da "Resmen bedava! 🎉"
+comparisonText(costPerWear(item))  // "Maliyeti bir maniküre düştü 💅 On numara beş yıldız ⭐" (yerel espri
+                                   //   sonları; bedavaysa "Resmen bedava 🎉 Hesap makinesi bile ağladı")
 findComparison(cost)               // Eşleşen kalem ({ emoji, name, phrase, price }) ya da null
 COMPARISONS                        // Fiyat listesi (fiyatlar değişince sadece burası güncellenir)
 ```
@@ -211,6 +212,9 @@ Kıyas cümlesi sadece kıyafet **en az 1 kere giyildiyse** gösterilir (hiç gi
 **Starbucks Endeksi** (`@/lib/starbucks-index`) – fiyatı günlük harcamalara çevirir
 ```tsx
 starbucksIndexText(item.price)  // "= 11 iced latte 🧋 ya da 15 filtre kahve ☕" (aynı fiyat hep aynı cümle)
+starbucksIndexMeme(item.price)  // Tek başına makara cümle (Onur ekledi): "Bu parayla 11 iced latte içer,
+                                //   11 gün main character takılırdın 🧋✨". Başına "Dolabın" eklenmez.
+                                //   Ekranda nerede kullanılacağına Ebrar karar verir.
 starbucksIndexList(item.price)  // [{ comparison, count }, ...] en pahalıdan ucuza (detay ekranı için)
 ```
 
@@ -245,8 +249,28 @@ Dolap boşken de çalışır (0 / null döner), ekran null durumlarını kontrol
   butonu), `sendTestNotification()` (5 sn sonra deneme bildirimi).
 - Mesajlar ve saat (20:00) bu dosyanın en üstündeki listelerde; değiştirmek için sadece orası.
 
+**Renkler** (`@/lib/colors`) – kıyafet rengi (isteğe bağlı alan `item.color`)
+```tsx
+COLORS               // [{ name: 'Siyah', hex: '#111111' }, ...] 18 renk (Kot mavisi, Desenli dahil)
+colorHex(item.color) // Renk yuvarlağı çizmek için kod (tema rengi değil, kıyafetin rengi)
+addItem({ ..., color: 'Beyaz' }) / updateItem(id, { color: 'Pembe' })  // renk isteğe bağlı
+```
+Eski kayıtlarda ve renk seçilmediyse `item.color` yok (undefined); ekranlar bunu kontrol etmeli.
+
+**Kombin motoru** (`@/lib/outfits`) – "Bununla ne giyerim?" (kullanıcı puan görmez, sadece öneri)
+```tsx
+matchesFor(item, items)  // [{ category: 'Alt', matches: [{ item, reason: 'Beyaz her şeyle gider 🤍' }] }, ...]
+                         //   Kategori kategori uyan parçalar, en iyi uyan en üstte. Uyumsuzlar hiç gelmez.
+outfitFor(item, items)   // { items: [seçilen, ...], missing: ['Ayakkabı'], text: 'Bu kombinle “Siyah etek”
+                         //   47 gün sonra yeniden gün yüzü görür 💅' }  Üst+Alt+Ayakkabı ya da Elbise+Ayakkabı,
+                         //   uyarsa Dış giyim/Çanta/Aksesuar eklenir. missing: dolapta uygun parça yok.
+colorMatch(a, b)         // { score, reason } – motorun iç aracı; kurallar dosyanın üstündeki listelerde
+```
+Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olmayan parça da önerilir
+("Rengini bilmiyorum ama bir dene 🤷‍♀️").
+
 **Veri tipi** (`@/lib/types`): `ClothingItem` → `id, name, category, price, photoFileName,
-wearDates, targetWears, createdAt`. Kategoriler `CATEGORIES` listesinde.
+wearDates, targetWears, createdAt, color?`. Kategoriler `CATEGORIES` listesinde.
 
 Örnek kullanım için `src/components/dev-test-panel.tsx` dosyasına bakılabilir.
 
@@ -260,7 +284,9 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, Dolap Tarotu
     görünüşü ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅, Ayarlar ekranı ✅
   - Sonra: uygulama simgesi (taslaklar beğenilmedi, ertelendi)
-  - Sonra: ekleme formunda renk seçici, Ana sayfada "Günün kombini" kartı (Onur'un motoruna bağlı)
+  - **Sırada (motor hazır ✅):** ekleme/düzenleme formunda **renk seçici** (`COLORS`, renk
+    yuvarlakları `colorHex`), kıyafet detayında **"Bununla ne giyerim? ✨"** butonu + öneri ekranı
+    (`matchesFor` + `outfitFor`), Ana sayfada "Günün kombini" kartı
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -268,13 +294,25 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - İstatistik hesapları (`src/lib/stats.ts`) ✅
   - Bildirimler (`src/lib/notifications.ts`) ✅
   - Şablondan kalan lint hatasının düzeltilmesi ✅
-  - 6. aşama mantıkları: Starbucks Endeksi ✅, Zaman Aşımı, Dolap Tarotu, Dolap Kahoot'u
+  - 6. aşama mantıkları: Starbucks Endeksi ✅ (+ makara `starbucksIndexMeme` ✅), Zaman Aşımı,
+    Dolap Kahoot'u
+  - Renk alanı (`src/lib/colors.ts`, `item.color`) ve kombin motoru (`src/lib/outfits.ts`) ✅
+  - Makara/yerel metinler: kıyas cümleleri ✅, bildirim mesajları (sırada)
   - `updateItem` – Onur bugün çalışmadığı için Ebrar ekledi (`app-context.tsx`, kural 2: yeni
     şey eklemek serbest). Onur kontrol eder; adını değiştirmek/silmek düzenleme ekranını bozar.
   - `resetAll` – aynı şekilde Ebrar ekledi (Ayarlar'daki "Bütün verileri sil" kullanır).
-  - Sonra: `ClothingItem`'a renk bilgisi ve kombin öneri motoru (`src/lib/outfits.ts`) –
-    ayrıntılar "Özellik detayları"nda. Motor hazır olunca `tarot-card.tsx` içindeki **GEÇİCİ**
-    `pickTarotItem()` fonksiyonunun içi motorla değiştirilir (görünüşe dokunmadan).
+  - **Yeni kararlaştırılan özellikler (16 Ekim, Onur + Ebrar), bu sırayla:**
+    1. Renk + kombin motoru ✅
+    2. **Favori kombin arşivi:** kombinler kaydedilir, favorilenir, arşivde listelenir
+       (mantık Onur: AppContext'e kaydet/favorile/sil; ekran Ebrar: arşiv sayfası).
+    3. **"Nereye giderken giydin?":** Giydim'de isteğe bağlı yer (Okul, İş, Kahve ☕, Date 💘,
+       Aile, Gece 🌙, Spor, Alışveriş, Seyahat). Aynı yere aynı kıyafet sık giyilince "aynı
+       insanlar görüyor, farklı bir şey giy" uyarısı; detayda "En son burada giymiştim".
+       Yer için **yeni bir alan** eklenir, `wearDates`'e dokunulmaz.
+    4. **Tarot yerine burç yorumu:** Welcome'da **burç seçtirilir** (doğum tarihi sorulmaz).
+       Günlük/haftalık değişen, moda + girl math temalı yorumlar (sunucusuz, cümle parçalarından
+       üretilir), "şanslı renk" kombin motoruna bağlanır. Tarot şeridi burç kartına dönüşür;
+       `tarot-card.tsx`'teki **GEÇİCİ** `pickTarotItem()` bu sırada kaldırılır/değiştirilir.
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
 
 ## Aynı anda çalışma kuralları (çakışmayı önlemek için)
@@ -364,7 +402,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   `src/lib/photos.ts` – fotoğraf seçme, kaydetme, silme;
   `src/lib/stats.ts` – dolap istatistikleri;
   `src/lib/notifications.ts` – bildirim mesajları, izin ve kurma araçları;
-  `src/lib/starbucks-index.ts` – Starbucks Endeksi (fiyat = kaç iced latte)
+  `src/lib/starbucks-index.ts` – Starbucks Endeksi (fiyat = kaç iced latte);
+  `src/lib/colors.ts` – kıyafet renkleri; `src/lib/outfits.ts` – kombin motoru (renk uyumu + öneri)
 - `src/hooks/` – yardımcı hook'lar
 
 ## Bilinen durumlar

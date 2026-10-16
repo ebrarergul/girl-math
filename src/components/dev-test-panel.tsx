@@ -14,7 +14,7 @@ import { comparisonText } from '@/lib/comparisons';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
 import { sendTestNotification } from '@/lib/notifications';
 import { photoUri, pickAndSavePhoto } from '@/lib/photos';
-import { starbucksIndexText } from '@/lib/starbucks-index';
+import { starbucksIndexMeme, starbucksIndexText } from '@/lib/starbucks-index';
 
 const colors = Colors.light;
 
@@ -67,6 +67,7 @@ export function DevTestPanel() {
           <Text style={styles.name}>{item.name}</Text>
           <Text style={styles.priceStrike}>{item.price} TL</Text>
           <Text style={styles.muted}>{starbucksIndexText(item.price)}</Text>
+          <Text style={styles.muted}>{starbucksIndexMeme(item.price)}</Text>
           <Text style={styles.price}>Giyim başına: {costPerWear(item)} TL</Text>
           <Text style={styles.muted}>
             Giyilme: {wearCount(item)} / {item.targetWears}

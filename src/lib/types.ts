@@ -5,6 +5,8 @@
  * tarif eder. İçinde çalışan kod yoktur, sadece tanım vardır.
  */
 
+import type { ColorName } from '@/lib/colors';
+
 // Dolaptaki kategoriler. Yeni kategori eklemek için bu listeye bir satır eklemek yeterli.
 export const CATEGORIES = [
   'Üst',
@@ -28,4 +30,5 @@ export type ClothingItem = {
   wearDates: string[]; // "Giydim"e her basıldığında o günün tarihi eklenir, örn: "2026-10-14". Giyilme sayısı = bu listenin uzunluğu
   targetWears: number; // Hedef giyilme sayısı. Buna ulaşınca "amorti edildi" sayılır
   createdAt: string; // Dolaba eklendiği tarih, örn: "2026-10-14"
+  color?: ColorName; // Kıyafetin rengi (kombin önerisi için). Eski kayıtlarda ve seçilmediyse yok
 };
