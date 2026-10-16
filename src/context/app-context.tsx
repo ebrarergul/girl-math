@@ -1,7 +1,7 @@
 /**
  * GIRL MATH – HAFIZA MERKEZİ (AppContext)
  *
- * Dolaptaki tüm kıyafetler burada tutulur. Ekranlar kıyafet bilgisini buradan alır
+ * Dolaptaki tüm kıyafetler ve kaydedilen kombinler burada tutulur. Ekranlar kıyafet bilgisini buradan alır
  * ve değişiklikleri buradaki fonksiyonlarla yapar. Her değişiklik telefona
  * (AsyncStorage) otomatik kaydedilir, uygulama kapanıp açılsa da kaybolmaz.
  *
@@ -22,10 +22,11 @@ import {
 import { deletePhoto } from '@/lib/photos';
 import { getWardrobeStats } from '@/lib/stats';
 import type { ColorName } from '@/lib/colors';
-import type { Category, ClothingItem } from '@/lib/types';
+import type { Category, ClothingItem, SavedOutfit } from '@/lib/types';
 
-// Kıyafetler telefonda bu isimle saklanır
+// Kıyafetler ve kombinler telefonda bu isimlerle saklanır
 const ITEMS_KEY = 'girlmath.items';
+const OUTFITS_KEY = 'girlmath.outfits';
 
 // Kullanıcı hedef girmezse kullanılacak hedef giyilme sayısı (#30wears)
 export const DEFAULT_TARGET_WEARS = 30;
@@ -53,6 +54,14 @@ type AppContextValue = {
   deleteItem: (id: string) => void;
   updateItem: (id: string, changes: ClothingItemChanges) => void;
   resetAll: () => void;
+
+  // Kombin arşivi
+  outfits: SavedOutfit[]; // Kaydedilen kombinler (en yeni en başta)
+  saveOutfit: (itemIds: string[], name?: string | null) => string; // Kombinin kimliğini döner
+  toggleFavoriteOutfit: (id: string) => void;
+  renameOutfit: (id: string, name: string | null) => void;
+  deleteOutfit: (id: string) => void;
+  wearOutfit: (id: string) => void; // "Bu kombini giydim": bütün parçalara Giydim
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -70,17 +79,21 @@ async function refreshReminders(items: ClothingItem[]): Promise<void> {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ClothingItem[]>([]);
+  const [outfits, setOutfits] = useState<SavedOutfit[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // 1) Uygulama açılınca telefondaki kayıtları oku
+  // 1) Uygulama açılınca telefondaki kayıtları (kıyafetler + kombinler) oku
   useEffect(() => {
-    AsyncStorage.getItem(ITEMS_KEY)
-      .then((saved) => {
-        if (saved) {
-          setItems(JSON.parse(saved));
+    Promise.all([AsyncStorage.getItem(ITEMS_KEY), AsyncStorage.getItem(OUTFITS_KEY)])
+      .then(([savedItems, savedOutfits]) => {
+        if (savedItems) {
+          setItems(JSON.parse(savedItems));
+        }
+        if (savedOutfits) {
+          setOutfits(JSON.parse(savedOutfits));
         }
       })
-      .catch((error) => console.warn('Kıyafetler okunamadı:', error))
+      .catch((error) => console.warn('Kayıtlar okunamadı:', error))
       .finally(() => setIsLoaded(true));
   }, []);
 
@@ -93,6 +106,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.warn('Kıyafetler kaydedilemedi:', error)
     );
   }, [items, isLoaded]);
+
+  // 2b) Kombinler her değiştiğinde telefona kaydet
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+    AsyncStorage.setItem(OUTFITS_KEY, JSON.stringify(outfits)).catch((error) =>
+      console.warn('Kombinler kaydedilemedi:', error)
+    );
+  }, [outfits, isLoaded]);
 
   // 3) Liste her değiştiğinde bildirimleri yeniden kur (izin yoksa hiçbir şey yapmaz)
   useEffect(() => {
@@ -151,13 +174,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  // Kıyafeti siler; fotoğrafı varsa onu da telefondan siler
+  // Kıyafeti siler; fotoğrafı varsa onu da telefondan siler.
+  // Kıyafet kombinlerden de çıkar; içinde hiç parça kalmayan kombin silinir.
   function deleteItem(id: string) {
     const item = items.find((current) => current.id === id);
     if (item) {
       deletePhoto(item.photoFileName);
     }
     setItems((current) => current.filter((item) => item.id !== id));
+    setOutfits((current) =>
+      current
+        .map((outfit) => ({ ...outfit, itemIds: outfit.itemIds.filter((itemId) => itemId !== id) }))
+        .filter((outfit) => outfit.itemIds.length > 0)
+    );
   }
 
   // Kıyafeti düzenler (ad, kategori, fiyat, hedef, fotoğraf). Giyim geçmişi korunur.
@@ -177,7 +206,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  // Bütün dolabı siler: önce fotoğrafları telefondan, sonra listeyi. Boş liste de otomatik
+  // Bütün dolabı siler: önce fotoğrafları telefondan, sonra listeyi ve kombinleri. Boş liste de otomatik
   // kaydedilir; bildirimler liste değişince kendiliğinden yeniden kurulur.
   // Sözleşme/Welcome bilgisine dokunmaz. (Ebrar ekledi – Ayarlar'daki "Bütün verileri sil" için)
   function resetAll() {
@@ -185,11 +214,82 @@ export function AppProvider({ children }: { children: ReactNode }) {
       deletePhoto(item.photoFileName);
     }
     setItems([]);
+    setOutfits([]); // (Onur ekledi – kombin arşivi de silinsin)
+  }
+
+  // ---------- Kombin arşivi ----------
+
+  // Kombini arşive kaydeder ve kimliğini döner. Aynı parçalardan oluşan kombin zaten
+  // kayıtlıysa yenisini eklemez, var olanın kimliğini döner.
+  function saveOutfit(itemIds: string[], name: string | null = null): string {
+    const key = [...itemIds].sort().join(',');
+    const existing = outfits.find((outfit) => [...outfit.itemIds].sort().join(',') === key);
+    if (existing) {
+      return existing.id;
+    }
+    const outfit: SavedOutfit = {
+      id: createId(),
+      itemIds,
+      name: name?.trim() || null,
+      favorite: false,
+      wornDates: [],
+      createdAt: todayString(),
+    };
+    setOutfits((current) => [outfit, ...current]);
+    return outfit.id;
+  }
+
+  function toggleFavoriteOutfit(id: string) {
+    setOutfits((current) =>
+      current.map((outfit) => (outfit.id === id ? { ...outfit, favorite: !outfit.favorite } : outfit))
+    );
+  }
+
+  // Boş ad verilirse otomatik ada döner
+  function renameOutfit(id: string, name: string | null) {
+    setOutfits((current) =>
+      current.map((outfit) => (outfit.id === id ? { ...outfit, name: name?.trim() || null } : outfit))
+    );
+  }
+
+  function deleteOutfit(id: string) {
+    setOutfits((current) => current.filter((outfit) => outfit.id !== id));
+  }
+
+  // "Bu kombini giydim": kombindeki bütün parçalara Giydim basılır, kombinin tarihi kaydedilir
+  function wearOutfit(id: string) {
+    const outfit = outfits.find((current) => current.id === id);
+    if (!outfit) {
+      return;
+    }
+    for (const itemId of outfit.itemIds) {
+      wearItem(itemId);
+    }
+    setOutfits((current) =>
+      current.map((outfit) =>
+        outfit.id === id ? { ...outfit, wornDates: [...outfit.wornDates, todayString()] } : outfit
+      )
+    );
   }
 
   return (
     <AppContext.Provider
-      value={{ items, isLoaded, addItem, wearItem, undoWear, deleteItem, updateItem, resetAll }}>
+      value={{
+        items,
+        isLoaded,
+        addItem,
+        wearItem,
+        undoWear,
+        deleteItem,
+        updateItem,
+        resetAll,
+        outfits,
+        saveOutfit,
+        toggleFavoriteOutfit,
+        renameOutfit,
+        deleteOutfit,
+        wearOutfit,
+      }}>
       {children}
     </AppContext.Provider>
   );

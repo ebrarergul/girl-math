@@ -266,6 +266,21 @@ outfitFor(item, items)   // { items: [seçilen, ...], missing: ['Ayakkabı'], te
                          //   uyarsa Dış giyim/Çanta/Aksesuar eklenir. missing: dolapta uygun parça yok.
 colorMatch(a, b)         // { score, reason } – motorun iç aracı; kurallar dosyanın üstündeki listelerde
 ```
+**Kombin arşivi** (`useApp()` + `@/lib/outfits`) – kaydet, favorile ⭐, "Bu kombini giydim"
+```tsx
+const { outfits, saveOutfit, toggleFavoriteOutfit, renameOutfit, deleteOutfit, wearOutfit } = useApp();
+saveOutfit(outfit.items.map((i) => i.id), 'Cuma akşamı 🍸')  // ad isteğe bağlı; kimliği döner.
+                                    //   Aynı parçalardan kombin zaten varsa yenisini eklemez.
+toggleFavoriteOutfit(id) / renameOutfit(id, 'Yeni ad' | null) / deleteOutfit(id)
+wearOutfit(id)                      // Bütün parçalara Giydim (ödül bildirimi dahil) + kombin tarihi
+sortOutfits(outfits)                // Arşiv sırası: favoriler üstte, sonra en yeni
+outfitItems(outfit, items)          // Kombinin kıyafetleri (silinenler atlanır)
+outfitName(outfit, items)           // Görünen ad: verilen ad ya da “Beyaz tişört” kombini
+```
+Kayıt: `SavedOutfit` (`types.ts`) → `id, itemIds, name, favorite, wornDates, createdAt`, telefonda
+`girlmath.outfits`. Kıyafet silinince kombinlerden çıkar; parçasız kalan kombin silinir.
+`resetAll` kombinleri de siler.
+
 Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olmayan parça da önerilir
 ("Rengini bilmiyorum ama bir dene 🤷‍♀️").
 
@@ -303,8 +318,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - `resetAll` – aynı şekilde Ebrar ekledi (Ayarlar'daki "Bütün verileri sil" kullanır).
   - **Yeni kararlaştırılan özellikler (16 Ekim, Onur + Ebrar), bu sırayla:**
     1. Renk + kombin motoru ✅
-    2. **Favori kombin arşivi:** kombinler kaydedilir, favorilenir, arşivde listelenir
-       (mantık Onur: AppContext'e kaydet/favorile/sil; ekran Ebrar: arşiv sayfası).
+    2. **Favori kombin arşivi:** mantık ✅ (Onur). **Sırada ekran (Ebrar):** Arşiv sayfası
+       (`sortOutfits`, yıldız, ad değiştirme, sil, "Bu kombini giydim"), öneri ekranında "Kaydet 💾".
     3. **"Nereye giderken giydin?":** Giydim'de isteğe bağlı yer (Okul, İş, Kahve ☕, Date 💘,
        Aile, Gece 🌙, Spor, Alışveriş, Seyahat). Aynı yere aynı kıyafet sık giyilince "aynı
        insanlar görüyor, farklı bir şey giy" uyarısı; detayda "En son burada giymiştim".

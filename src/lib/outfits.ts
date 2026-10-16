@@ -8,6 +8,7 @@
  * Ekranda kullanımı:
  *   matchesFor(item, items)  // [{ category: 'Alt', matches: [{ item, reason }, ...] }, ...]
  *   outfitFor(item, items)   // { items: [...], missing: ['Ayakkabı'], text: 'Bu kombinle …' }
+ *   outfitItems(outfit, items) / outfitName(outfit, items) / sortOutfits(outfits)  // Arşiv için
  *
  * Kuralları değiştirmek için sadece aşağıdaki listeleri düzenlemek yeterli.
  */
@@ -15,7 +16,7 @@
 import type { ColorName } from '@/lib/colors';
 import { pickBySum } from '@/lib/comparisons';
 import { daysSinceLastWear } from '@/lib/girl-math';
-import type { Category, ClothingItem } from '@/lib/types';
+import type { Category, ClothingItem, SavedOutfit } from '@/lib/types';
 
 // ---------- Renk grupları ----------
 
@@ -263,4 +264,29 @@ export function outfitFor(base: ClothingItem, items: ClothingItem[]): Outfit {
     result = dress.missing.length < separates.missing.length ? dress : separates;
   }
   return { items: result.pieces, missing: result.missing, text: outfitText(result.pieces) };
+}
+
+// ---------- Kayıtlı kombinler (Arşiv) ----------
+
+// Kayıtlı kombinin kıyafetleri (dolaptan silinmiş olanlar atlanır)
+export function outfitItems(outfit: SavedOutfit, items: ClothingItem[]): ClothingItem[] {
+  return outfit.itemIds
+    .map((id) => items.find((item) => item.id === id))
+    .filter((item): item is ClothingItem => item !== undefined);
+}
+
+// Kombinin ekranda görünecek adı: kullanıcının verdiği ad ya da otomatik ad
+export function outfitName(outfit: SavedOutfit, items: ClothingItem[]): string {
+  if (outfit.name) {
+    return outfit.name;
+  }
+  const first = outfitItems(outfit, items)[0];
+  return first ? `“${first.name}” kombini` : 'Kombin';
+}
+
+// Arşiv sırası: önce favoriler, sonra en yeni kaydedilen
+export function sortOutfits(outfits: SavedOutfit[]): SavedOutfit[] {
+  return [...outfits].sort(
+    (a, b) => Number(b.favorite) - Number(a.favorite) || b.createdAt.localeCompare(a.createdAt)
+  );
 }

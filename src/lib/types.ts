@@ -32,3 +32,13 @@ export type ClothingItem = {
   createdAt: string; // Dolaba eklendiği tarih, örn: "2026-10-14"
   color?: ColorName; // Kıyafetin rengi (kombin önerisi için). Eski kayıtlarda ve seçilmediyse yok
 };
+
+// Kaydedilmiş bir kombin (Arşiv)
+export type SavedOutfit = {
+  id: string; // Her kombine özel, değişmeyen kimlik
+  itemIds: string[]; // Kombindeki kıyafetlerin kimlikleri (silinen kıyafet buradan da çıkar)
+  name: string | null; // Kullanıcının verdiği ad, örn: "Cuma akşamı 🍸". Verilmediyse null (otomatik ad gösterilir)
+  favorite: boolean; // Yıldızlı mı? Favoriler arşivde en üstte
+  wornDates: string[]; // "Bu kombini giydim"e her basıldığında o günün tarihi
+  createdAt: string; // Kaydedildiği gün, örn: "2026-10-16"
+};

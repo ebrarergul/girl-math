@@ -12,6 +12,7 @@ import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme'
 import { useApp } from '@/context/app-context';
 import { comparisonText } from '@/lib/comparisons';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
+import { outfitFor, outfitItems, outfitName, sortOutfits } from '@/lib/outfits';
 import { sendTestNotification } from '@/lib/notifications';
 import { photoUri, pickAndSavePhoto } from '@/lib/photos';
 import { starbucksIndexMeme, starbucksIndexText } from '@/lib/starbucks-index';
@@ -19,7 +20,19 @@ import { starbucksIndexMeme, starbucksIndexText } from '@/lib/starbucks-index';
 const colors = Colors.light;
 
 export function DevTestPanel() {
-  const { items, isLoaded, addItem, wearItem, undoWear, deleteItem } = useApp();
+  const {
+    items,
+    isLoaded,
+    addItem,
+    wearItem,
+    undoWear,
+    deleteItem,
+    outfits,
+    saveOutfit,
+    toggleFavoriteOutfit,
+    deleteOutfit,
+    wearOutfit,
+  } = useApp();
 
   function addSample() {
     addItem({ name: 'Siyah deri ceket', category: 'Dış giyim', price: 3000, photoFileName: null });
@@ -31,6 +44,28 @@ export function DevTestPanel() {
       return; // Kullanıcı vazgeçti
     }
     addItem({ name: 'Pembe elbise', category: 'Elbise', price: 1200, photoFileName: fileName });
+  }
+
+  // Renkli örnek dolap: kombin motorunu denemek için
+  function addColoredSamples() {
+    addItem({ name: 'Pembe çanta', category: 'Çanta', price: 900, photoFileName: null, color: 'Pembe' });
+    addItem({ name: 'Beyaz sneaker', category: 'Ayakkabı', price: 2500, photoFileName: null, color: 'Beyaz' });
+    addItem({ name: 'Siyah etek', category: 'Alt', price: 700, photoFileName: null, color: 'Siyah' });
+    addItem({ name: 'Kot pantolon', category: 'Alt', price: 1100, photoFileName: null, color: 'Kot mavisi' });
+    addItem({ name: 'Beyaz tişört', category: 'Üst', price: 400, photoFileName: null, color: 'Beyaz' });
+  }
+
+  // Listedeki ilk kıyafete kombin önerir ve arşive kaydeder
+  function suggestAndSaveOutfit() {
+    if (items.length === 0) {
+      Alert.alert('Dolap boş', 'Önce "🎨 Renkli örnek dolap" ekle.');
+      return;
+    }
+    const outfit = outfitFor(items[0], items);
+    saveOutfit(outfit.items.map((item) => item.id));
+    const names = outfit.items.map((item) => item.name).join(' + ');
+    const missing = outfit.missing.length > 0 ? `\n\nEksik: ${outfit.missing.join(', ')}` : '';
+    Alert.alert('✨ Kombin kaydedildi', `${names}\n\n${outfit.text}${missing}`);
   }
 
   async function testNotification() {
@@ -58,6 +93,44 @@ export function DevTestPanel() {
       <Pressable style={styles.softButton} onPress={testNotification}>
         <Text style={styles.softButtonText}>🔔 Test bildirimi (5 sn)</Text>
       </Pressable>
+
+      <Text style={styles.title}>👗 Kombin arşivi</Text>
+      <View style={styles.row}>
+        <Pressable style={styles.softButton} onPress={addColoredSamples}>
+          <Text style={styles.softButtonText}>🎨 Renkli örnek dolap</Text>
+        </Pressable>
+        <Pressable style={styles.primaryButton} onPress={suggestAndSaveOutfit}>
+          <Text style={styles.primaryButtonText}>✨ Kombin öner + kaydet</Text>
+        </Pressable>
+      </View>
+      {outfits.length === 0 && <Text style={styles.muted}>Arşiv boş.</Text>}
+      {sortOutfits(outfits).map((outfit) => (
+        <View key={outfit.id} style={styles.card}>
+          <Text style={styles.name}>
+            {outfit.favorite ? '⭐ ' : ''}
+            {outfitName(outfit, items)}
+          </Text>
+          <Text style={styles.muted}>
+            {outfitItems(outfit, items)
+              .map((item) => item.name)
+              .join(' + ')}
+          </Text>
+          <Text style={styles.muted}>Kombin olarak giyilme: {outfit.wornDates.length}</Text>
+          <View style={styles.row}>
+            <Pressable style={styles.primaryButton} onPress={() => wearOutfit(outfit.id)}>
+              <Text style={styles.primaryButtonText}>👗 Bu kombini giydim</Text>
+            </Pressable>
+            <Pressable style={styles.softButton} onPress={() => toggleFavoriteOutfit(outfit.id)}>
+              <Text style={styles.softButtonText}>{outfit.favorite ? '☆' : '⭐'}</Text>
+            </Pressable>
+            <Pressable style={styles.softButton} onPress={() => deleteOutfit(outfit.id)}>
+              <Text style={styles.softButtonText}>Sil</Text>
+            </Pressable>
+          </View>
+        </View>
+      ))}
+
+      <Text style={styles.title}>👚 Kıyafetler</Text>
 
       {items.map((item) => (
         <View key={item.id} style={styles.card}>
