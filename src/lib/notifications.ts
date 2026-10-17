@@ -6,6 +6,7 @@
  *   2) Takılma   – en uzun süredir giyilmeyen kıyafet için, 3 gün sonra 20:00'de
  *   3) Günlük    – her akşam 20:00'de "bugün ne giydin?" hatırlatması
  *   4) Etkinlik  – "Etkinlik için aldım" kıyafetleri: bir gün önce 20:00 ve o gün 10:00
+ *   5) Kahoot    – Cumartesi 11:00 "açıldı!", Pazar 21:00 "bu gece kapanıyor" (oynanmadıysa)
  *
  * Mesajları değiştirmek için sadece aşağıdaki listeleri düzenlemek yeterli.
  * Cümleler Türkçe ek gerektirmeyecek şekilde yazıldı ("ceketi/elbiseyi" sorunu olmasın diye).
@@ -15,7 +16,8 @@ import * as Notifications from 'expo-notifications';
 
 import { eventLabel } from '@/lib/events';
 import { wearCount } from '@/lib/girl-math';
-import type { ClothingItem } from '@/lib/types';
+import { MIN_ITEMS_FOR_QUIZ, playedThisWeek, quizStreak } from '@/lib/quiz';
+import type { ClothingItem, QuizResult } from '@/lib/types';
 
 // Bildirim saati (20:00)
 const REMINDER_HOUR = 20;
@@ -251,4 +253,66 @@ export async function scheduleEventReminders(items: ClothingItem[]): Promise<voi
       });
     }
   }
+}
+
+// ---------- Dolap Kahoot'u ----------
+
+const QUIZ_OPEN_ID = 'girlmath-quiz-open';
+const QUIZ_CLOSING_ID = 'girlmath-quiz-closing';
+const QUIZ_OPEN_HOUR = 11; // Cumartesi 11:00
+const QUIZ_CLOSING_HOUR = 21; // Pazar 21:00 (20:00'deki günlük hatırlatmayla çakışmasın)
+
+// Bugünden itibaren haftanın verilen gününe (0 = Pazar, 6 = Cumartesi) denk gelen ilk an.
+// O an geçtiyse bir sonraki haftaya atar.
+function nextWeekday(weekday: number, hour: number): Date {
+  const now = new Date();
+  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour);
+  date.setDate(date.getDate() + ((weekday - now.getDay() + 7) % 7));
+  if (date.getTime() <= now.getTime()) {
+    date.setDate(date.getDate() + 7);
+  }
+  return date;
+}
+
+// Kahoot bildirimlerini baştan kurar (liste ya da sonuçlar değiştikçe çağrılır):
+// - Cumartesi 11:00 "açıldı!" – dolapta yeterli parça varsa
+// - Pazar 21:00 "bu gece kapanıyor" – o haftanın Kahoot'u henüz oynanmadıysa
+export async function scheduleQuizReminders(
+  items: ClothingItem[],
+  results: QuizResult[]
+): Promise<void> {
+  await Notifications.cancelScheduledNotificationAsync(QUIZ_OPEN_ID);
+  await Notifications.cancelScheduledNotificationAsync(QUIZ_CLOSING_ID);
+  if (items.length < MIN_ITEMS_FOR_QUIZ || !(await hasNotificationPermission())) {
+    return;
+  }
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: QUIZ_OPEN_ID,
+    content: {
+      title: "🎯 Dolap Kahoot'u açıldı!",
+      body: 'Dolabını ne kadar tanıyorsun kızım? 5 soru, 15 saniye ⏱️',
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: nextWeekday(6, QUIZ_OPEN_HOUR),
+    },
+  });
+
+  const closing = nextWeekday(0, QUIZ_CLOSING_HOUR);
+  if (playedThisWeek(results, closing)) {
+    return;
+  }
+  const streak = quizStreak(results, closing);
+  await Notifications.scheduleNotificationAsync({
+    identifier: QUIZ_CLOSING_ID,
+    content: {
+      title: '⏳ Kahoot bu gece kapanıyor',
+      body:
+        streak > 0
+          ? `🔥 ${streak} haftalık serini bozma! 5 soru, iki dakika bile sürmez.`
+          : 'Serini başlatmak için son şans 🔥 5 soru, iki dakika bile sürmez.',
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: closing },
+  });
 }

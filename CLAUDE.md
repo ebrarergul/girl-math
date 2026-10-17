@@ -109,7 +109,9 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - **Bildirimler** (yerel, sunucusuz – `src/lib/notifications.ts`): 3 tür var.
   1) Ödül: kıyafet "Giydim" ile tam hedefe ulaştığında hemen (sadece 1 kere).
   2) Takılma: en uzun süredir giyilmeyen kıyafet için 3 gün sonra 20:00; bildirim günü en az
-     14 gündür giyilmemiş olmalı. 3) Günlük hatırlatma: her akşam 20:00.
+     14 gündür giyilmemiş olmalı. 3) Günlük hatırlatma: her akşam 20:00. 4) Etkinlik: bir gün
+  önce 20:00 + o gün 10:00. 5) Kahoot: Cumartesi 11:00 "açıldı!" (dolapta ≥ 4 parça varsa), Pazar
+  21:00 "bu gece kapanıyor" (o hafta oynanmadıysa; seri varsa "🔥 N haftalık serini bozma").
   Mesajlar Türkçe ek gerektirmeyecek şekilde yazılır (kıyafet adı "ceketi/elbiseyi" sorunu).
   İzin, kıyafet eklenince istenir (iPhone pencereyi sadece 1 kere gösterir).
 - OCR gibi Expo Go'da olmayan yerel modüller "development build" gerektirir; bu tür

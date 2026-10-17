@@ -18,6 +18,7 @@ import {
   scheduleDailyReminder,
   scheduleEventReminders,
   scheduleForgottenReminder,
+  scheduleQuizReminders,
   sendPaidOffNotification,
 } from '@/lib/notifications';
 import { deletePhoto } from '@/lib/photos';
@@ -93,11 +94,12 @@ function withPlace(item: ClothingItem, place: PlaceName | null): (PlaceName | nu
   return [...places, place];
 }
 
-// Takılma, günlük ve etkinlik bildirimlerini güncel kıyafet listesine göre yeniden kurar
-async function refreshReminders(items: ClothingItem[]): Promise<void> {
+// Takılma, günlük, etkinlik ve Kahoot bildirimlerini güncel listelere göre yeniden kurar
+async function refreshReminders(items: ClothingItem[], quizResults: QuizResult[]): Promise<void> {
   await scheduleDailyReminder();
   await scheduleForgottenReminder(getWardrobeStats(items).forgotten);
   await scheduleEventReminders(items);
+  await scheduleQuizReminders(items, quizResults);
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -163,13 +165,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }, [outfits, isLoaded]);
 
-  // 3) Liste her değiştiğinde bildirimleri yeniden kur (izin yoksa hiçbir şey yapmaz)
+  // 3) Liste ya da Kahoot sonuçları değiştiğinde bildirimleri yeniden kur (izin yoksa bir şey yapmaz)
   useEffect(() => {
     if (!isLoaded) {
       return;
     }
-    refreshReminders(items).catch((error) => console.warn('Bildirimler kurulamadı:', error));
-  }, [items, isLoaded]);
+    refreshReminders(items, quizResults).catch((error) =>
+      console.warn('Bildirimler kurulamadı:', error)
+    );
+  }, [items, quizResults, isLoaded]);
 
   function addItem(newItem: NewClothingItem) {
     const item: ClothingItem = {
@@ -190,7 +194,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // İzin verilirse bildirimler hemen kurulur.
     const nextItems = [item, ...items];
     requestNotificationPermission()
-      .then((granted) => (granted ? refreshReminders(nextItems) : undefined))
+      .then((granted) => (granted ? refreshReminders(nextItems, quizResults) : undefined))
       .catch((error) => console.warn('Bildirim izni istenemedi:', error));
   }
 
