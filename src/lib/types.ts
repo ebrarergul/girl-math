@@ -6,6 +6,7 @@
  */
 
 import type { ColorName } from '@/lib/colors';
+import type { ItemEvent } from '@/lib/events';
 import type { PlaceName } from '@/lib/places';
 
 // Dolaptaki kategoriler. Yeni kategori eklemek için bu listeye bir satır eklemek yeterli.
@@ -35,6 +36,7 @@ export type ClothingItem = {
   // Her giyimin yeri, wearDates ile aynı sırada (wearPlaces[3] = wearDates[3]'teki yer).
   // Yer seçilmediyse null. Eski kayıtlarda bu alan hiç yok. Sadece AppContext değiştirir.
   wearPlaces?: (PlaceName | null)[];
+  event?: ItemEvent; // "Etkinlik için aldım": etkinlik türü + tarihi (Zaman Aşımı = Bedava). Yoksa alan yok
 };
 
 // Kaydedilmiş bir kombin (Arşiv)
@@ -45,4 +47,13 @@ export type SavedOutfit = {
   favorite: boolean; // Yıldızlı mı? Favoriler arşivde en üstte
   wornDates: string[]; // "Bu kombini giydim"e her basıldığında o günün tarihi
   createdAt: string; // Kaydedildiği gün, örn: "2026-10-16"
+};
+
+// Bir haftanın Dolap Kahoot'u sonucu (haftada bir kez oynanır)
+export type QuizResult = {
+  weekKey: string; // Haftanın Pazartesi'si, örn: "2026-10-12"
+  correctCount: number; // Kaç doğru (0-5)
+  score: number; // Toplam puan (en fazla 750)
+  badgeTitle: string; // Kazanılan rozetin adı, örn: "Ekonomist"
+  playedAt: string; // Oynandığı gün, örn: "2026-10-18"
 };

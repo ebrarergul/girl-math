@@ -6,17 +6,28 @@
  */
 
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp, type NewClothingItem } from '@/context/app-context';
 import { comparisonText } from '@/lib/comparisons';
-import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
+import { eventCountdownText, eventDayCost } from '@/lib/events';
+import { costPerWear, isPaidOff, todayString, wearCount } from '@/lib/girl-math';
 import { outfitFor, outfitItems, outfitName, sortOutfits } from '@/lib/outfits';
 import { sendTestNotification } from '@/lib/notifications';
 import { photoUri, pickAndSavePhoto } from '@/lib/photos';
 import { freshAlternatives, lastWearText, repeatWarning, type PlaceName } from '@/lib/places';
 import { starbucksIndexMeme, starbucksIndexText } from '@/lib/starbucks-index';
+import {
+  answerPoints,
+  bestQuizScore,
+  daysUntilQuiz,
+  playedThisWeek,
+  quizBadge,
+  quizStreak,
+  weeklyQuiz,
+} from '@/lib/quiz';
 import type { ClothingItem } from '@/lib/types';
 import { ZODIAC_SIGNS, dailyHoroscope, weeklyHoroscope } from '@/lib/zodiac';
 
@@ -69,6 +80,22 @@ export function DevTestPanel() {
       missing.length > 0 ? `✅ ${missing.length} parça eklendi` : 'Örnek dolap zaten ekli',
       'Aşağıdaki "Kıyafetler" listesinde görebilirsin.'
     );
+  }
+
+  // Etkinlik modu denemesi: etkinliği yarın olan bir kıyafet ekler (bildirimler kurulur)
+  function addEventSample() {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const date = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+    addItem({
+      name: 'Yeşil saten elbise',
+      category: 'Elbise',
+      price: 2400,
+      photoFileName: null,
+      color: 'Yeşil',
+      event: { type: 'Düğün', date },
+    });
+    Alert.alert('🎉 Eklendi', 'Etkinliği yarın: bu akşam 20:00 ve yarın 10:00 bildirim gelecek.');
   }
 
   // Listedeki ilk kıyafete kombin önerir ve arşive kaydeder
@@ -171,10 +198,15 @@ export function DevTestPanel() {
         </View>
       )}
 
+      <DevQuiz />
+
       <Text style={styles.title}>👗 Kombin arşivi</Text>
       <View style={styles.row}>
         <Pressable style={styles.softButton} onPress={addColoredSamples}>
           <Text style={styles.softButtonText}>🎨 Renkli örnek dolap</Text>
+        </Pressable>
+        <Pressable style={styles.softButton} onPress={addEventSample}>
+          <Text style={styles.softButtonText}>🎉 Yarın etkinlikli örnek</Text>
         </Pressable>
         <Pressable style={styles.primaryButton} onPress={suggestAndSaveOutfit}>
           <Text style={styles.primaryButtonText}>✨ Kombin öner + kaydet</Text>
@@ -220,6 +252,11 @@ export function DevTestPanel() {
           <Text style={styles.muted}>{starbucksIndexMeme(item.price)}</Text>
           <Text style={styles.price}>Giyim başına: {costPerWear(item)} TL</Text>
           {lastWearText(item) && <Text style={styles.muted}>📍 {lastWearText(item)}</Text>}
+          {eventCountdownText(item) && (
+            <Text style={styles.horoscopeLine}>
+              {eventCountdownText(item)} (bugün gösterilen maliyet: {eventDayCost(item)} TL)
+            </Text>
+          )}
           <Text style={styles.muted}>
             Giyilme: {wearCount(item)} / {item.targetWears}
             {isPaidOff(item) ? ' · Amorti edildi 🎉' : ''}
@@ -244,6 +281,106 @@ export function DevTestPanel() {
           </View>
         </View>
       ))}
+    </View>
+  );
+}
+
+// Şu anki zaman (milisaniye). Sadece butona basınca çağrılır.
+function nowMs(): number {
+  return Date.now();
+}
+
+// Mini Dolap Kahoot'u (geçici deneme). Hafta içiyse yaklaşan Cumartesi'nin sorularıyla dener.
+function DevQuiz() {
+  const { items, quizResults, saveQuizResult } = useApp();
+  const [step, setStep] = useState<number | null>(null); // null: başlamadı
+  const [score, setScore] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [startedAt, setStartedAt] = useState(0);
+
+  const today = new Date();
+  const quizDate = new Date(today);
+  quizDate.setDate(today.getDate() + daysUntilQuiz(today)); // Hafta içiyse yaklaşan Cumartesi
+  const quiz = weeklyQuiz(items, quizDate);
+  const played = playedThisWeek(quizResults, quizDate);
+  const question = step !== null ? quiz.questions[step] : null;
+
+  function start() {
+    setStep(0);
+    setScore(0);
+    setCorrectCount(0);
+    setStartedAt(nowMs());
+  }
+
+  function answer(index: number) {
+    if (step === null || !question) {
+      return;
+    }
+    const seconds = (nowMs() - startedAt) / 1000;
+    const correct = index === question.correctIndex && seconds <= 15;
+    const nextScore = score + answerPoints(correct, seconds);
+    const nextCorrect = correctCount + (correct ? 1 : 0);
+    setScore(nextScore);
+    setCorrectCount(nextCorrect);
+    const isLast = step === quiz.questions.length - 1;
+    Alert.alert(correct ? '✅ Doğru!' : seconds > 15 ? '⏰ Süre doldu' : '❌ Yanlış', correct ? question.correctText : question.wrongText, [
+      {
+        text: isLast ? 'Sonucu gör' : 'Sıradaki',
+        onPress: () => {
+          if (!isLast) {
+            setStep(step + 1);
+            setStartedAt(nowMs());
+            return;
+          }
+          const badge = quizBadge(nextCorrect);
+          saveQuizResult({
+            weekKey: quiz.weekKey,
+            correctCount: nextCorrect,
+            score: nextScore,
+            badgeTitle: badge.title,
+            playedAt: todayString(),
+          });
+          setStep(null);
+          Alert.alert(`${badge.emoji} ${badge.title}`, `${nextCorrect}/5 doğru · ${nextScore} puan\n\n${badge.message}`);
+        },
+      },
+    ]);
+  }
+
+  return (
+    <View style={styles.panel}>
+      <Text style={styles.title}>{"🎯 Dolap Kahoot'u"}</Text>
+      <Text style={styles.muted}>
+        {quiz.isOpen ? 'Bugün açık!' : `Normalde ${quiz.daysUntilOpen} gün sonra açılıyor (test için Cumartesi soruları)`}
+        {' · '}Seri: {quizStreak(quizResults)} hafta 🔥 · En yüksek: {bestQuizScore(quizResults)}
+      </Text>
+      {quiz.blockedMessage && <Text style={styles.muted}>{quiz.blockedMessage}</Text>}
+      {!quiz.blockedMessage && played && step === null && (
+        <Text style={styles.muted}>{"Bu haftanın Kahoot'unu oynadın ✅ Gelecek hafta yenileri gelir."}</Text>
+      )}
+      {!quiz.blockedMessage && !played && step === null && (
+        <Pressable style={styles.primaryButton} onPress={start}>
+          <Text style={styles.primaryButtonText}>🎯 Başla (5 soru)</Text>
+        </Pressable>
+      )}
+      {question && (
+        <View style={styles.card}>
+          <Text style={styles.muted}>Soru {step! + 1}/5 · 15 saniye · Puan: {score}</Text>
+          {question.photoItemId && (
+            <Image
+              source={{ uri: photoUri(items.find((item) => item.id === question.photoItemId)?.photoFileName ?? null) }}
+              style={styles.photo}
+              blurRadius={8}
+            />
+          )}
+          <Text style={styles.name}>{question.prompt}</Text>
+          {question.options.map((option, index) => (
+            <Pressable key={option.label + index} style={styles.softButton} onPress={() => answer(index)}>
+              <Text style={styles.softButtonText}>{option.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
     </View>
   );
 }

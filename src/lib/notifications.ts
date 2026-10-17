@@ -5,6 +5,7 @@
  *   1) Ödül      – kıyafet amorti olunca hemen
  *   2) Takılma   – en uzun süredir giyilmeyen kıyafet için, 3 gün sonra 20:00'de
  *   3) Günlük    – her akşam 20:00'de "bugün ne giydin?" hatırlatması
+ *   4) Etkinlik  – "Etkinlik için aldım" kıyafetleri: bir gün önce 20:00 ve o gün 10:00
  *
  * Mesajları değiştirmek için sadece aşağıdaki listeleri düzenlemek yeterli.
  * Cümleler Türkçe ek gerektirmeyecek şekilde yazıldı ("ceketi/elbiseyi" sorunu olmasın diye).
@@ -12,6 +13,7 @@
 
 import * as Notifications from 'expo-notifications';
 
+import { eventLabel } from '@/lib/events';
 import { wearCount } from '@/lib/girl-math';
 import type { ClothingItem } from '@/lib/types';
 
@@ -190,4 +192,63 @@ export async function sendTestNotification(): Promise<boolean> {
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5 },
   });
   return true;
+}
+
+// ---------- Etkinlik (Zaman Aşımı = Bedava) ----------
+
+const EVENT_ID_PREFIX = 'girlmath-event-';
+const EVENT_DAY_HOUR = 10; // Etkinlik günü sabah 10:00
+
+// "2026-10-30" gününün verilen saatindeki an
+function atTime(date: string, hour: number, minute = 0): Date {
+  const [year, month, day] = date.split('-').map(Number);
+  return new Date(year, month - 1, day, hour, minute);
+}
+
+// Etkinlikli kıyafetlerin bildirimlerini baştan kurar: önce eski etkinlik bildirimlerinin
+// hepsi silinir (silinen kıyafet / değişen tarih kalmasın), sonra gelecektekiler kurulur.
+export async function scheduleEventReminders(items: ClothingItem[]): Promise<void> {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    scheduled
+      .filter((request) => request.identifier.startsWith(EVENT_ID_PREFIX))
+      .map((request) => Notifications.cancelScheduledNotificationAsync(request.identifier))
+  );
+
+  if (!(await hasNotificationPermission())) {
+    return;
+  }
+  const now = Date.now();
+  for (const item of items) {
+    if (!item.event) {
+      continue;
+    }
+    const label = eventLabel(item.event);
+    const name = `“${item.name}”`;
+
+    const eve = atTime(item.event.date, REMINDER_HOUR, REMINDER_MINUTE);
+    eve.setDate(eve.getDate() - 1);
+    if (eve.getTime() > now) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${EVENT_ID_PREFIX}eve-${item.id}`,
+        content: {
+          title: '👗 Yarın büyük gün!',
+          body: `${label} için ${name} hazır mı? Ütüle, as; parası zaten çoktan ödendi 😌`,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: eve },
+      });
+    }
+
+    const day = atTime(item.event.date, EVENT_DAY_HOUR);
+    if (day.getTime() > now) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: `${EVENT_ID_PREFIX}day-${item.id}`,
+        content: {
+          title: `🎉 Bugün büyük gün: ${label}!`,
+          body: `${name} için ödenen para hesaptan çoktan çıktı. Bugünkü maliyeti 0 TL; bedavaya harika görünüyorsun!`,
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: day },
+      });
+    }
+  }
 }

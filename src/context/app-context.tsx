@@ -16,20 +16,23 @@ import { todayString, wearCount } from '@/lib/girl-math';
 import {
   requestNotificationPermission,
   scheduleDailyReminder,
+  scheduleEventReminders,
   scheduleForgottenReminder,
   sendPaidOffNotification,
 } from '@/lib/notifications';
 import { deletePhoto } from '@/lib/photos';
 import { getWardrobeStats } from '@/lib/stats';
 import type { ColorName } from '@/lib/colors';
+import type { ItemEvent } from '@/lib/events';
 import type { PlaceName } from '@/lib/places';
 import type { ZodiacName } from '@/lib/zodiac';
-import type { Category, ClothingItem, SavedOutfit } from '@/lib/types';
+import type { Category, ClothingItem, QuizResult, SavedOutfit } from '@/lib/types';
 
 // Kıyafetler ve kombinler telefonda bu isimlerle saklanır
 const ITEMS_KEY = 'girlmath.items';
 const OUTFITS_KEY = 'girlmath.outfits';
 const ZODIAC_KEY = 'girlmath.zodiac';
+const QUIZ_KEY = 'girlmath.quiz';
 
 // Kullanıcı hedef girmezse kullanılacak hedef giyilme sayısı (#30wears)
 export const DEFAULT_TARGET_WEARS = 30;
@@ -42,6 +45,7 @@ export type NewClothingItem = {
   photoFileName: string | null;
   targetWears?: number;
   color?: ColorName; // İsteğe bağlı: kıyafetin rengi (kombin önerisi için)
+  event?: ItemEvent; // İsteğe bağlı: "Etkinlik için aldım" (kaldırmak için updateItem(id, { event: undefined }))
 };
 
 // Kıyafet düzenlerken değişebilecek bilgiler. Sadece verilen alanlar değişir;
@@ -69,7 +73,11 @@ type AppContextValue = {
 
   // Burç (Welcome'da / Ayarlar'da seçilir). Seçilmediyse null.
   zodiac: ZodiacName | null;
-  setZodiac: (sign: ZodiacName | null) => void; // "Bu kombini giydim": bütün parçalara Giydim
+  setZodiac: (sign: ZodiacName | null) => void;
+
+  // Dolap Kahoot'u sonuçları (haftada bir kez)
+  quizResults: QuizResult[];
+  saveQuizResult: (result: QuizResult) => void; // Bu hafta zaten kayıt varsa bir şey yapmaz // "Bu kombini giydim": bütün parçalara Giydim
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -85,16 +93,18 @@ function withPlace(item: ClothingItem, place: PlaceName | null): (PlaceName | nu
   return [...places, place];
 }
 
-// Takılma ve günlük bildirimleri güncel kıyafet listesine göre yeniden kurar
+// Takılma, günlük ve etkinlik bildirimlerini güncel kıyafet listesine göre yeniden kurar
 async function refreshReminders(items: ClothingItem[]): Promise<void> {
   await scheduleDailyReminder();
   await scheduleForgottenReminder(getWardrobeStats(items).forgotten);
+  await scheduleEventReminders(items);
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ClothingItem[]>([]);
   const [outfits, setOutfits] = useState<SavedOutfit[]>([]);
   const [zodiac, setZodiacState] = useState<ZodiacName | null>(null);
+  const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // 1) Uygulama açılınca telefondaki kayıtları (kıyafetler + kombinler) oku
@@ -103,8 +113,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       AsyncStorage.getItem(ITEMS_KEY),
       AsyncStorage.getItem(OUTFITS_KEY),
       AsyncStorage.getItem(ZODIAC_KEY),
+      AsyncStorage.getItem(QUIZ_KEY),
     ])
-      .then(([savedItems, savedOutfits, savedZodiac]) => {
+      .then(([savedItems, savedOutfits, savedZodiac, savedQuiz]) => {
         if (savedItems) {
           setItems(JSON.parse(savedItems));
         }
@@ -113,6 +124,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         if (savedZodiac) {
           setZodiacState(savedZodiac as ZodiacName);
+        }
+        if (savedQuiz) {
+          setQuizResults(JSON.parse(savedQuiz));
         }
       })
       .catch((error) => console.warn('Kayıtlar okunamadı:', error))
@@ -128,6 +142,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.warn('Kıyafetler kaydedilemedi:', error)
     );
   }, [items, isLoaded]);
+
+  // 2c) Kahoot sonuçları her değiştiğinde telefona kaydet
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+    AsyncStorage.setItem(QUIZ_KEY, JSON.stringify(quizResults)).catch((error) =>
+      console.warn('Kahoot sonuçları kaydedilemedi:', error)
+    );
+  }, [quizResults, isLoaded]);
 
   // 2b) Kombinler her değiştiğinde telefona kaydet
   useEffect(() => {
@@ -155,6 +179,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       price: newItem.price,
       photoFileName: newItem.photoFileName,
       ...(newItem.color ? { color: newItem.color } : {}),
+      ...(newItem.event ? { event: newItem.event } : {}),
       wearDates: [],
       targetWears: newItem.targetWears ?? DEFAULT_TARGET_WEARS,
       createdAt: todayString(),
@@ -267,6 +292,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setItems([]);
     setOutfits([]); // (Onur ekledi – kombin arşivi de silinsin)
     setZodiac(null); // (Onur ekledi – burç seçimi de silinsin)
+    setQuizResults([]); // (Onur ekledi – Kahoot sonuçları da silinsin)
+  }
+
+  // ---------- Dolap Kahoot'u ----------
+
+  // Haftanın sonucunu kaydeder. Bu hafta zaten oynandıysa ikinci sonuç kaydedilmez.
+  function saveQuizResult(result: QuizResult) {
+    setQuizResults((current) =>
+      current.some((saved) => saved.weekKey === result.weekKey) ? current : [...current, result]
+    );
   }
 
   // ---------- Burç ----------
@@ -384,6 +419,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         undoWearOutfit,
         zodiac,
         setZodiac,
+        quizResults,
+        saveQuizResult,
       }}>
       {children}
     </AppContext.Provider>

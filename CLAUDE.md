@@ -340,6 +340,42 @@ yerine pembe yazı gibi çizer, `zodiacRange` "23 Eki – 21 Kas", `MOON_SYMBOLS
 (burç seçimi), Welcome'ın 2. sayfası, Ayarlar → Burcum. Ekranda burç adına ek gelmez:
 "Ay Akrep burcunda" (❌ "Ay Akrep'te").
 
+**Dolap Kahoot'u** (`@/lib/quiz` + `useApp()`) – sadece hafta sonu, 5 soru, soru başı 15 saniye
+```tsx
+const { quizResults, saveQuizResult } = useApp();
+const quiz = weeklyQuiz(items)   // { weekKey, isOpen, daysUntilOpen, blockedMessage, questions: [5 soru] }
+// Soru: { kind, prompt, options: [{ label, itemId? }], correctIndex, correctText, wrongText,
+//          photoItemId? (🔍 "Bu parça kim?": fotoğrafı yakından + bulanık göster),
+//          aboutItemId? (📍 "… ile nereye gittin?": küçük fotoğraf gösterilebilir) }
+answerPoints(dogruMu, saniye)    // doğru: 100 + hız bonusu (0-50), yanlış/süre doldu: 0 → en fazla 750
+quizBadge(dogruSayisi)           // { emoji, title, message } 🏆 Merkez Bankası Başkanı (4-5) · 💼 Ekonomist (3)
+                                 //   · 🌱 Girl Math Stajyeri (1-2) · 😤 "Kızım sen bu dolabı tanımıyor musun?" (0)
+saveQuizResult({ weekKey: quiz.weekKey, correctCount, score, badgeTitle, playedAt: todayString() })
+playedThisWeek(quizResults) / quizStreak(quizResults) / bestQuizScore(quizResults)
+```
+Soru türleri: ⭐ dolabın yıldızı, 🕸️ unutulmuş prenses, 💸 kapışma (hangisi pahalı, 2 şık),
+😬 hiç giymediğin, 🔍 bu parça kim?, 📍 nereye gittin, 💖 amorti olan + 📜 Sözleşme soruları (en az 1).
+Bilgisi yetmeyen soru atlanır; aynı kıyafet iki soruda öne çıkmaz; hafta boyunca sorular aynı kalır.
+Hafta içi `isOpen = false` ("Cumartesi açılıyor ⏳"), dolapta 4'ten az parça varsa `blockedMessage`.
+Haftada bir kez oynanır (`saveQuizResult` ikinci sonucu kaydetmez). Süre sayacı ekranın işi;
+süre dolarsa `answerPoints(false, …)`. Telefonda `girlmath.quiz`; `resetAll` siler.
+Örnek akış: `dev-test-panel.tsx` → `DevQuiz` (hafta içi test için yaklaşan Cumartesi'nin soruları).
+
+**Zaman Aşımı = Bedava / etkinlik modu** (`@/lib/events`) – Sözleşme Madde 3
+```tsx
+EVENT_TYPES                      // 10 tür: 💍 Düğün, 💐 Nişan, 🌿 Kına, 🎓 Mezuniyet, 🎂 Doğum günü, 🎤 Konser,
+                                 //   ✈️ Tatil, 💘 Sevgililer Günü, 🎄 Yılbaşı, ✨ Diğer (kendi adını yazar)
+addItem({ ..., event: { type: 'Düğün', date: '2026-10-30' } })   // "Diğer" ise customName: "Ece'nin partisi"
+updateItem(id, { event: { ... } }) / updateItem(id, { event: undefined })  // değiştir / kaldır
+eventLabel(item.event)           // "💍 Düğün" / "✨ Ece'nin partisi"
+eventCountdownText(item)         // "⏳ 💍 Düğün için 12 gün kaldı. … o gün 0 TL!" / "👗 Yarın büyük gün…" /
+                                 //   "🎉 Bugün büyük gün… bugün 0 TL 🆓" / (7 güne kadar) "💌 … ikinci giyimini bekliyor"; yoksa null
+eventStatus(item)                // { kind: 'upcoming', days } | 'tomorrow' | 'today' | { kind: 'past', daysAgo } | null
+eventDayCost(item)               // Etkinlik günü 0, diğer günler costPerWear (SADECE gösterim; hesaplar değişmez)
+```
+Bildirimler otomatik (AppContext): etkinlikten bir gün önce 20:00 "👗 Yarın büyük gün!", o gün 10:00
+"🎉 … bedavaya harika görünüyorsun!". Kıyafet silinince / tarih değişince kendiliğinden güncellenir.
+
 Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olmayan parça da önerilir
 (en sonda; ekranda "Rengi girilmemiş · Ekle 🎨" hapı olarak, dokununca düzenleme formu açılır).
 
@@ -370,8 +406,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - İstatistik hesapları (`src/lib/stats.ts`) ✅
   - Bildirimler (`src/lib/notifications.ts`) ✅
   - Şablondan kalan lint hatasının düzeltilmesi ✅
-  - 6. aşama mantıkları: Starbucks Endeksi ✅ (+ makara `starbucksIndexMeme` ✅), Zaman Aşımı,
-    Dolap Kahoot'u
+  - 6. aşama mantıkları: Starbucks Endeksi ✅ (+ makara `starbucksIndexMeme` ✅), Dolap Kahoot'u ✅
+    (`src/lib/quiz.ts`, `quizResults`/`saveQuizResult`), Zaman Aşımı / etkinlik modu ✅ (`src/lib/events.ts`)
   - Renk alanı (`src/lib/colors.ts`, `item.color`) ve kombin motoru (`src/lib/outfits.ts`) ✅
   - Makara/yerel metinler: kıyas cümleleri ✅, bildirim mesajları ✅ (yerel üslup; takılmada
     Utanç Duvarı'yla aynı zarar hesabı: günlük ≥ 10 TL ise günlük, değilse biriken zarar)
@@ -423,6 +459,18 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   adı, öneri parçasının küçük fotoğrafı + "Kombini gör →" (öneri ekranına gider).
   Bu hafta: 💘 / 💸 / 👗 üç satır, her biri ayrı küçük kart. Burç seçilmediyse kart soluk +
   "Burcunu seç, yıldızlar dolabına baksın 🔮" butonu.
+- **Dolap Kahoot'u ekranları (Ebrar, sırada):** Ana sayfada hafta sonu küçük kart "🎯 Hafta sonu
+  Kahoot'u açıldı!" (hafta içi soluk: "Cumartesi açılıyor ⏳", oynandıysa rozet + seri 🔥).
+  Yarışma: tam ekran, üstte 15 sn'lik küçülen `primary` süre çubuğu + "Soru 2/5", şıklar büyük
+  hap butonlar (kıyafet şıklarında küçük fotoğraf), dokununca doğru = `success` yeşil + titreşim,
+  yanlış = sallanma + doğrusu yeşil yanar, altta `correctText`/`wrongText` balonu, "Sıradaki →".
+  🔍 sorusunda fotoğraf büyük ve bulanık, süre ilerledikçe netleşebilir. Sonuç: büyük rozet emojisi
+  (`Typography.hero`), rozet adı, puan, "🔥 3 haftalık seri", Story'de paylaş (share-card'a rozet kartı).
+- **Etkinlik modu ekranları (Ebrar, sırada):** ekleme/düzenleme formunda "🎉 Etkinlik için aldım"
+  anahtarı → açılınca `EVENT_TYPES` hapları (emoji + ad; "Diğer"de ad kutusu) + tarih seçici.
+  Detayda geri sayım kartı (`eventCountdownText`); etkinlik günü maliyet yerine büyük "0 ₺ 🆓"
+  (`eventDayCost`) + gümüş krom değil, `success` yeşil "Bugün bedava" rozeti ve öne çıkan "Giydim".
+  Ana sayfada en yakın etkinlik için küçük geri sayım kartı (7 gün kala).
 - **Welcome'da burç seçimi:** 12 burç 3×4 ızgara, her kutuda büyük emoji + ad; seçilende
   `primary` dolgu + beyaz yazı. Altta soluk "Şimdi değil".
 
@@ -553,6 +601,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   `src/lib/colors.ts` – kıyafet renkleri; `src/lib/outfits.ts` – kombin motoru (renk uyumu + öneri)
   ve kombin arşivi yardımcıları; `src/lib/places.ts` – giyim yerleri, tekrar uyarısı, "en son" satırı;
   `src/lib/zodiac.ts` – burçlar, gökyüzü hesabı (Ay, Güneş, evre, Merkür retrosu), günlük/haftalık yorum;
+  `src/lib/quiz.ts` – Dolap Kahoot'u (sorular, puan, rozet, seri);
+  `src/lib/events.ts` – Zaman Aşımı = Bedava / etkinlik modu (türler, geri sayım, etkinlik günü 0 TL);
   `src/lib/photo-color.ts` – fotoğraftan renk tahmini (Ebrar)
 - `src/hooks/` – yardımcı hook'lar
 
