@@ -23,6 +23,7 @@ import {
 } from '@/lib/notifications';
 import { deletePhoto } from '@/lib/photos';
 import { getWardrobeStats } from '@/lib/stats';
+import { writeBackupPhotos, type BackupFile } from '@/lib/backup';
 import type { ColorName } from '@/lib/colors';
 import type { ItemEvent } from '@/lib/events';
 import type { PlaceName } from '@/lib/places';
@@ -78,7 +79,11 @@ type AppContextValue = {
 
   // Dolap Kahoot'u sonuçları (haftada bir kez)
   quizResults: QuizResult[];
-  saveQuizResult: (result: QuizResult) => void; // Bu hafta zaten kayıt varsa bir şey yapmaz // "Bu kombini giydim": bütün parçalara Giydim
+  saveQuizResult: (result: QuizResult) => void; // Bu hafta zaten kayıt varsa bir şey yapmaz
+
+  // Veri yedeği: şu anki her şeyi yedektekiyle değiştirir. Başarısız olursa false döner ve
+  // mevcut dolaba dokunmaz. Sözleşme / Welcome bilgisine dokunmaz.
+  restoreAll: (backup: BackupFile) => boolean; // "Bu kombini giydim": bütün parçalara Giydim
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -299,6 +304,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setQuizResults([]); // (Onur ekledi – Kahoot sonuçları da silinsin)
   }
 
+  // ---------- Veri yedeği ----------
+
+  function restoreAll(backup: BackupFile): boolean {
+    let content;
+    try {
+      content = writeBackupPhotos(backup); // Önce fotoğraflar; hata olursa hiçbir şey değişmez
+    } catch (error) {
+      console.warn('Yedek yüklenemedi:', error);
+      return false;
+    }
+    // Yeni dolapta kullanılmayan eski fotoğrafları telefondan sil (boşuna yer kaplamasın)
+    const keep = new Set(content.items.map((item) => item.photoFileName).filter(Boolean));
+    for (const item of items) {
+      if (item.photoFileName && !keep.has(item.photoFileName)) {
+        deletePhoto(item.photoFileName);
+      }
+    }
+    setItems(content.items);
+    setOutfits(content.outfits);
+    setZodiac(content.zodiac);
+    setQuizResults(content.quizResults);
+    return true;
+  }
+
   // ---------- Dolap Kahoot'u ----------
 
   // Haftanın sonucunu kaydeder. Bu hafta zaten oynandıysa ikinci sonuç kaydedilmez.
@@ -425,6 +454,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setZodiac,
         quizResults,
         saveQuizResult,
+        restoreAll,
       }}>
       {children}
     </AppContext.Provider>

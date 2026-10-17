@@ -378,6 +378,20 @@ eventDayCost(item)               // Etkinlik günü 0, diğer günler costPerWea
 Bildirimler otomatik (AppContext): etkinlikten bir gün önce 20:00 "👗 Yarın büyük gün!", o gün 10:00
 "🎉 … bedavaya harika görünüyorsun!". Kıyafet silinince / tarih değişince kendiliğinden güncellenir.
 
+**Veri yedeği** (`@/lib/backup` + `useApp()`) – uygulama silinse bile dolap geri gelsin
+```tsx
+const { items, outfits, zodiac, quizResults, restoreAll } = useApp();
+await exportBackup({ items, outfits, zodiac, quizResults })  // Tek dosya (fotoğraflar dahil) + paylaşım
+                                   //   penceresi ("Dosyalar'a Kaydet", iCloud, WhatsApp…); false: olmadı
+const read = await readBackup()    // Dosya seçtirir + kontrol eder, HİÇBİR ŞEYİ DEĞİŞTİRMEZ:
+                                   //   { ok: true, backup, summary: '24 kıyafet, 6 kombin · 18 Ekim 2026' }
+                                   //   { ok: false, reason: 'canceled' | 'invalid' | 'newer' } → backupErrorText(reason)
+restoreAll(read.backup)            // Onaydan sonra: her şey yedektekiyle değişir (true/false). Hata olursa
+                                   //   mevcut dolaba dokunulmaz. Sözleşme/Welcome bilgisine dokunmaz.
+```
+Yedek dosyası `GirlMath-yedek-2026-10-18.json` (imza `app: 'girl-math'`, `version: 1`). Veri kalıbı
+değişirse `BACKUP_VERSION` artırılır ve `checkBackup` eski sürümü dönüştürür.
+
 Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olmayan parça da önerilir
 (en sonda; ekranda "Rengi girilmemiş · Ekle 🎨" hapı olarak, dokununca düzenleme formu açılır).
 
@@ -410,6 +424,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Şablondan kalan lint hatasının düzeltilmesi ✅
   - 6. aşama mantıkları: Starbucks Endeksi ✅ (+ makara `starbucksIndexMeme` ✅), Dolap Kahoot'u ✅
     (`src/lib/quiz.ts`, `quizResults`/`saveQuizResult`), Zaman Aşımı / etkinlik modu ✅ (`src/lib/events.ts`)
+  - Kahoot bildirimleri ✅, veri yedeği ✅ (`src/lib/backup.ts`, `restoreAll`)
   - Renk alanı (`src/lib/colors.ts`, `item.color`) ve kombin motoru (`src/lib/outfits.ts`) ✅
   - Makara/yerel metinler: kıyas cümleleri ✅, bildirim mesajları ✅ (yerel üslup; takılmada
     Utanç Duvarı'yla aynı zarar hesabı: günlük ≥ 10 TL ise günlük, değilse biriken zarar)
@@ -473,6 +488,11 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   Detayda geri sayım kartı (`eventCountdownText`); etkinlik günü maliyet yerine büyük "0 ₺ 🆓"
   (`eventDayCost`) + gümüş krom değil, `success` yeşil "Bugün bedava" rozeti ve öne çıkan "Giydim".
   Ana sayfada en yakın etkinlik için küçük geri sayım kartı (7 gün kala).
+- **Veri yedeği (Ebrar, sırada):** Ayarlar → VERİLER grubuna iki satır: "📤 Yedeği dışa aktar"
+  (basınca kısa "Hazırlanıyor…" göstergesi; büyük dolapta birkaç saniye sürebilir) ve "📥 Yedeği yükle"
+  (`readBackup` → onay penceresi: `summary` + "Şu anki dolabın silinip yedektekiyle değiştirilecek",
+  [Vazgeç] [Yükle] kırmızı; sonra "✅ Dolabın geri geldi!"). Altına küçük not: "Uygulamayı silmeden
+  önce yedek al 💾". Örnek akış: `dev-test-panel.tsx` → `testExport` / `testImport`.
 - **Welcome'da burç seçimi:** 12 burç 3×4 ızgara, her kutuda büyük emoji + ad; seçilende
   `primary` dolgu + beyaz yazı. Altta soluk "Şimdi değil".
 
@@ -605,6 +625,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   `src/lib/zodiac.ts` – burçlar, gökyüzü hesabı (Ay, Güneş, evre, Merkür retrosu), günlük/haftalık yorum;
   `src/lib/quiz.ts` – Dolap Kahoot'u (sorular, puan, rozet, seri);
   `src/lib/events.ts` – Zaman Aşımı = Bedava / etkinlik modu (türler, geri sayım, etkinlik günü 0 TL);
+  `src/lib/backup.ts` – veri yedeği (dışa aktar, kontrol et, geri yükle);
   `src/lib/photo-color.ts` – fotoğraftan renk tahmini (Ebrar)
 - `src/hooks/` – yardımcı hook'lar
 

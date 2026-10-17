@@ -12,6 +12,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp, type NewClothingItem } from '@/context/app-context';
 import { comparisonText } from '@/lib/comparisons';
+import { backupErrorText, exportBackup, readBackup } from '@/lib/backup';
 import { eventCountdownText, eventDayCost } from '@/lib/events';
 import { costPerWear, isPaidOff, todayString, wearCount } from '@/lib/girl-math';
 import { outfitFor, outfitItems, outfitName, sortOutfits } from '@/lib/outfits';
@@ -48,6 +49,8 @@ export function DevTestPanel() {
     wearOutfit,
     zodiac,
     setZodiac,
+    quizResults,
+    restoreAll,
   } = useApp();
   const daily = zodiac ? dailyHoroscope(zodiac, items) : null;
   const weekly = zodiac ? weeklyHoroscope(zodiac) : null;
@@ -127,6 +130,38 @@ export function DevTestPanel() {
     ]);
   }
 
+  async function testExport() {
+    const ok = await exportBackup({ items, outfits, zodiac, quizResults });
+    if (!ok) {
+      Alert.alert('Yedek hazırlanamadı', 'Bu cihazda paylaşım penceresi açılamadı.');
+    }
+  }
+
+  async function testImport() {
+    const read = await readBackup();
+    if (!read.ok) {
+      if (read.reason !== 'canceled') {
+        Alert.alert('Yüklenemedi', backupErrorText(read.reason));
+      }
+      return;
+    }
+    Alert.alert(
+      '📥 Yedeği yükle?',
+      `${read.summary}\n\nŞu anki dolabın silinip yedektekiyle değiştirilecek.`,
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Yükle',
+          style: 'destructive',
+          onPress: () => {
+            const ok = restoreAll(read.backup);
+            Alert.alert(ok ? '✅ Dolabın geri geldi!' : 'Bir sorun oldu', ok ? read.summary : 'Mevcut dolabına dokunulmadı.');
+          },
+        },
+      ]
+    );
+  }
+
   async function testNotification() {
     const sent = await sendTestNotification();
     if (!sent) {
@@ -152,6 +187,14 @@ export function DevTestPanel() {
       <Pressable style={styles.softButton} onPress={testNotification}>
         <Text style={styles.softButtonText}>🔔 Test bildirimi (5 sn)</Text>
       </Pressable>
+      <View style={styles.row}>
+        <Pressable style={styles.softButton} onPress={testExport}>
+          <Text style={styles.softButtonText}>📤 Yedeği dışa aktar</Text>
+        </Pressable>
+        <Pressable style={styles.softButton} onPress={testImport}>
+          <Text style={styles.softButtonText}>📥 Yedeği yükle</Text>
+        </Pressable>
+      </View>
 
       <Text style={styles.title}>🔮 Burç</Text>
       <View style={styles.row}>
