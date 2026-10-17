@@ -25,8 +25,10 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { INFINITE_COST, formatTL, itemComparisonText } from '@/components/clothing-card';
+import { ColorSwatch } from '@/components/color-picker';
 import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
+import type { ColorName } from '@/lib/colors';
 import { costPerWear, daysSinceLastWear, isPaidOff, wearCount } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
 import { starbucksIndexList } from '@/lib/starbucks-index';
@@ -183,6 +185,7 @@ export default function ItemDetailScreen() {
         <View style={styles.hero}>
           <View style={styles.facts}>
             <Fact label="Kategori" value={item.category} />
+            {item.color && <Fact label="Renk" value={item.color} color={item.color} />}
             <Fact label="Giyim" value={`${wears} / ${item.targetWears}`} />
             <Fact label="Son giyim" value={lastWornText(wears, daysSinceLastWear(item))} />
             <Fact label="Eklendi" value={item.createdAt.split('-').reverse().join('.')} />
@@ -228,6 +231,28 @@ export default function ItemDetailScreen() {
                 'Giymediğin sürece maliyeti sonsuz 😱 İlk "Giydim" ile düşmeye başlasın!'}
             </Text>
           </View>
+
+          {/* Kombin önerisi ekranı (Onur'un kombin motoru) */}
+          <Pressable
+            onPress={() => router.push({ pathname: '/outfit/[id]', params: { id: item.id } })}
+            style={({ pressed }) => [styles.outfitCard, pressed && styles.outfitCardPressed]}>
+            <View style={styles.outfitIcon}>
+              <SymbolView
+                name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
+                tintColor={colors.primary}
+                size={20}
+              />
+            </View>
+            <View style={styles.outfitBody}>
+              <Text style={styles.outfitTitle}>Bununla ne giyerim?</Text>
+              <Text style={styles.outfitText}>Dolabından kombin önerisi</Text>
+            </View>
+            <SymbolView
+              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+              tintColor={colors.primary}
+              size={14}
+            />
+          </Pressable>
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -301,12 +326,16 @@ export default function ItemDetailScreen() {
 }
 
 // Pembe alandaki küçük bilgi satırı (etiket + değer)
-function Fact({ label, value }: { label: string; value: string }) {
+// color verilirse değerin solunda küçük renk yuvarlağı çıkar (RENK satırı)
+function Fact({ label, value, color }: { label: string; value: string; color?: ColorName }) {
   return (
     <View style={styles.fact}>
       {/* Türkçe kurala göre büyük harf: "Giyim" → "GİYİM" */}
       <Text style={styles.factLabel}>{label.toLocaleUpperCase('tr')}</Text>
-      <Text style={styles.factValue}>{value}</Text>
+      <View style={styles.factValueRow}>
+        {color && <ColorSwatch color={color} size={14} />}
+        <Text style={styles.factValue}>{value}</Text>
+      </View>
     </View>
   );
 }
@@ -362,6 +391,11 @@ const styles = StyleSheet.create({
   factLabel: {
     ...Typography.label,
     color: colors.textSecondary,
+  },
+  factValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one + Spacing.half,
   },
   factValue: {
     ...Typography.bodyBold,
@@ -442,6 +476,41 @@ const styles = StyleSheet.create({
   compareText: {
     ...Typography.heading,
     color: colors.text,
+  },
+  // "Bununla ne giyerim?" satırı (Cüzdan'daki "Almalı mıyım?" kartıyla aynı stil)
+  outfitCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    padding: Spacing.three,
+    ...Shadows.card,
+  },
+  outfitCardPressed: {
+    transform: [{ scale: 0.98 }],
+  },
+  outfitIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outfitBody: {
+    flex: 1,
+    gap: Spacing.half,
+  },
+  outfitTitle: {
+    ...Typography.heading,
+    color: colors.text,
+  },
+  outfitText: {
+    ...Typography.body,
+    color: colors.textSecondary,
   },
   section: {
     gap: Spacing.two,

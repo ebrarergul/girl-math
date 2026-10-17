@@ -6,7 +6,9 @@
  * - Düzenleme: detay sayfasındaki "Düzenle" ile kıyafetin kimliği (id) verilerek açılır,
  *   form o kıyafetin bilgileriyle dolu gelir. "Kaydet" → updateItem(); giyim geçmişi korunur.
  * "Almalı mıyım?" ekranından fiyat (price) verilerek de açılabilir: fiyat dolu gelir.
- * Fotoğraf, ad, kategori, fiyat ve isteğe bağlı hedef giyilme sayısı girilir.
+ * Fotoğraf, ad, kategori, isteğe bağlı renk (kombin önerileri için), fiyat ve isteğe bağlı hedef
+ * giyilme sayısı girilir. Fotoğraf seçilince rengi fotoğraftan tahmin edilip seçili gelir
+ * ("Fotoğraftan tahmin ettim … doğru mu?"); kullanıcı elle seçtiyse tahmin üstüne yazılmaz.
  */
 
 import { Image } from 'expo-image';
@@ -16,8 +18,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ColorPicker } from '@/components/color-picker';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { DEFAULT_TARGET_WEARS, useApp } from '@/context/app-context';
+import type { ColorName } from '@/lib/colors';
+import { guessPhotoColor } from '@/lib/photo-color';
 import { deletePhoto, pickAndSavePhoto, photoUri } from '@/lib/photos';
 import { CATEGORIES, type Category } from '@/lib/types';
 
@@ -41,6 +46,9 @@ export default function AddItemScreen() {
   );
   const [name, setName] = useState(editing?.name ?? '');
   const [category, setCategory] = useState<Category | null>(editing?.category ?? null);
+  const [color, setColor] = useState<ColorName | undefined>(editing?.color);
+  // Fotoğraftan tahmin edilen renk (kullanıcı seçiciye dokununca silinir)
+  const [guessedColor, setGuessedColor] = useState<ColorName | null>(null);
   const [priceText, setPriceText] = useState(
     editing ? String(editing.price) : (priceParam ?? ''),
   );
@@ -76,6 +84,18 @@ export default function AddItemScreen() {
     deletePhoto(photoRef.current);
     photoRef.current = fileName;
     setPhotoFileName(fileName);
+
+    // Rengi fotoğraftan tahmin et; ama kullanıcı rengi kendisi seçtiyse ona dokunma
+    const guess = await guessPhotoColor(photoUri(fileName));
+    if (guess && (color === undefined || color === guessedColor)) {
+      setColor(guess);
+      setGuessedColor(guess);
+    }
+  }
+
+  function handleColorChange(next: ColorName | undefined) {
+    setColor(next);
+    setGuessedColor(null);
   }
 
   function handleSave() {
@@ -85,6 +105,7 @@ export default function AddItemScreen() {
     const values = {
       name: name.trim(),
       category,
+      color, // Seçilmediyse undefined: düzenlemede rengi kaldırmak da böyle olur
       price: Math.round(price),
       photoFileName,
       targetWears: target,
@@ -176,6 +197,19 @@ export default function AddItemScreen() {
               );
             })}
           </View>
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>RENGİ</Text>
+          <ColorPicker
+            value={color}
+            onChange={handleColorChange}
+            note={
+              guessedColor && color === guessedColor
+                ? `Fotoğraftan tahmin ettim: ${guessedColor}. Doğru mu? 🎨`
+                : null
+            }
+          />
         </View>
 
         <View style={styles.field}>

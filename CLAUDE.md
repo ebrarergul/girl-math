@@ -257,6 +257,19 @@ addItem({ ..., color: 'Beyaz' }) / updateItem(id, { color: 'Pembe' })  // renk i
 ```
 Eski kayıtlarda ve renk seçilmediyse `item.color` yok (undefined); ekranlar bunu kontrol etmeli.
 
+**Fotoğraftan renk tahmini** (`@/lib/photo-color`, Ebrar ekledi) – ekleme formunda fotoğraf seçilince
+```tsx
+const color = await guessPhotoColor(photoUri(fileName));  // 'Bej' | 'Desenli' | ... ya da null
+```
+Telefonda, internetsiz: fotoğraf 160 piksele küçültülür (`expo-image-manipulator`), pikselleri
+okunur (`jpeg-js`). Önce desen kontrolü (yan yana piksellerde sert geçiş oranı > %9 → "Desenli"),
+desen yoksa ortadaki pikseller renk gruplarına ayrılır (k-means), kenardaki zemin grubu elenir,
+en büyük grubun ortalama rengi en yakın renge eşlenir. Renksiz tonlar (canlılık < 5) açıklığa
+göre Siyah/Gri/Beyaz; krem/kot/pudra gibi tonlar `EXTRA_SHADES` listesinde. Ayarlar dosyanın
+üstündeki sabitlerde. Tahmindir: formda "Fotoğraftan tahmin ettim: Bej. Doğru mu? 🎨" yazar,
+kullanıcı elle seçtiyse tahmin üstüne yazılmaz. Bilinen zayıflık: beyaz zeminde beyaz kıyafet,
+çok koyu kot ("Siyah" der), üstünde büyük logo olan düz tişört ("Desenli" diyebilir).
+
 **Kombin motoru** (`@/lib/outfits`) – "Bununla ne giyerim?" (kullanıcı puan görmez, sadece öneri)
 ```tsx
 matchesFor(item, items)  // [{ category: 'Alt', matches: [{ item, reason: 'Beyaz her şeyle gider 🤍' }] }, ...]
@@ -266,6 +279,12 @@ outfitFor(item, items)   // { items: [seçilen, ...], missing: ['Ayakkabı'], te
                          //   uyarsa Dış giyim/Çanta/Aksesuar eklenir. missing: dolapta uygun parça yok.
 colorMatch(a, b)         // { score, reason } – motorun iç aracı; kurallar dosyanın üstündeki listelerde
 ```
+Ebrar'ın motorda yaptığı küçük değişiklikler (17 Ekim, Onur çalışmıyorken, izinle; yanlarında not var):
+ikisi de nötrse sebep cümlesi **önerilen** parçanın rengini anlatır (yoksa "Siyah her şeyi kurtarır"
+bej tişörtün altında yazıyordu); şık ikili bir nötr içerse de kendi cümlesi çıkar; yeni şık ikili
+"Kahverengi + lacivert, sessiz lüks 🤎💙"; Lacivert cümlesi "Lacivert her renkle şık durur 💙";
+rengi bilinmeyen parçanın puanı 50 → `MIN_MATCH_SCORE + 1` (listede en sona düşer, kombine sadece
+rengi bilinen uygun parça yoksa girer). Puan mantığı başka değişmedi.
 **Kombin arşivi** (`useApp()` + `@/lib/outfits`) – kaydet, favorile ⭐, "Bu kombini giydim"
 ```tsx
 const { outfits, saveOutfit, toggleFavoriteOutfit, renameOutfit, deleteOutfit, wearOutfit } = useApp();
@@ -312,7 +331,7 @@ Merkür retrosu tarihleri `MERCURY_RETROGRADES` listesinde (2027 sonrası eklenm
 Burç seçilmediyse ekranda "Burcunu seç, yıldızlar dolabına baksın 🔮" gösterilir.
 
 Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olmayan parça da önerilir
-("Rengini bilmiyorum ama bir dene 🤷‍♀️").
+(en sonda; ekranda "Rengi girilmemiş · Ekle 🎨" hapı olarak, dokununca düzenleme formu açılır).
 
 **Veri tipi** (`@/lib/types`): `ClothingItem` → `id, name, category, price, photoFileName,
 wearDates, targetWears, createdAt, color?`. Kategoriler `CATEGORIES` listesinde.
@@ -329,9 +348,10 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, Dolap Tarotu
     görünüşü ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅, Ayarlar ekranı ✅
   - Sonra: uygulama simgesi (taslaklar beğenilmedi, ertelendi)
-  - **Sırada (motor hazır ✅):** ekleme/düzenleme formunda **renk seçici** (`COLORS`, renk
-    yuvarlakları `colorHex`), kıyafet detayında **"Bununla ne giyerim? ✨"** butonu + öneri ekranı
-    (`matchesFor` + `outfitFor`), Ana sayfada "Günün kombini" kartı
+  - Renk seçici ✅ (+ fotoğraftan renk tahmini ✅), detayda RENK satırı ✅, **"Bununla ne
+    giyerim? ✨"** ekranı ✅ (kolaj, seçenekle değiştirme, "Kombini kaydet 💾")
+  - **Sırada:** Kombin arşivi sayfası, Ana sayfada "Günün kombini" kartı, "Nereye?" seçimi,
+    burç kartı (aşağıdaki "Yeni kararlaştırılan özellikler" sırasıyla)
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -348,8 +368,9 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - `resetAll` – aynı şekilde Ebrar ekledi (Ayarlar'daki "Bütün verileri sil" kullanır).
   - **Yeni kararlaştırılan özellikler (16 Ekim, Onur + Ebrar), bu sırayla:**
     1. Renk + kombin motoru ✅
-    2. **Favori kombin arşivi:** mantık ✅ (Onur). **Sırada ekran (Ebrar):** Arşiv sayfası
-       (`sortOutfits`, yıldız, ad değiştirme, sil, "Bu kombini giydim"), öneri ekranında "Kaydet 💾".
+    2. **Favori kombin arşivi:** mantık ✅ (Onur), öneri ekranında "Kombini kaydet 💾" ✅ (Ebrar).
+       **Sırada ekran (Ebrar):** Arşiv sayfası (`sortOutfits`, yıldız, ad değiştirme, sil,
+       "Bu kombini giydim").
     3. **"Nereye giderken giydin?":** mantık ✅ (Onur, `src/lib/places.ts`). **Sırada ekran
        (Ebrar):** Giydim'de isteğe bağlı yer seçme ("Geç" seçeneğiyle; hızlı Giydim yer sormaz),
        `repeatWarning` varsa uyarı penceresi (soft: "💭 Hatırlatma", strong: "🚨") + "Bunun yerine"
@@ -426,7 +447,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
       fiyatları toplamı), en altta "Almalı mıyım?" kartı, başlığın yanında Story paylaş butonu.
       Dolap boşsa ekleme butonu.
     - `explore.tsx` – "Test" sekmesi, sadece `<DevTestPanel />` gösterir (sadece geliştirmede)
-  - `add-item.tsx` – kıyafet ekleme **ve düzenleme** formu (fotoğraf, ad, kategori, fiyat, hedef).
+  - `add-item.tsx` – kıyafet ekleme **ve düzenleme** formu (fotoğraf, ad, kategori, renk, fiyat,
+    hedef). Fotoğraf seçilince renk `guessPhotoColor` ile tahmin edilip seçili gelir.
     Parametresiz: yeni parça (`addItem`). `params: { id }`: düzenleme, form dolu gelir
     (`updateItem`; detaydaki "Düzenle" açar). `params: { price }`: fiyat dolu gelir ("Almalı
     mıyım?" → "Aldım!"). Kaydetmeden çıkılırsa bu formda yeni seçilen fotoğrafı siler.
@@ -434,12 +456,19 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     (iced latteye düşme süresine göre), "Bunu alırsan şunlardan vazgeçiyorsun" (Starbucks
     Endeksi), "Girl Math'e göre" (Brunch/Manikür/Iced latte/Filtre kahve fiyatına düşmesi için
     kaç giyim ve ne kadar süre). Kalemler `TARGET_NAMES` listesinde; fiyatlar comparisons.ts'ten.
-  - `item/[id].tsx` – kıyafet detay sayfası (sağ üstte "Düzenle"): bilgi satırları + büyük fotoğraf, maliyet, kıyas
-    cümlesi, hedef çubuğu, Starbucks Endeksi, silme; altta "Giydim ✨" ve ↩ geri al.
+  - `item/[id].tsx` – kıyafet detay sayfası (sağ üstte "Düzenle"): bilgi satırları (renk varsa
+    RENK satırı + renk yuvarlağı) + büyük fotoğraf, maliyet, kıyas cümlesi, **"Bununla ne
+    giyerim?"** kartı, hedef çubuğu, Starbucks Endeksi, silme; altta "Giydim ✨" ve ↩ geri al.
     "Giydim"de maliyet rakamı zıplar (reanimated) ve kutlama balonu çıkar (mesajlar `handleWear`'da).
   - `share.tsx` – Story paylaşımı: kartın önizlemesi + "Story'de paylaş" (fotoğrafını çeker,
     paylaşım penceresini açar). `params: { id }` → kıyafet kartı (detaydaki paylaş simgesi),
     parametresiz → dolap kartı (Cüzdan'daki paylaş butonu).
+  - `outfit/[id].tsx` – "Bununla ne giyerim? ✨" (detaydan açılır): `outfitFor` kombini yamuk,
+    üst üste binen fotoğraf **kolajı** ("Seçtiğin" etiketi), kombin cümlesi, eksik kategori notu,
+    seçilen parçanın rengi yoksa "renk seçersen…" satırı; **"Başka seçenekler"** (`matchesFor`,
+    her kartta renk + sebep hapı). Seçeneğe dokununca kombine girer/çıkar (elbise ↔ üst/alt
+    birbirini çıkarır), "Öneriye dön ↺". Altta "Kombini kaydet 💾" (`saveOutfit`, iPhone'da
+    isteğe bağlı ad sorar; kayıtlıysa "Arşivde ✓").
   - `shame-wall.tsx` – Utanç Duvarı: toplam boşa giden + unutulan bütün parçalar (en çok
     zarar yazandan aza).
   - `settings.tsx` – Ayarlar (iPhone ayarları tarzı gruplar): BİLDİRİMLER (izin durumu + "Aç";
@@ -458,6 +487,9 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `quick-wear.tsx` – ortak hızlı Giydim: `useQuickWear()` → `{ toggleWear, toastView }`
     (ışık düğmesi: giyilmediyse Giydim + titreşim + "Geri al"lı balon, bugün giyildiyse geri al).
     Ana sayfa şeridi ve Dolap'ta basılı tutma kullanır.
+  - `color-picker.tsx` – renk seçici (`ColorPicker`: yatay kayan renk yuvarlakları, tekrar
+    dokununca seçim kalkar, `note` ile alt yazı) ve tek renk yuvarlağı `ColorSwatch` (beyazın
+    kenarı var, "Desenli" çok renkli). Form, detay ve kombin ekranı kullanır.
   - `tarot-card.tsx` – Dolap Tarotu (gümüş şerit, dönen kart, deste `DECK`, GEÇİCİ `pickTarotItem`)
   - `share-card.tsx` – Story kartları (`ItemShareCard`, `WardrobeShareCard`, pembe geçişli 9:16)
   - `screen-background.tsx` – sekmeler, Welcome ve Sözleşme'nin "üstten pembe ışık" zemini
@@ -482,7 +514,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   `src/lib/starbucks-index.ts` – Starbucks Endeksi (fiyat = kaç iced latte);
   `src/lib/colors.ts` – kıyafet renkleri; `src/lib/outfits.ts` – kombin motoru (renk uyumu + öneri)
   ve kombin arşivi yardımcıları; `src/lib/places.ts` – giyim yerleri, tekrar uyarısı, "en son" satırı;
-  `src/lib/zodiac.ts` – burçlar, gökyüzü hesabı (Ay, Güneş, evre, Merkür retrosu), günlük/haftalık yorum
+  `src/lib/zodiac.ts` – burçlar, gökyüzü hesabı (Ay, Güneş, evre, Merkür retrosu), günlük/haftalık yorum;
+  `src/lib/photo-color.ts` – fotoğraftan renk tahmini (Ebrar)
 - `src/hooks/` – yardımcı hook'lar
 
 ## Bilinen durumlar
@@ -511,6 +544,11 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
 - Ebrar'ın eklediği paketler (Ekim 2026): `react-native-view-shot`, `expo-sharing` (Story
   paylaşımı), `expo-haptics` (titreşim), `expo-linear-gradient` (renk geçişleri). Hepsi Expo
   Go'da çalışır. `expo-sharing` app.json'a kendi satırını ekledi. Pull sonrası `npm install`.
+  17 Ekim: `expo-image-manipulator` ve `jpeg-js` (fotoğraftan renk tahmini; ikisi de Expo Go'da
+  çalışır, app.json değişmedi). Pull sonrası `npm install`.
+- **İleride düşünülebilir (Ebrar'ın fikri):** renk adı yerine fotoğraftaki gerçek tonlara göre kombin
+  önerisi. Şimdilik yapılmadı çünkü motorun kuralları ve kullanıcıya gösterilen sebepler renk
+  adlarına dayanıyor; tonlara geçmek motoru baştan yazmak demek.
 - Açılış ekranı (splash) rengi `app.json`'da `#FFF7FA`; Expo Go'da görünmez, gerçek uygulamada görünür.
 
 ## Eski proje

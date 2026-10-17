@@ -29,7 +29,7 @@ const NEUTRAL_REASONS: Partial<Record<ColorName, string>> = {
   Beyaz: 'Beyaz her şeyle gider 🤍',
   Gri: 'Gri her şeyin yanında sakin durur 🩶',
   Bej: 'Bej her şeye yumuşak bir dokunuş katar 🤎',
-  Lacivert: 'Lacivert, siyahın daha şık kuzeni 💙',
+  Lacivert: 'Lacivert her renkle şık durur 💙',
   'Kot mavisi': 'Kot her şeyle gider, kurtarıcımız 👖',
 };
 
@@ -48,6 +48,7 @@ const CHIC_PAIRS: [ColorName, ColorName, string][] = [
   ['Pembe', 'Yeşil', 'Pembe + yeşil, tam bir çiçek bahçesi 🌷'],
   ['Mavi', 'Sarı', 'Mavi + sarı, yaz enerjisi ☀️'],
   ['Haki', 'Turuncu', 'Haki + turuncu, sonbahar havası 🍂'],
+  ['Kahverengi', 'Lacivert', 'Kahverengi + lacivert, sessiz lüks 🤎💙'],
 ];
 
 // Klasik kurala göre riskli ikililer
@@ -75,10 +76,15 @@ function isPair(a: ColorName, b: ColorName, x: ColorName, y: ColorName): boolean
   return (a === x && b === y) || (a === y && b === x);
 }
 
-// İki rengin uyumu. Renklerden biri bilinmiyorsa (eski kayıt) orta puan verir.
+// Rengi bilinmeyen parçanın puanı: öneri sınırının hemen üstü. Böylece listede görünür ama
+// her kategoride en sona düşer; kombine sadece rengi bilinen uygun parça yoksa girer (Ebrar
+// değiştirdi; eskiden 50 idi ve rengi bilinmeyenler öndeki önerilere karışıyordu)
+const UNKNOWN_COLOR_SCORE = MIN_MATCH_SCORE + 1;
+
+// İki rengin uyumu. Renklerden biri bilinmiyorsa (eski kayıt) düşük ama geçer puan verir.
 export function colorMatch(a: ColorName | undefined, b: ColorName | undefined): ColorMatch {
   if (!a || !b) {
-    return { score: 50, reason: 'Rengini bilmiyorum ama bir dene 🤷‍♀️' };
+    return { score: UNKNOWN_COLOR_SCORE, reason: 'Rengini bilmiyorum ama bir dene 🤷‍♀️' };
   }
   if (a === 'Desenli' && b === 'Desenli') {
     return { score: 10, reason: 'İki desen bir arada göz yorar 🙈' };
@@ -90,7 +96,15 @@ export function colorMatch(a: ColorName | undefined, b: ColorName | undefined): 
     return { score: 80, reason: `Tepeden tırnağa ${a.toLocaleLowerCase('tr')}, iddialı! ✨` };
   }
 
-  const neutral = NEUTRALS.includes(a) ? a : NEUTRALS.includes(b) ? b : null;
+  // İkisi de nötrse cümle ikinci rengin (önerilen parçanın) olur; yoksa kartın altında seçilen
+  // parçanın rengi yazar ve öneri o renkmiş gibi okunur (Ebrar düzeltti)
+  const neutral = NEUTRALS.includes(b) ? b : NEUTRALS.includes(a) ? a : null;
+  // Şık ikililerden biri nötr olsa bile (kahverengi + lacivert) kendi cümlesi daha anlamlı;
+  // puan nötr kuralındaki gibi kalır (Ebrar ekledi)
+  const chicWithNeutral = neutral && CHIC_PAIRS.find(([x, y]) => isPair(a, b, x, y));
+  if (chicWithNeutral) {
+    return { score: 90, reason: chicWithNeutral[2] };
+  }
   if (neutral) {
     return { score: 90, reason: NEUTRAL_REASONS[neutral] ?? 'Nötr renk her şeyle gider ✨' };
   }
