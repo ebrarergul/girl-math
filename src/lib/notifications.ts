@@ -31,30 +31,47 @@ const FORGOTTEN_ID = 'girlmath-forgotten';
 
 // ---------- Mesajlar ----------
 
+// Kıyafet adı tırnak içinde özne olur: “Pembe elbise” (Türkçe ek sorunu olmasın diye)
+const q = (name: string) => `“${name}”`;
+
 const PAID_OFF_TITLE = 'Tebrikler aşko! 💖';
 const PAID_OFF_MESSAGES = [
-  (name: string, wears: number) => `${name} ${wears} kere giyildi, resmen bedava!`,
-  (name: string) => `${name} kendini amorti etti! 🎉 Artık her giyişin kâr, girl math böyle çalışır.`,
-  (name: string) => `Bu bir başarı hikâyesi 👑 ${name} hedefe ulaştı. Para harcamadın, yatırım yaptın!`,
-  (name: string) => `${name} artık bedava 💅 Bunu kutlamak için yeni bir şey almak şart değil… ama olabilir 👀`,
+  (name: string) => `+1000 aura ✨ ${q(name)} kendini amorti etti, artık resmen bedava!`,
+  (name: string, wears: number) =>
+    `${q(name)} ${wears} kere giyildi, resmen bedava 🎉 Merkez Bankası seni danışman olarak istiyor 📞`,
+  (name: string) => `${q(name)} kendini amorti etti 💅 Enflasyon kaybetti, sen kazandın!`,
+  (name: string) => `${q(name)} bedavaya düştü 💖 Kızım sen bu işi biliyorsun`,
 ];
 
 const FORGOTTEN_TITLE = 'Dolabın sana küs 😤';
 const FORGOTTEN_MESSAGES = [
-  (name: string, days: number) => `${days} gündür giymediğin şey: ${name}. Acil giy ya da sat! 😤`,
-  (name: string, days: number) =>
-    `${name} dolabın karanlık köşesinden sesleniyor: "Beni hatırlıyor musun?" 🥺 (${days} gün oldu)`,
-  (name: string, days: number) =>
-    `${name} ${days} gündür gün yüzü görmedi. Maliyeti kendiliğinden düşmüyor tatlım 💸`,
-  (name: string, _days: number, price: number) => `${name} için ${price} TL verdin. Yarın giysen? 👗`,
+  (name: string, days: number) => `-500 aura 📉 ${q(name)} ${days} gündür dolapta çürüyor`,
+  (name: string, days: number) => `${q(name)} ${days} gündür askıda 👀 Acil giy ya da sat, kızım!`,
+  (name: string, days: number, price: number) =>
+    `${q(name)} için ${price} TL verdin, ${days} gündür yüzüne bakmadın 🥺 Enflasyon bile bu kadar acımasız değil`,
+  (name: string, days: number, price: number) =>
+    `Dolabında ${price} TL'lik ${q(name)} var ve ${days} gündür kira ödemeden oturuyor 🏠 Çıkar onu artık!`,
 ];
+
+// Zarar cümlesi (Utanç Duvarı ile aynı hesap: günlük zarar = fiyat ÷ 365). Günlük zarar bu
+// tutar ve üstündeyse günlük tutar yazılır; değilse biriken zarar ("günlük 2 TL" anlamsız durur).
+const MIN_DAILY_LOSS = 10;
+function lossMessage(name: string, days: number, price: number): string {
+  const daily = Math.round(price / 365);
+  const loss =
+    daily >= MIN_DAILY_LOSS
+      ? `sana günlük ${daily} TL zarar yazıyor`
+      : `sana şimdiye kadar ${Math.round((price / 365) * days)} TL zarar yazdı`;
+  return `${q(name)} ${days} gündür askıda ve ${loss} 💸 Bu hafta sonu giy ya da sat!`;
+}
 
 const DAILY_TITLE = 'Girl Math 💅';
 const DAILY_MESSAGES = [
-  'Bugün ne giydin? "Giydim"e basmayı unutma, maliyetler kendiliğinden düşmüyor 💸',
-  'Günün kombinini kaydet aşko ✨ Her "Giydim" bir indirim!',
-  'Dolabın seni bekliyor 👀 Bugün giydiklerini işaretledin mi?',
-  'Girl math hatırlatması: giymediğin kıyafet pahalı, giydiğin bedava 💖',
+  'Bugün ne giydin aşko? “Giydim”e bas, maliyetler kendiliğinden düşmüyor 💸',
+  'Bugün main character mıydın? Kanıtla: “Giydim” 📸',
+  'Girl dinner yedin, girl math yaptın mı? “Giydim” bekliyor 💅',
+  'Enflasyon her gün artıyor, bari senin maliyetin düşsün 📉 Bugün ne giydin?',
+  'Bugünkü kombin kaydedilmezse giyilmemiş sayılır kızım, kurallar böyle 📜',
 ];
 
 // Listeden rastgele bir eleman seçer
@@ -104,6 +121,15 @@ export async function sendPaidOffNotification(item: ClothingItem): Promise<void>
   });
 }
 
+// Takılma mesajı: dört cümle + zarar cümlesi arasından rastgele
+function forgottenMessage(item: ClothingItem, days: number): string {
+  const options = [
+    ...FORGOTTEN_MESSAGES.map((message) => () => message(item.name, days, item.price)),
+    () => lossMessage(item.name, days, item.price),
+  ];
+  return pickRandom(options)();
+}
+
 // 2) Takılma: en uzun süredir giyilmeyen kıyafet için 3 gün sonra 20:00'ye kurulur.
 // Her çağrıldığında eskisini siler, yenisini kurar. Kıyafet yoksa sadece eskisini siler.
 export async function scheduleForgottenReminder(
@@ -129,7 +155,7 @@ export async function scheduleForgottenReminder(
     identifier: FORGOTTEN_ID,
     content: {
       title: FORGOTTEN_TITLE,
-      body: pickRandom(FORGOTTEN_MESSAGES)(item.name, daysAtDelivery, item.price),
+      body: forgottenMessage(item, daysAtDelivery),
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
   });

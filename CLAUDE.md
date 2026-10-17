@@ -373,7 +373,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 6. aşama mantıkları: Starbucks Endeksi ✅ (+ makara `starbucksIndexMeme` ✅), Zaman Aşımı,
     Dolap Kahoot'u
   - Renk alanı (`src/lib/colors.ts`, `item.color`) ve kombin motoru (`src/lib/outfits.ts`) ✅
-  - Makara/yerel metinler: kıyas cümleleri ✅, bildirim mesajları (sırada)
+  - Makara/yerel metinler: kıyas cümleleri ✅, bildirim mesajları ✅ (yerel üslup; takılmada
+    Utanç Duvarı'yla aynı zarar hesabı: günlük ≥ 10 TL ise günlük, değilse biriken zarar)
   - `updateItem` – Onur bugün çalışmadığı için Ebrar ekledi (`app-context.tsx`, kural 2: yeni
     şey eklemek serbest). Onur kontrol eder; adını değiştirmek/silmek düzenleme ekranını bozar.
   - `resetAll` – aynı şekilde Ebrar ekledi (Ayarlar'daki "Bütün verileri sil" kullanır).
