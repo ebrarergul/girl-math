@@ -392,6 +392,22 @@ restoreAll(read.backup)            // Onaydan sonra: her şey yedektekiyle deği
 Yedek dosyası `GirlMath-yedek-2026-10-18.json` (imza `app: 'girl-math'`, `version: 1`). Veri kalıbı
 değişirse `BACKUP_VERSION` artırılır ve `checkBackup` eski sürümü dönüştürür.
 
+**Analizler** (`@/lib/insights`) – Cüzdan'da ya da ayrı bir "Analiz" sayfasında
+```tsx
+colorStats(items, 'month' | 'all')  // Giydim sayısına göre renkler: { text: '💖 En çok pembe giyiyorsun (%40)'
+                                    //   (eşitse '💖🖤 Pembe ve siyah başa baş'), shares: [{ color, emoji, wears,
+                                    //   percent }], uncoloredCount, mostProfitable (sadece 'all': en çok kâr
+                                    //   ettiren renk { color, emoji, savings, text }) }
+monthlySummary(items)               // Bu ay (ya da monthlySummary(items, '2026-09')): { title: 'Ekim 2026 özetin 💅',
+                                    //   lines: [hazır satırlar], verdict: 'Merkez Bankası bu ay seni örnek gösterdi 🏦',
+                                    //   newItemCount, spent, wears, previousWears, star, paidOffCount, unwornCount }
+sellList(items)                     // "Satmayı düşün": 90+ gündür giyilmeyen (hiç giyilmediyse 90+ gündür dolapta),
+                                    //   amorti olmamış parçalar (etkinliği henüz gelmemiş olan hariç), pahalıdan ucuza:
+                                    //   { candidates: [{ item, days, estimate, text }], totalEstimate, text }
+```
+İkinci el değeri **tahmin** (alış fiyatının ~%40'ı, `RESALE_RATE`); ekranda "tahmini" diye yazılır.
+`colorEmoji('Pembe')` → "💖" (renk listesine emoji eklendi).
+
 Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olmayan parça da önerilir
 (en sonda; ekranda "Rengi girilmemiş · Ekle 🎨" hapı olarak, dokununca düzenleme formu açılır).
 
@@ -425,6 +441,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 6. aşama mantıkları: Starbucks Endeksi ✅ (+ makara `starbucksIndexMeme` ✅), Dolap Kahoot'u ✅
     (`src/lib/quiz.ts`, `quizResults`/`saveQuizResult`), Zaman Aşımı / etkinlik modu ✅ (`src/lib/events.ts`)
   - Kahoot bildirimleri ✅, veri yedeği ✅ (`src/lib/backup.ts`, `restoreAll`)
+  - Analizler ✅ (`src/lib/insights.ts`: renk analizi, aylık özet, "satmayı düşün")
   - Renk alanı (`src/lib/colors.ts`, `item.color`) ve kombin motoru (`src/lib/outfits.ts`) ✅
   - Makara/yerel metinler: kıyas cümleleri ✅, bildirim mesajları ✅ (yerel üslup; takılmada
     Utanç Duvarı'yla aynı zarar hesabı: günlük ≥ 10 TL ise günlük, değilse biriken zarar)
@@ -493,6 +510,11 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   (`readBackup` → onay penceresi: `summary` + "Şu anki dolabın silinip yedektekiyle değiştirilecek",
   [Vazgeç] [Yükle] kırmızı; sonra "✅ Dolabın geri geldi!"). Altına küçük not: "Uygulamayı silmeden
   önce yedek al 💾". Örnek akış: `dev-test-panel.tsx` → `testExport` / `testImport`.
+- **Analizler (Ebrar, sırada):** Cüzdan'ın altına ya da ayrı "Analiz" sayfasına: renk analizi için
+  "Bu ay / Tüm zamanlar" hap seçici + yatay yüzde çubuğu (her renk `colorHex` ile kendi renginde
+  dilim, altında emoji + %); "Ekim 2026 özetin 💅" kartı (`lines` alt alta, en altta `verdict`
+  pembe balonda; Story'de paylaşılabilir); "🏷️ Satmayı düşün" listesi küçük fotoğraflı satırlar +
+  altta "💰 tahminen ~2.600 TL" (tahmin olduğu belli olsun). Liste boşsa 👑 cümlesi.
 - **Welcome'da burç seçimi:** 12 burç 3×4 ızgara, her kutuda büyük emoji + ad; seçilende
   `primary` dolgu + beyaz yazı. Altta soluk "Şimdi değil".
 
@@ -626,6 +648,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   `src/lib/quiz.ts` – Dolap Kahoot'u (sorular, puan, rozet, seri);
   `src/lib/events.ts` – Zaman Aşımı = Bedava / etkinlik modu (türler, geri sayım, etkinlik günü 0 TL);
   `src/lib/backup.ts` – veri yedeği (dışa aktar, kontrol et, geri yükle);
+  `src/lib/insights.ts` – analizler (renk analizi, aylık özet, "satmayı düşün" listesi);
   `src/lib/photo-color.ts` – fotoğraftan renk tahmini (Ebrar)
 - `src/hooks/` – yardımcı hook'lar
 

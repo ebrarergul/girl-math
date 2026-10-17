@@ -15,6 +15,7 @@ import { comparisonText } from '@/lib/comparisons';
 import { backupErrorText, exportBackup, readBackup } from '@/lib/backup';
 import { eventCountdownText, eventDayCost } from '@/lib/events';
 import { costPerWear, isPaidOff, todayString, wearCount } from '@/lib/girl-math';
+import { colorStats, monthlySummary, sellList } from '@/lib/insights';
 import { outfitFor, outfitItems, outfitName, sortOutfits } from '@/lib/outfits';
 import { sendTestNotification } from '@/lib/notifications';
 import { photoUri, pickAndSavePhoto } from '@/lib/photos';
@@ -241,6 +242,8 @@ export function DevTestPanel() {
         </View>
       )}
 
+      <DevInsights />
+
       <DevQuiz />
 
       <Text style={styles.title}>👗 Kombin arşivi</Text>
@@ -324,6 +327,53 @@ export function DevTestPanel() {
           </View>
         </View>
       ))}
+    </View>
+  );
+}
+
+// Analizler (geçici deneme): renk analizi, aylık özet, "satmayı düşün"
+function DevInsights() {
+  const { items } = useApp();
+  const month = colorStats(items, 'month');
+  const all = colorStats(items, 'all');
+  const summary = monthlySummary(items);
+  const sell = sellList(items);
+  const sharesText = (shares: typeof all.shares) =>
+    shares.map((share) => `${share.emoji} ${share.color} %${share.percent}`).join(' · ');
+
+  return (
+    <View style={styles.panel}>
+      <Text style={styles.title}>📊 Analizler</Text>
+      <View style={styles.card}>
+        <Text style={styles.name}>🎨 Renk · Bu ay</Text>
+        <Text style={styles.horoscopeLine}>{month.text}</Text>
+        <Text style={styles.muted}>{sharesText(month.shares)}</Text>
+        <Text style={styles.name}>🎨 Renk · Tüm zamanlar</Text>
+        <Text style={styles.horoscopeLine}>{all.text}</Text>
+        <Text style={styles.muted}>{sharesText(all.shares)}</Text>
+        {all.mostProfitable && <Text style={styles.horoscopeLine}>{all.mostProfitable.text}</Text>}
+        {all.uncoloredCount > 0 && (
+          <Text style={styles.muted}>{all.uncoloredCount} parçanın rengi yok, eklersen analiz netleşir</Text>
+        )}
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.name}>{summary.title}</Text>
+        {summary.lines.map((line) => (
+          <Text key={line} style={styles.horoscopeLine}>
+            {line}
+          </Text>
+        ))}
+        <Text style={styles.comparison}>💬 {summary.verdict}</Text>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.name}>🏷️ Satmayı düşün ({sell.candidates.length})</Text>
+        {sell.candidates.map((candidate) => (
+          <Text key={candidate.item.id} style={styles.muted}>
+            {candidate.text}
+          </Text>
+        ))}
+        <Text style={styles.horoscopeLine}>{sell.text}</Text>
+      </View>
     </View>
   );
 }
