@@ -5,10 +5,10 @@
  * - Saate göre selamlama ve bugünün tarihi
  * - Pembe "vitrin" kartı: her gün farklı bir Girl Math gerçeği; dokununca sıradakine geçer
  * - "Bugün ne giydin?" hızlı check-in şeridi (ışık düğmesi gibi: dokun ✓, tekrar dokun geri al)
- * - Dolap Tarotu: günün kartı, ince şerit (dokununca döner, dolaptan bir parça önerir)
+ * - "Günün kombini": unutulan bir parçanın etrafında kombin (dokununca "Bununla ne giyerim?")
+ * - Burç şeridi (gümüş): burç + şanslı renk; dokununca burç sayfası (seçilmediyse burç seçimi)
  * - "Unutulan parça" (Utanç Duvarı'nın ilk hali) ve "Dolabının yıldızı" (en çok giyilen) kartları
  * Dolap boşsa ekleme butonu çıkar. Tüm sayılar getWardrobeStats'tan gelir.
- * İleride: vitrin kartının yerine "Günün kombini" (Onur'un kombin motoru hazır olunca).
  */
 
 import * as Haptics from 'expo-haptics';
@@ -23,7 +23,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FORGOTTEN_DAYS, formatTL, lossText } from '@/components/clothing-card';
 import { ScreenBackground } from '@/components/screen-background';
 import { useQuickWear } from '@/components/quick-wear';
-import { TarotCard } from '@/components/tarot-card';
+import { DailyOutfitCard } from '@/components/daily-outfit-card';
+import { HoroscopeStrip } from '@/components/horoscope-strip';
 import {
   BottomTabInset,
   Colors,
@@ -240,7 +241,9 @@ export default function HomeScreen() {
                 </View>
               )}
 
-              {items.length > 0 && <TarotCard items={items} onOpenItem={openItem} />}
+              <DailyOutfitCard items={items} />
+
+              <HoroscopeStrip />
 
               {forgotten && forgottenMessage && (
                 <HighlightCard

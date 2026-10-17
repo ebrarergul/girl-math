@@ -26,12 +26,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { INFINITE_COST, formatTL, itemComparisonText } from '@/components/clothing-card';
 import { ColorSwatch } from '@/components/color-picker';
+import { PlaceSheet } from '@/components/place-sheet';
 import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import type { ColorName } from '@/lib/colors';
 import { costPerWear, daysSinceLastWear, isPaidOff, wearCount } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
+import { placeLabel, type PlaceName } from '@/lib/places';
 import { starbucksIndexList } from '@/lib/starbucks-index';
+import type { ClothingItem } from '@/lib/types';
 
 const colors = Colors.light;
 
@@ -51,6 +54,9 @@ export default function ItemDetailScreen() {
   const router = useRouter();
   const { items, wearItem, undoWear, deleteItem } = useApp();
   const item = items.find((current) => current.id === id);
+
+  // "Giydim"e basınca önce "Nereye gidiyorsun?" penceresi açılır
+  const [placeOpen, setPlaceOpen] = useState(false);
 
   // Kutlama balonu: id her seferinde değişir ki aynı mesaj üst üste gelse de animasyon baştan oynasın
   const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
@@ -98,6 +104,8 @@ export default function ItemDetailScreen() {
   }
 
   const wears = wearCount(item);
+  // Son giyimin yeri (seçildiyse): "☕ Kahve"
+  const lastPlace = item.wearPlaces?.[item.wearDates.length - 1] ?? null;
   const cost = costPerWear(item);
   const paidOff = isPaidOff(item);
   const uri = photoUri(item.photoFileName);
@@ -106,10 +114,12 @@ export default function ItemDetailScreen() {
   const starbucks = starbucksIndexList(item.price).slice(0, 3);
 
   // "Giydim": kaydı yap, rakamı zıplat, duruma göre kutlama mesajı göster
-  function handleWear() {
+  // Pencerede yer seçilince (ya da "Geç" → null) giyim kaydedilir
+  function handleWear(place: PlaceName | null) {
+    setPlaceOpen(false);
     const newWears = wears + 1;
     const newCost = Math.round(item!.price / newWears);
-    wearItem(item!.id);
+    wearItem(item!.id, place);
     popCost();
 
     // Titreşim: hedefe ulaştıysa iPhone'un "başarı" titreşimi, değilse tek bir "tık"
@@ -128,6 +138,14 @@ export default function ItemDetailScreen() {
     } else {
       showToast(`${newWears}. giyim, harikasın ✨`);
     }
+  }
+
+  // Uyarıdaki "Bunun yerine" parçası seçildi: o giyilir, onun sayfası açılır
+  function handleWearInstead(other: ClothingItem, place: PlaceName) {
+    setPlaceOpen(false);
+    wearItem(other.id, place);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    router.replace({ pathname: '/item/[id]', params: { id: other.id } });
   }
 
   function handleUndo() {
@@ -188,6 +206,7 @@ export default function ItemDetailScreen() {
             {item.color && <Fact label="Renk" value={item.color} color={item.color} />}
             <Fact label="Giyim" value={`${wears} / ${item.targetWears}`} />
             <Fact label="Son giyim" value={lastWornText(wears, daysSinceLastWear(item))} />
+            {lastPlace && <Fact label="Son yer" value={placeLabel(lastPlace)} />}
             <Fact label="Eklendi" value={item.createdAt.split('-').reverse().join('.')} />
           </View>
           <View style={styles.photoBox}>
@@ -316,11 +335,23 @@ export default function ItemDetailScreen() {
           </Pressable>
         )}
         <Pressable
-          onPress={handleWear}
+          onPress={() => setPlaceOpen(true)}
           style={({ pressed }) => [styles.wearButton, pressed && styles.wearPressed]}>
           <Text style={styles.wearText}>Giydim ✨</Text>
         </Pressable>
       </View>
+      <PlaceSheet
+        visible={placeOpen}
+        item={item}
+        items={items}
+        onSelect={handleWear}
+        onWearInstead={handleWearInstead}
+        onNewOutfit={() => {
+          setPlaceOpen(false);
+          router.push({ pathname: '/outfit/[id]', params: { id: item.id } });
+        }}
+        onClose={() => setPlaceOpen(false)}
+      />
     </SafeAreaView>
   );
 }

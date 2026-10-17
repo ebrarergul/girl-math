@@ -1,16 +1,22 @@
 /**
  * WELCOME (KARŞILAMA) EKRANI
  *
- * Sözleşme onaylandıktan sonra bir kez gösterilir ve uygulamanın nasıl çalıştığını
- * 3 kısa kartla anlatır. Kullanıcı alttaki butona basınca onStart çağrılır.
+ * Sözleşme onaylandıktan sonra bir kez gösterilir. İki sayfa:
+ * 1) Uygulamanın nasıl çalıştığını 3 kısa kartla anlatır; "Hadi başlayalım" 2. sayfaya geçer.
+ * 2) "Son bir şey: burcun ne? 🔮" – 12 burçluk ızgara (ZodiacGrid). Seçince setZodiac ile
+ *    kaydedilir; "Dolabıma git 💖" ya da "Şimdi değil" (burç seçilmez) onStart'ı çağırır.
+ * Burç sonradan Ayarlar → Burcum'dan da seçilebilir.
  */
 
 import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '@/components/screen-background';
+import { ZodiacGrid } from '@/components/zodiac-grid';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { useApp } from '@/context/app-context';
 
 const colors = Colors.light;
 
@@ -31,6 +37,50 @@ type Props = {
 };
 
 export function WelcomeScreen({ onStart }: Props) {
+  const { zodiac, setZodiac } = useApp();
+  const [step, setStep] = useState<'intro' | 'zodiac'>('intro');
+
+  if (step === 'zodiac') {
+    return (
+      <ScreenBackground>
+        <SafeAreaView style={styles.screen}>
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            <View style={styles.header}>
+              <Text style={styles.emoji}>🔮</Text>
+              <Text style={styles.title}>Son bir şey: burcun ne?</Text>
+              <Text style={styles.subtitle}>
+                Her gün şanslı rengini ve dolabından yıldızların seçtiği parçayı söylerim.
+              </Text>
+            </View>
+            <ZodiacGrid value={zodiac} onSelect={setZodiac} />
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <Pressable
+              onPress={onStart}
+              disabled={!zodiac}
+              style={({ pressed }) => [
+                styles.button,
+                !zodiac && styles.buttonDisabled,
+                pressed && styles.buttonPressed,
+              ]}>
+              <Text style={styles.buttonText}>Dolabıma git 💖</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setZodiac(null);
+                onStart();
+              }}
+              hitSlop={8}
+              style={styles.skip}>
+              <Text style={styles.skipText}>Şimdi değil</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </ScreenBackground>
+    );
+  }
+
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.screen}>
@@ -59,7 +109,7 @@ export function WelcomeScreen({ onStart }: Props) {
 
         <View style={styles.footer}>
           <Pressable
-            onPress={onStart}
+            onPress={() => setStep('zodiac')}
             style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
             <Text style={styles.buttonText}>Hadi başlayalım 💖</Text>
           </Pressable>
@@ -142,6 +192,17 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.four,
     ...Shadows.button,
+  },
+  buttonDisabled: {
+    opacity: 0.4,
+  },
+  skip: {
+    alignSelf: 'center',
+    paddingTop: Spacing.three,
+  },
+  skipText: {
+    ...Typography.bodyBold,
+    color: colors.textMuted,
   },
   buttonPressed: {
     backgroundColor: colors.primaryPressed,

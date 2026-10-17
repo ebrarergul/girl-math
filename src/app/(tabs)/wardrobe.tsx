@@ -3,7 +3,8 @@
  *
  * Dolaptaki kıyafetleri 2 sütunlu kartlar halinde gösterir. Üstte arama kutusu, sıralama
  * butonu ve kategori hapları var. Dolap boşsa "ilk parçanı ekle" mesajı çıkar.
- * Karta basılı tutunca hızlı Giydim (Ana sayfa şeridiyle aynı kural: tekrar basılı tutunca geri al).
+ * Karta basılı tutunca hızlı Giydim (sadece ekler; bugün zaten giyildiyse "zaten giyildi ✓" balonu,
+ * geri almak balondaki "Geri al" ile).
  */
 
 import { useRouter } from 'expo-router';
@@ -67,7 +68,7 @@ function sortItems(list: ClothingItem[], sort: SortKey): ClothingItem[] {
 export default function WardrobeScreen() {
   const router = useRouter();
   const { items, isLoaded } = useApp();
-  const { toggleWear, toastView } = useQuickWear();
+  const { wearOnce, toastView } = useQuickWear();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category | typeof ALL>(ALL);
   const [sort, setSort] = useState<SortKey>('newest');
@@ -111,17 +112,13 @@ export default function WardrobeScreen() {
                 <View style={styles.titleText}>
                   <Text style={styles.label}>GIRL MATH</Text>
                   <Text style={styles.title}>Dolabım</Text>
-                  {isLoaded && items.length > 0 && (
-                    <Text style={styles.subtitle}>
-                      {items.length} parça · Basılı tut, Giydim sayılsın
-                    </Text>
-                  )}
                 </View>
                 <View style={styles.headerButtons}>
-                  {/* Kaydedilen kombinler (arşiv) */}
+                  {/* Kaydedilen kombinler (arşiv): beyaz yuvarlak simge, yanında pembe "+" */}
                   <Pressable
                     onPress={() => router.push('/outfits')}
                     accessibilityLabel="Kombinlerim"
+                    hitSlop={4}
                     style={({ pressed }) => [
                       styles.outfitsButton,
                       pressed && styles.outfitsButtonPressed,
@@ -129,10 +126,9 @@ export default function WardrobeScreen() {
                     <SymbolView
                       name={{ ios: 'square.grid.2x2', android: 'grid_view', web: 'grid_view' }}
                       tintColor={colors.primary}
-                      size={16}
+                      size={20}
                       weight="semibold"
                     />
-                    <Text style={styles.outfitsButtonText}>Kombinlerim</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => router.push('/add-item')}
@@ -147,6 +143,13 @@ export default function WardrobeScreen() {
                   </Pressable>
                 </View>
               </View>
+
+              {/* Alt yazı başlık satırının altında, tam genişlikte (butonları itmesin) */}
+              {isLoaded && items.length > 0 && (
+                <Text style={styles.subtitle}>
+                  {items.length} parça · Basılı tut, Giydim sayılsın
+                </Text>
+              )}
 
               <View style={styles.searchRow}>
                 <View style={styles.searchBox}>
@@ -251,7 +254,7 @@ export default function WardrobeScreen() {
               <ClothingCard
                 item={item}
                 onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } })}
-                onLongPress={() => toggleWear(item)}
+                onLongPress={() => wearOnce(item)}
               />
             ) : (
               <View style={styles.spacer} />
@@ -287,6 +290,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   titleText: {
+    flex: 1,
     gap: Spacing.one,
   },
   headerButtons: {
@@ -294,24 +298,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
   },
-  // Beyaz hap: "Kombinlerim" (pembe "+" ana buton olarak öne çıksın diye sade)
+  // Beyaz yuvarlak "Kombinlerim" (pembe "+" ana buton olarak öne çıksın diye sade). Yazılı hap
+  // olunca uzun alt yazıyla birlikte sığmıyor, "+" ekrandan taşıyordu.
   outfitsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one + Spacing.half,
-    height: 40,
-    paddingHorizontal: Spacing.three,
+    width: 48,
+    height: 48,
     borderRadius: Radius.pill,
     backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
     ...Shadows.card,
   },
   outfitsButtonPressed: {
     backgroundColor: colors.primarySoft,
     transform: [{ scale: 0.95 }],
-  },
-  outfitsButtonText: {
-    ...Typography.bodyBold,
-    color: colors.primary,
   },
   addButton: {
     width: 48,

@@ -157,7 +157,10 @@ export function ClothingCard({ item, onPress, onLongPress }: Props) {
         <Text style={styles.name} numberOfLines={1}>
           {item.name}
         </Text>
-        <Text style={styles.category}>{item.category}</Text>
+        {/* Ad kategoriyle aynıysa ("Ayakkabı" / "Ayakkabı") kategori tekrar yazılmaz */}
+        {item.name.trim().toLocaleLowerCase('tr') !== item.category.toLocaleLowerCase('tr') && (
+          <Text style={styles.category}>{item.category}</Text>
+        )}
 
         <View style={styles.priceBlock}>
           {/* Pembe fiyatın üstündeki satır: maliyet düştüyse üstü çizili satın alma fiyatı;

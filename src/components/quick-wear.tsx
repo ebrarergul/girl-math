@@ -2,10 +2,13 @@
  * HIZLI GİYDİM (Ana sayfa şeridi ve Dolap'ta basılı tutma ortak kullanır)
  *
  * Işık düğmesi gibi çalışır: bugün giyilmediyse "Giydim" sayar (titreşim + kutlama balonu,
- * balonda "Geri al"); bugün zaten giyildiyse bugünkü giyimi geri alır.
+ * balonda "Geri al"); bugün zaten giyildiyse bugünkü giyimi geri alır (Ana sayfa şeridi).
+ * wearOnce ise hiç geri almaz: bugün zaten giyildiyse sadece "bugün zaten giyildi ✓" balonu
+ * (içinde "Geri al") çıkar (Dolap'ta basılı tutma; "Basılı tut, Giydim sayılsın" sayıyı
+ * azaltmasın diye).
  *
  * Kullanımı (ekranın en dışındaki görünümün içinde, sonda toastView gösterilir):
- *   const { toggleWear, toastView } = useQuickWear();
+ *   const { toggleWear, wearOnce, toastView } = useQuickWear();
  *   <Pressable onPress={() => toggleWear(item)} />
  *   ...
  *   {toastView}
@@ -63,6 +66,21 @@ export function useQuickWear() {
       showToast(`${name} bugünden çıkarıldı ↩`);
       return;
     }
+    addWear(item);
+  }
+
+  // Sadece ekler: bugün zaten giyildiyse saymaz, balonda haber verir (geri almak balondan)
+  function wearOnce(item: ClothingItem) {
+    if (isWornToday(item)) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      showToast(`“${item.name}” bugün zaten giyildi ✓`, item.id);
+      return;
+    }
+    addWear(item);
+  }
+
+  function addWear(item: ClothingItem) {
+    const name = `“${item.name}”`;
     const newWears = wearCount(item) + 1;
     wearItem(item.id);
     // Titreşim: hedefe ulaştıysa "başarı" titreşimi, değilse tek bir "tık"
@@ -107,7 +125,7 @@ export function useQuickWear() {
     </View>
   ) : null;
 
-  return { toggleWear, toastView };
+  return { toggleWear, wearOnce, toastView };
 }
 
 const styles = StyleSheet.create({

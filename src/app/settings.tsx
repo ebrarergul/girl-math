@@ -4,7 +4,7 @@
  * iPhone ayarları tarzında gruplar halinde:
  * - BİLDİRİMLER: izin durumu + "Bildirimleri aç" (izin daha önce reddedildiyse iPhone
  *   Ayarları'nı açar), deneme bildirimi
- * - GIRL MATH: Kullanım Sözleşmesi'ni tekrar okuma, gizlilik notu, sürüm
+ * - GIRL MATH: Burcum (burç seçimi), Kullanım Sözleşmesi'ni tekrar okuma, gizlilik notu, sürüm
  * - VERİLER: "Bütün verileri sil" (iki kez sorar; sadece dolap silinir, sözleşme kalır)
  * Ana sayfanın sağ üstündeki ⚙️ butonuyla açılır.
  */
@@ -17,18 +17,20 @@ import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { zodiacGlyph } from '@/components/zodiac-grid';
 import { useApp } from '@/context/app-context';
 import {
   hasNotificationPermission,
   requestNotificationPermission,
   sendTestNotification,
 } from '@/lib/notifications';
+import { zodiacSign } from '@/lib/zodiac';
 
 const colors = Colors.light;
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { items, resetAll } = useApp();
+  const { items, resetAll, zodiac } = useApp();
 
   // Bildirim izni: null = henüz okunmadı. Ekrana her dönüldüğünde yeniden okunur
   // (kullanıcı iPhone Ayarları'ndan izni açıp geri gelmiş olabilir).
@@ -116,9 +118,7 @@ export default function SettingsScreen() {
           <Row
             icon="bell.fill"
             title="Bildirimler"
-            detail={
-              notificationsOn === null ? '…' : notificationsOn ? 'Açık' : undefined
-            }
+            detail={notificationsOn === null ? '…' : notificationsOn ? 'Açık' : undefined}
             action={notificationsOn === false ? 'Aç' : undefined}
             onPress={notificationsOn === false ? handleEnableNotifications : undefined}
           />
@@ -134,6 +134,13 @@ export default function SettingsScreen() {
         </Text>
 
         <Section title="GIRL MATH">
+          <Row
+            icon="moon.stars.fill"
+            title="Burcum"
+            detail={zodiac ? `${zodiacGlyph(zodiacSign(zodiac).emoji)} ${zodiac}` : 'Seçilmedi'}
+            onPress={() => router.push('/zodiac')}
+            chevron
+          />
           <Row
             icon="doc.text.fill"
             title="Kullanım Sözleşmesi"
@@ -158,8 +165,8 @@ export default function SettingsScreen() {
           <View style={styles.privacyBody}>
             <Text style={styles.privacyTitle}>Gizlilik</Text>
             <Text style={styles.privacyText}>
-              Hesap yok, sunucu yok. Kıyafetlerin, fiyatların ve fotoğrafların sadece bu
-              telefonda durur; hiçbir yere gönderilmez.
+              Hesap yok, sunucu yok. Kıyafetlerin, fiyatların ve fotoğrafların sadece bu telefonda
+              durur; hiçbir yere gönderilmez.
             </Text>
           </View>
         </View>

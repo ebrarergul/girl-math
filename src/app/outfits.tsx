@@ -97,6 +97,16 @@ export default function OutfitsScreen() {
           </View>
         ) : (
           <>
+            {/* Kısa özet */}
+            <Text style={styles.summary}>
+              {[
+                `${outfits.length} kombin`,
+                favorites.length > 0 ? `${favorites.length} favori` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+
             {favorites.length > 0 && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>⭐ Favoriler</Text>
@@ -109,6 +119,16 @@ export default function OutfitsScreen() {
                 {renderGrid(others)}
               </View>
             )}
+
+            {/* Yeni kombin nasıl eklenir */}
+            <View style={styles.tip}>
+              <SymbolView name="sparkles" tintColor={colors.primary} size={16} />
+              <Text style={styles.tipText}>
+                {
+                  'Yeni kombin için bir parçanın detayında "Bununla ne giyerim?"e bas, beğendiğini kaydet.'
+                }
+              </Text>
+            </View>
           </>
         )}
       </ScrollView>
@@ -158,7 +178,7 @@ function OutfitCard({
               ) : piece ? (
                 <SymbolView
                   name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
-                  tintColor={colors.primary}
+                  tintColor={colors.accent}
                   size={18}
                   weight="light"
                 />
@@ -207,6 +227,24 @@ const styles = StyleSheet.create({
   section: {
     gap: Spacing.three,
   },
+  summary: {
+    ...Typography.body,
+    color: colors.textSecondary,
+    marginBottom: -Spacing.two,
+  },
+  tip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    backgroundColor: colors.primarySoft,
+    borderRadius: Radius.lg,
+    padding: Spacing.three,
+  },
+  tipText: {
+    ...Typography.body,
+    color: colors.textSecondary,
+    flex: 1,
+  },
   sectionTitle: {
     ...Typography.heading,
     color: colors.text,
@@ -232,11 +270,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.one,
   },
+  // Boş/fotoğrafsız kutular soluk zeminde (parlak pembe, ürün fotoğraflarının yanında sırıtıyordu)
   cell: {
     width: '48.5%',
     aspectRatio: 3 / 4,
     borderRadius: Radius.sm,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

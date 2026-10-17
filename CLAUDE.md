@@ -40,7 +40,7 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - Eğlenceli bildirimler: ödül ("Tebrikler aşko! ... resmen bedava") ve takılma
   ("o 3000 liralık elbiseyi 6 aydır 1 kere giydin, acil giy ya da sat!").
 - Sonraki özellikler: etiket okuyan OCR kamera, Starbucks Endeksi (fırsat maliyeti
-  simülatörü), "Zaman Aşımı = Bedava" modülü, günlük kombin öneren Dolap Tarotu,
+  simülatörü), "Zaman Aşımı = Bedava" modülü, günlük kombin öneren burç yorumu (eski Dolap Tarotu),
   haftalık hafıza testi Dolap Kahoot'u, paylaşılabilir istatistik kartı (✅ Story kartı).
 - Gelir modeli (ileride): Freemium; ilk 10-15 parça ücretsiz, sınırsız ekleme ve detaylı
   analiz için aylık ~29 TL Premium.
@@ -63,12 +63,10 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - **Zaman Aşımı = Bedava (etkinlik modu):** Kıyafet "Etkinlik için alındı" etiketi ve
   etkinlik tarihiyle kaydedilir. O gün: "Bu elbisenin parası hesaptan çoktan çıktı. Bugünkü
   maliyeti 0 TL; bedavaya harika görünüyorsun!" bildirimi.
-- **Dolap Tarotu (günün enerjisi):** Sabah sanal kart çekilir; kartın temasına göre dolaptaki
-  **unutulmuş ya da farklı** bir parça önerilir (Asılan Adam → "Olaylara farklı açıdan bakma
-  vakti"). Kombin öneri motorunun eğlenceli yüzü olabilir. ✅ Görünüşü hazır:
-  `src/components/tarot-card.tsx` (Ana sayfada gümüş şerit, dokununca dönen kart, 9 kartlık
-  deste, günde bir kart). Öneriyi şimdilik **GEÇİCİ** `pickTarotItem()` yapıyor; Onur'un
-  kombin motoru gelince sadece o fonksiyonun içi değişecek.
+- **Dolap Tarotu → Burç yorumu (günün enerjisi):** İlk fikir Dolap Tarotu'ydu (kart çekip
+  unutulmuş parça önerisi). 16 Ekim'de Onur + Ebrar kararıyla yerine **burç yorumu** geldi ✅
+  (17 Ekim): gerçek gökyüzüne göre günlük/haftalık yorum, şanslı renk, dolaptan o renkte parça
+  ve etrafında kombin. `tarot-card.tsx` silindi; gümüş "büyü" şeridi burç şeridine geçti.
 - **Dolap Kahoot'u (haftalık hafıza testi):** Hafta sonları süreli mini yarışma: "Bu ceketi en
   son ne zaman giydin?", "En çok hangi rengi giyerek kâr ettin?". Başarıya "Tasarruf
   Kraliçesi" gibi rozetler.
@@ -77,7 +75,7 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   uyumu basit kurallarla (nötrler her şeyle; aynı rengin tonları; tamamlayıcı renkler),
   internet/yapay zekâ gerekmez. **Girl Math dokunuşu:** unutulan ve amortiye en uzak parçalar
   öne çıkar ("Bugün bunu giyersen ceketin 500 TL'ye düşer!"). Aynı motor Ana sayfada
-  "Günün kombini", Tarot'ta mistik öneri olarak kullanılır. Trend takibi sunucu/yapay zekâ
+  "Günün kombini", burç yorumunda "Yıldızların seçimi" olarak kullanılır. Trend takibi sunucu/yapay zekâ
   gerektirdiği için sonraya; ara çözüm elle güncellenen "sezonun trend renkleri" listesi.
   Gerekenler: `ClothingItem`'a renk bilgisi + kombin motoru `src/lib/outfits.ts` (Onur),
   ekleme formunda renk seçici + Ana sayfada "Günün kombini" kartı (Ebrar).
@@ -137,7 +135,7 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - Mesajlarda kıyafet adı Türkçe ek almasın diye tırnak içinde **özne** yapılır:
   "“Ceket” 23 gündür askıda 👀" (❌ "Ceketi 23 gündür giymedin").
 - **Gümüş (krom, Y2K)** = "ödül ve büyü" rengi: `Gradients.chrome` (theme.ts). Büyük gümüş
-  tek yer Dolap Tarotu kapağı ("Dolabının yıldızı"ndaki gümüş madalya estetik bulunmadığı için
+  tek yer burç şeridi ve burç sayfasının kartı ("Dolabının yıldızı"ndaki gümüş madalya estetik bulunmadığı için
   kaldırıldı). Her yeri gümüş yapılmaz, yoksa özelliğini kaybeder.
 - Sekmeler, Welcome ve Sözleşme'de zemin `ScreenBackground` (üstten süzülen açık pembe ışık);
   detay ve form sayfaları sade (düz zemin).
@@ -318,6 +316,8 @@ freshAlternatives(item, 'Okul', items)  // "Bunun yerine": aynı kategori, son 1
 ```
 Yer verisi `item.wearPlaces` (wearDates ile aynı sırada, yer yoksa null; eski kayıtlarda alan yok).
 Sadece AppContext değiştirir; `undoWear` son yeri de siler. Örnek akış: `dev-test-panel.tsx` → `wearAt`.
+Ekranda: `PlaceSheet` (`src/components/place-sheet.tsx`) – detayda "Giydim" ve kayıtlı kombinde
+"Bu kombini giydim" önce bunu açar. Hızlı Giydim (Ana sayfa şeridi, Dolap'ta basılı tutma) yer sormaz.
 
 **Burç yorumu** (`@/lib/zodiac`) – Tarot'un yerine; gerçek gökyüzüne göre (internetsiz hesap)
 ```tsx
@@ -334,6 +334,11 @@ sezonu (yaklaşınca), Ay evresi; şanslı renk + dolaptan o renkte parça ve et
 değişir, aynı gün aynı kalır. Haftalık yorum: haftanın dolunay/yeniay/retro/Güneş girişine göre.
 Merkür retrosu tarihleri `MERCURY_RETROGRADES` listesinde (2027 sonrası eklenmeli).
 Burç seçilmediyse ekranda "Burcunu seç, yıldızlar dolabına baksın 🔮" gösterilir.
+Ekranlar (Ebrar): `zodiac-grid.tsx` (12 burç ızgarası; `zodiacGlyph` sembolü mor emoji kutusu
+yerine pembe yazı gibi çizer, `zodiacRange` "23 Eki – 21 Kas", `MOON_SYMBOLS`, `mercuryNote`),
+`horoscope-strip.tsx` (Ana sayfa gümüş şeridi), `horoscope.tsx` (burç sayfası), `zodiac.tsx`
+(burç seçimi), Welcome'ın 2. sayfası, Ayarlar → Burcum. Ekranda burç adına ek gelmez:
+"Ay Akrep burcunda" (❌ "Ay Akrep'te").
 
 Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olmayan parça da önerilir
 (en sonda; ekranda "Rengi girilmemiş · Ekle 🎨" hapı olarak, dokununca düzenleme formu açılır).
@@ -350,14 +355,14 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu ✅
   - Ana sayfa ve Cüzdan ✅
   - Kıyafet düzenleme ✅ (`updateItem`'ı da Ebrar ekledi, Onur'un haberi var), Dolap sıralama
-    butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, Dolap Tarotu
-    görünüşü ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅, Ayarlar ekranı ✅
+    butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, burç yorumu ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅, Ayarlar ekranı ✅
   - Sonra: uygulama simgesi (taslaklar beğenilmedi, ertelendi)
   - Renk seçici ✅ (+ fotoğraftan renk tahmini ✅), detayda RENK satırı ✅, **"Bununla ne
     giyerim? ✨"** ekranı ✅ (kolaj, seçenekle değiştirme, "Kombini kaydet 💾")
-  - Kombin arşivi ✅ (Dolap'ta "Kombinlerim" → arşiv → kayıtlı kombin sayfası)
-  - **Sırada:** Ana sayfada "Günün kombini" kartı, "Nereye?" seçimi, burç kartı (aşağıdaki
-    "Yeni kararlaştırılan özellikler" sırasıyla)
+  - Kombin arşivi ✅ (Dolap'ta "Kombinlerim" → arşiv → kayıtlı kombin sayfası), Ana sayfada
+    "Günün kombini" ✅, "Nereye giderken giydin?" + tekrar uyarısı ✅
+  - 16 Ekim'de kararlaştırılan 4 özelliğin ekranları bitti ✅ (17 Ekim).
+  - **Sırada:** uygulama simgesi, Dolap Kahoot'u (Onur'un mantığı gelince), Zaman Aşımı.
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -377,14 +382,15 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     2. **Favori kombin arşivi:** mantık ✅ (Onur), ekranlar ✅ (Ebrar): "Kombini kaydet 💾",
        Kombinlerim (arşiv), kayıtlı kombin sayfası (yıldız, ad değiştirme, sil, "Bu kombini
        giydim" + ↩).
-    3. **"Nereye giderken giydin?":** mantık ✅ (Onur, `src/lib/places.ts`). **Sırada ekran
-       (Ebrar):** Giydim'de isteğe bağlı yer seçme ("Geç" seçeneğiyle; hızlı Giydim yer sormaz),
-       `repeatWarning` varsa uyarı penceresi (soft: "💭 Hatırlatma", strong: "🚨") + "Bunun yerine"
-       önerileri + [Yine de giy] [Vazgeç], detayda `lastWearText` satırı.
-    4. **Tarot yerine burç yorumu:** mantık ✅ (Onur, `src/lib/zodiac.ts`, `zodiac`/`setZodiac`).
-       **Sırada ekran (Ebrar):** Welcome'da burç seçimi (12 burç + "Şimdi değil"), Ana sayfadaki
-       Tarot şeridi → burç kartı (Bugün / Bu hafta sekmeleri, şanslı renk, kombin önerisi),
-       Ayarlar'da "Burcum" satırı. `tarot-card.tsx` ve **GEÇİCİ** `pickTarotItem()` kaldırılır.
+    3. **"Nereye giderken giydin?":** mantık ✅ (Onur, `src/lib/places.ts`), ekranlar ✅ (Ebrar):
+       `PlaceSheet` (yer hapları + "Geç"), `repeatWarning` uyarısı (soft/strong) + "Bunun yerine"
+       (dokununca o parça giyilir) + [Yine de giy] [Vazgeç]; öneri yoksa nazik not + "Bununla
+       yeni kombin kur →"; detayda SON YER satırı; kayıtlı kombinde "Bu kombinle nereye?"
+       (kombinde tekrar uyarısı yok).
+    4. **Tarot yerine burç yorumu:** mantık ✅ (Onur, `src/lib/zodiac.ts`, `zodiac`/`setZodiac`),
+       ekranlar ✅ (Ebrar): Welcome'da burç seçimi, Ana sayfada gümüş burç şeridi, burç sayfası
+       (Bugün / Bu hafta, şanslı renk, Yıldızların seçimi + "Kombini gör →"), Ayarlar → Burcum.
+       `tarot-card.tsx` silindi.
 - Bir kişi diğerinin alanındaki bir dosyaya dokunmak zorunda kalırsa önce haber verir.
 
 ## Yeni ekranlar için tasarım önerileri (Onur'dan – öneri, son karar Ebrar'ın)
@@ -439,14 +445,15 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     - `index.tsx` – Ana sayfa ("bugün" ekranı), yukarıdan aşağı: tarih + saate göre selamlama
       ("Günaydın / Merhaba / İyi akşamlar aşko"); pembe **vitrin kartı** (her gün farklı bir
       Girl Math gerçeği, dokununca sıradakine geçer – `buildFacts`); **"Bugün ne giydin?"**
-      şeridi (dokun ✓ Giydim, tekrar dokun geri al); **Dolap Tarotu** şeridi; **"Unutulan
+      şeridi (dokun ✓ Giydim, tekrar dokun geri al); **"Günün kombini"** kartı; gümüş **burç şeridi** (`HoroscopeStrip`); **"Unutulan
       parça"** kartı + "Utanç Duvarı'nın tamamı →"; **"Dolabının yıldızı"** (en çok giyilen,
-      başlıkta pembe ★). Sağ üstte ⚙️ butonu Ayarlar'ı açar. Dolap boşsa ekleme butonu. Onur'un kombin motoru
-      gelince vitrin kartının yerine/yanına "Günün kombini" gelebilir.
-    - `wardrobe.tsx` – Dolap: büyük başlık + beyaz "Kombinlerim" hapı + pembe "+" butonu, arama + sıralama butonu
+      başlıkta pembe ★). Sağ üstte ⚙️ butonu Ayarlar'ı açar. Dolap boşsa ekleme butonu.
+    - `wardrobe.tsx` – Dolap: büyük başlık + beyaz yuvarlak ⊞ "Kombinlerim" + pembe "+" butonu (alt yazı
+      başlık satırının altında, tam genişlikte), arama + sıralama butonu
       (En yeni / En pahalı / En az giyilen / Amortiye en yakın; varsayılan dışındaysa buton
       pembe), kategori hapları, 2 sütunlu `ClothingCard`'lar, boş dolap mesajı. Karta kısa
-      dokunuş detayı açar, **basılı tutmak hızlı Giydim** (tekrar basılı tutmak geri alır).
+      dokunuş detayı açar, **basılı tutmak hızlı Giydim** (`wearOnce`: sadece ekler; bugün zaten
+      giyildiyse "bugün zaten giyildi ✓" balonu, geri almak balondaki "Geri al" ile).
     - `wallet.tsx` – Cüzdan ("para" ekranı): dolap değeri + Starbucks Endeksi cümlesi,
       pembe "GIRL MATH kazancın" kutusu, 2×2 kutu (ortalama maliyet, toplam giyim, amorti
       edilen, hiç giyilmeyen) + **"Bu ay dolaba giren"** (bu ay eklenen parçaların satın alma
@@ -463,7 +470,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     Endeksi), "Girl Math'e göre" (Brunch/Manikür/Iced latte/Filtre kahve fiyatına düşmesi için
     kaç giyim ve ne kadar süre). Kalemler `TARGET_NAMES` listesinde; fiyatlar comparisons.ts'ten.
   - `item/[id].tsx` – kıyafet detay sayfası (sağ üstte "Düzenle"): bilgi satırları (renk varsa
-    RENK satırı + renk yuvarlağı) + büyük fotoğraf, maliyet, kıyas cümlesi, **"Bununla ne
+    RENK satırı + renk yuvarlağı, son giyimde yer seçildiyse SON YER) + büyük fotoğraf, maliyet, kıyas cümlesi, **"Bununla ne
     giyerim?"** kartı, hedef çubuğu, Starbucks Endeksi, silme; altta "Giydim ✨" ve ↩ geri al.
     "Giydim"de maliyet rakamı zıplar (reanimated) ve kutlama balonu çıkar (mesajlar `handleWear`'da).
   - `share.tsx` – Story paylaşımı: kartın önizlemesi + "Story'de paylaş" (fotoğrafını çeker,
@@ -475,38 +482,52 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     her kartta renk + sebep hapı). Seçeneğe dokununca kombine girer/çıkar (elbise ↔ üst/alt
     birbirini çıkarır), "Öneriye dön ↺". Altta "Kombini kaydet 💾" (`saveOutfit`, iPhone'da
     isteğe bağlı ad sorar; kayıtlıysa "Arşivde ✓ · Kombine git →" kayıtlı kombini açar).
-  - `outfits.tsx` – Kombinlerim (arşiv, Dolap'tan açılır): "⭐ Favoriler" + "Tüm kombinler",
+  - `outfits.tsx` – Kombinlerim (arşiv, Dolap'tan açılır): üstte "2 kombin · 1 favori", "⭐ Favoriler" + "Tüm kombinler", en altta yeni kombin ipucu,
     2 sütunlu kartlar (2×2 fotoğraf ızgarası, 4'ten fazla parçada "+N", ad, giyim sayısı), köşede
     favori yıldızı (favoride `highlight` ★). Karta dokununca kayıtlı kombin sayfası.
   - `saved-outfit/[id].tsx` – kayıtlı kombin: kolaj, ad (✏️ ile değiştirilir, iPhone'da), "3 parça
     · 2 kere giydin · en son dün", parça listesi (dokununca kıyafet detayı), "Bu kombini sil",
     sağ üstte yıldız. Altta "Bu kombini giydim ✨" (`wearOutfit`, kutlama balonu); bugün
-    giyildiyse "Bugün giydin ✓" + ↩ (`undoWearOutfit`).
+    giyildiyse "Bugün giydin ✓" + ↩ (`undoWearOutfit`). Giymeden önce "Bu kombinle nereye?".
   - `shame-wall.tsx` – Utanç Duvarı: toplam boşa giden + unutulan bütün parçalar (en çok
     zarar yazandan aza).
   - `settings.tsx` – Ayarlar (iPhone ayarları tarzı gruplar): BİLDİRİMLER (izin durumu + "Aç";
     izin daha önce reddedildiyse iPhone Ayarları'nı açar, deneme bildirimi), GIRL MATH
-    (Kullanım Sözleşmesi, sürüm), VERİLER ("Bütün verileri sil", iki kez sorar, `resetAll`),
+    (Burcum, Kullanım Sözleşmesi, sürüm), VERİLER ("Bütün verileri sil", iki kez sorar, `resetAll`),
     Gizlilik notu ve imza.
+  - `horoscope.tsx` – Burç sayfası (Ana sayfa şeridinden): gümüş kart (sembol, tarih, element,
+    gezegen, Ay'ın burcu ve evresi, Merkür hapı), "Bugün" (kişilik, gökyüzü cümleleri, şanslı
+    renk, Yıldızların seçimi → "Kombini gör") / "Bu hafta" (💘 / 💸 / 👗); sağ üstte "Değiştir".
+  - `zodiac.tsx` – Burç seçimi (Ayarlar → Burcum, burç şeridi): ızgara + "Şimdi değil"/"Burcumu kaldır".
   - `agreement.tsx` – Sözleşmeyi Ayarlar'dan tekrar okuma sayfası (`AgreementScreen`'i gösterir,
     butona basınca geri döner).
   - Sayfa başlığı/geri butonu her sayfanın kendi içinde `<Stack.Screen options={...} />` ile
     ayarlanır; bu yüzden yeni sayfa eklemek için ortak `_layout.tsx`'e dokunmak gerekmez.
 - `src/components/` – tekrar kullanılan bileşenler (şablondan gelenler de burada)
   - `agreement-screen.tsx` – Girl Math Kullanım Sözleşmesi ekranı
-  - `welcome-screen.tsx` – Welcome karşılama ekranı (sözleşmeden sonra bir kez)
+  - `welcome-screen.tsx` – Welcome karşılama ekranı (sözleşmeden sonra bir kez): 1) 3 kart +
+    "Hadi başlayalım", 2) "Son bir şey: burcun ne?" (ZodiacGrid, "Dolabıma git 💖", "Şimdi değil")
   - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Cüzdan, Test (pembe, SF Symbols simgeleri).
     `app-tabs.web.tsx` aynı sekmelerin web sürümü.
-  - `quick-wear.tsx` – ortak hızlı Giydim: `useQuickWear()` → `{ toggleWear, toastView }`
-    (ışık düğmesi: giyilmediyse Giydim + titreşim + "Geri al"lı balon, bugün giyildiyse geri al).
-    Ana sayfa şeridi ve Dolap'ta basılı tutma kullanır.
+  - `quick-wear.tsx` – ortak hızlı Giydim: `useQuickWear()` → `{ toggleWear, wearOnce, toastView }`.
+    `toggleWear` ışık düğmesi (giyilmediyse Giydim + titreşim + "Geri al"lı balon, bugün
+    giyildiyse geri al) – Ana sayfa şeridi. `wearOnce` sadece ekler (bugün giyildiyse "zaten
+    giyildi ✓" balonu) – Dolap'ta basılı tutma.
+  - `place-sheet.tsx` – "Nereye gidiyorsun?" alttan açılan pencere (`PLACES` hapları, "Geç",
+    karartmaya dokununca vazgeç). `item` verilirse tekrar uyarısı + "Bunun yerine" + nazik not.
+    Karartma rengi temada `overlay`.
+  - `daily-outfit-card.tsx` – Ana sayfada "Günün kombini": en unutulan 3 parçadan güne göre biri,
+    etrafında `outfitFor` kombini; küçük kolaj + cümle + "Kombini gör →" (öneri ekranını açar).
   - `outfit-collage.tsx` – kombin kolajı `OutfitCollage` (yamuk, üst üste binen 3:4 kartlar +
     parça adları, isteğe bağlı ilk parça etiketi) ve `ClothingPhoto` (3:4 fotoğraf, yoksa askı).
     "Bununla ne giyerim?" ve kayıtlı kombin sayfası kullanır.
   - `color-picker.tsx` – renk seçici (`ColorPicker`: yatay kayan renk yuvarlakları, tekrar
     dokununca seçim kalkar, `note` ile alt yazı) ve tek renk yuvarlağı `ColorSwatch` (beyazın
     kenarı var, "Desenli" çok renkli). Form, detay ve kombin ekranı kullanır.
-  - `tarot-card.tsx` – Dolap Tarotu (gümüş şerit, dönen kart, deste `DECK`, GEÇİCİ `pickTarotItem`)
+  - `horoscope-strip.tsx` – Ana sayfadaki gümüş burç şeridi (burç sembolü, şanslı renk, Ay evresi;
+    dokununca burç sayfası, burç yoksa burç seçimi)
+  - `zodiac-grid.tsx` – 12 burç ızgarası + burç yardımcıları (`zodiacGlyph`, `zodiacRange`,
+    `MOON_SYMBOLS`, `mercuryNote`). Burç seçimi ve Welcome kullanır.
   - `share-card.tsx` – Story kartları (`ItemShareCard`, `WardrobeShareCard`, pembe geçişli 9:16)
   - `screen-background.tsx` – sekmeler, Welcome ve Sözleşme'nin "üstten pembe ışık" zemini
   - `stat-tile.tsx` – küçük istatistik kutusu (etiket, büyük değer, açıklama; `tone="primary"`
@@ -581,16 +602,17 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
    (+ detay sayfası, Hot Pink tema, editorial başlıklar ✅)
    - Kıyafet düzenleme ✅, Dolap sıralama ✅, "Almalı mıyım?" ✅
    - Ana sayfa ve Cüzdan `getWardrobeStats` ile dolduruldu ✅
-   - Story paylaşım kartı, titreşim, pembe geçişli zemin, Utanç Duvarı, Dolap Tarotu (görünüş),
+   - Story paylaşım kartı, titreşim, pembe geçişli zemin, Utanç Duvarı, Dolap Tarotu (sonra burç yorumuyla değişti),
      hızlı Giydim, ∞ maliyet gösterimi, "Bu ay dolaba giren", Ana sayfa yenilemesi ✅
    - Ayarlar ekranı ✅, app.json izin metinleri ✅
    - Sırada: **uygulama simgesi ve açılış logosu** (hâlâ Expo'nun varsayılanı; pembe zemin +
-     ince askı + "Girl Math" yazılı taslaklar denendi, beğenilmedi, sonraya kaldı), Onur'un
-     kombin motoru → "Günün kombini" + Tarot önerisi + renk seçici, Premium/ücretsiz sınır
-     ekranı, karanlık mod, Bundle ID (Onur'la birlikte)
+     ince askı + "Girl Math" yazılı taslaklar denendi, beğenilmedi, sonraya kaldı), karanlık mod,
+     Bundle ID (Onur'la birlikte). Premium/ücretsiz sınır ekranı **en sona** (önce uygulamayı
+     yaymak ve sevdirmek hedef).
+   - Renk + kombin, kombin arşivi, Günün kombini, "Nereye?", burç yorumu ✅ (17 Ekim)
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
-6. Ekstra özellikler – Starbucks simülatörü ✅, Utanç Duvarı ✅, Dolap Tarotu (görünüş ✅, öneri
-   Onur'un motoruna bağlı), kombin önerisi, Kahoot, Zaman Aşımı, OCR – ayrıntılar "Özellik
+6. Ekstra özellikler – Starbucks simülatörü ✅, Utanç Duvarı ✅, burç yorumu ✅, kombin önerisi ✅,
+   Kahoot, Zaman Aşımı, OCR – ayrıntılar "Özellik
    detayları" bölümünde
 7. App Store hazırlığı (Apple Developer hesabı, EAS Build/Xcode, TestFlight, gizlilik
    politikası, izin metinleri)

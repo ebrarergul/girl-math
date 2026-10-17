@@ -4,7 +4,8 @@
  * Kombinlerim (arşiv) sayfasındaki karta dokununca, kombinin kimliği (id) verilerek açılır.
  * Yukarıdan aşağı: kombin kolajı, adı (✏️ ile değiştirilir), "3 parça · 2 kere giydin · en son
  * 3 gün önce", parçaların listesi (dokununca kıyafet detayı), "Bu kombini sil".
- * Sağ üstte favori yıldızı. Altta "Bu kombini giydim ✨" (wearOutfit: bütün parçalara Giydim);
+ * Sağ üstte favori yıldızı. Altta "Bu kombini giydim ✨": önce "Bu kombinle nereye?" penceresi,
+ * sonra wearOutfit (bütün parçalara aynı yerle Giydim);
  * bugün zaten giyildiyse "Bugün giydin ✓" olur (yanında ↩ geri al), iki kere sayılmaz. Basınca kutlama balonu çıkar;
  * bugün ayrıca giyilmiş parça tekrar sayılmaz ve balonda söylenir.
  */
@@ -19,10 +20,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ColorSwatch } from '@/components/color-picker';
 import { ClothingPhoto, OutfitCollage } from '@/components/outfit-collage';
+import { PlaceSheet } from '@/components/place-sheet';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { todayString } from '@/lib/girl-math';
 import { outfitItems, outfitName } from '@/lib/outfits';
+import type { PlaceName } from '@/lib/places';
 
 const colors = Colors.light;
 
@@ -55,6 +58,8 @@ export default function SavedOutfitScreen() {
 
   // Kutlama balonu: birkaç saniye görünüp kaybolur
   const [toast, setToast] = useState<string | null>(null);
+  // "Bu kombini giydim"e basınca önce "Nereye gidiyorsun?" penceresi
+  const [placeOpen, setPlaceOpen] = useState(false);
   useEffect(() => {
     if (!toast) {
       return;
@@ -118,11 +123,13 @@ export default function SavedOutfitScreen() {
     );
   }
 
-  function handleWear() {
+  // Pencerede yer seçilince (ya da "Geç" → null) bütün parçalara aynı yerle Giydim
+  function handleWear(place: PlaceName | null) {
+    setPlaceOpen(false);
     const today = todayString();
     const already = pieces.filter((piece) => piece.wearDates.includes(today));
     const fresh = pieces.length - already.length;
-    wearOutfit(outfit!.id);
+    wearOutfit(outfit!.id, place);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (already.length === 0) {
       setToast(`Giydin! ${fresh} parçanın maliyeti düştü 💸`);
@@ -265,7 +272,7 @@ export default function SavedOutfitScreen() {
           </Pressable>
         )}
         <Pressable
-          onPress={handleWear}
+          onPress={() => setPlaceOpen(true)}
           disabled={wornToday}
           style={({ pressed }) => [
             styles.wearButton,
@@ -277,6 +284,13 @@ export default function SavedOutfitScreen() {
           </Text>
         </Pressable>
       </View>
+      {/* Kombinde tekrar uyarısı yok (parça parça değil, kombin olarak giyiliyor) */}
+      <PlaceSheet
+        visible={placeOpen}
+        title="Bu kombinle nereye?"
+        onSelect={handleWear}
+        onClose={() => setPlaceOpen(false)}
+      />
     </SafeAreaView>
   );
 }

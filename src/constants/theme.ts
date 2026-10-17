@@ -60,6 +60,7 @@ const light = {
   success: Palette.green,
   warning: Palette.amber,
   danger: Palette.red,
+  overlay: 'rgba(24, 16, 20, 0.4)', // Alttan açılan pencerenin arkasındaki yarı saydam karartma
 };
 
 export const Colors = {
@@ -135,7 +136,7 @@ export const Radius = {
 // Gölgeler: style={[styles.kart, Shadows.card]} gibi eklenir
 // Hazır renk geçişleri (expo-linear-gradient'e colors={Gradients.chrome} diye verilir)
 export const Gradients = {
-  // Metal parlaması gibi dalgalanan gümüş: Dolap Tarotu kartının arkası
+  // Metal parlaması gibi dalgalanan gümüş: Ana sayfadaki burç şeridi ve burç sayfasının kartı
   chrome: [Palette.chromeMid, Palette.chromeLight, Palette.chromeDark, Palette.chromeLight] as const,
 };
 
