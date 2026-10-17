@@ -65,6 +65,7 @@ type AppContextValue = {
   renameOutfit: (id: string, name: string | null) => void;
   deleteOutfit: (id: string) => void;
   wearOutfit: (id: string, place?: PlaceName | null) => void;
+  undoWearOutfit: (id: string) => void; // Kombinin bugünkü giyimini ve parçaların bugünkü Giydim'ini geri alır
 
   // Burç (Welcome'da / Ayarlar'da seçilir). Seçilmediyse null.
   zodiac: ZodiacName | null;
@@ -194,6 +195,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // "Giydim'i geri al": en son eklenen tarihi siler
   function undoWear(id: string) {
+    // Bugünkü tek giyim geri alınıyorsa, bu parçayı içeren kombinlerin "bugün giyildi" kaydı da
+    // silinir; yoksa kombin sayfası parça giyilmediği halde "Bugün giydin" der (Ebrar ekledi)
+    const today = todayString();
+    const item = items.find((current) => current.id === id);
+    if (
+      item &&
+      item.wearDates[item.wearDates.length - 1] === today &&
+      item.wearDates.filter((date) => date === today).length === 1
+    ) {
+      setOutfits((current) =>
+        current.map((outfit) =>
+          outfit.itemIds.includes(id) && outfit.wornDates.includes(today)
+            ? { ...outfit, wornDates: outfit.wornDates.filter((date) => date !== today) }
+            : outfit
+        )
+      );
+    }
     setItems((current) =>
       current.map((item) =>
         item.id === id
@@ -305,12 +323,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!outfit) {
       return;
     }
+    // Bugün zaten giyilmiş parça (ör. ayrıca "Giydim" denmiş) ikinci kez sayılmaz; kombinin
+    // bugünkü tarihi de bir kez eklenir (Ebrar düzeltti – eskiden aynı gün iki kez sayılıyordu)
+    const today = todayString();
     for (const itemId of outfit.itemIds) {
-      wearItem(itemId, place);
+      const item = items.find((current) => current.id === itemId);
+      if (item && !item.wearDates.includes(today)) {
+        wearItem(itemId, place);
+      }
     }
     setOutfits((current) =>
       current.map((outfit) =>
-        outfit.id === id ? { ...outfit, wornDates: [...outfit.wornDates, todayString()] } : outfit
+        outfit.id === id && !outfit.wornDates.includes(today)
+          ? { ...outfit, wornDates: [...outfit.wornDates, today] }
+          : outfit
+      )
+    );
+  }
+
+  // "Bu kombini giydim"i geri al: bugün giyilmiş parçaların son Giydim'i ve kombinin bugünkü
+  // tarihi silinir (Ebrar ekledi – kombin sayfasındaki ↩ butonu)
+  function undoWearOutfit(id: string) {
+    const outfit = outfits.find((current) => current.id === id);
+    if (!outfit) {
+      return;
+    }
+    const today = todayString();
+    for (const itemId of outfit.itemIds) {
+      const item = items.find((current) => current.id === itemId);
+      if (item && item.wearDates[item.wearDates.length - 1] === today) {
+        undoWear(itemId);
+      }
+    }
+    setOutfits((current) =>
+      current.map((outfit) =>
+        outfit.id === id
+          ? { ...outfit, wornDates: outfit.wornDates.filter((date) => date !== today) }
+          : outfit
       )
     );
   }
@@ -332,6 +381,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         renameOutfit,
         deleteOutfit,
         wearOutfit,
+        undoWearOutfit,
         zodiac,
         setZodiac,
       }}>

@@ -11,50 +11,32 @@
  *   Seçeneğe dokununca kombine girer (aynı kategoridekinin yerine), kombindekine dokununca çıkar.
  *   Elbise seçilince üst/alt, üst ya da alt seçilince elbise çıkar. "Öneriye dön ↺" sıfırlar.
  * - Altta "Kombini kaydet 💾": isteğe bağlı ad sorar, Onur'un arşivine (saveOutfit) kaydeder.
- *   Aynı parçalardan kombin zaten kayıtlıysa buton "Arşivde ✓" olur.
+ *   Aynı parçalardan kombin zaten kayıtlıysa buton "Arşivde ✓ · Kombine git →" olur ve o kombinin
+ *   sayfasını (saved-outfit/[id]) açar.
  * Seçilen parçanın rengi yoksa kombin kartında renk seçmeye çağıran bir satır çıkar.
  * Dolapta kombin kuracak kadar parça yoksa ekleme butonu gösterilir.
  */
 
 import * as Haptics from 'expo-haptics';
-import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import {
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ColorSwatch } from '@/components/color-picker';
+import { ClothingPhoto, OutfitCollage } from '@/components/outfit-collage';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { matchesFor, outfitFor } from '@/lib/outfits';
-import { photoUri } from '@/lib/photos';
 import type { Category, ClothingItem } from '@/lib/types';
 
 const colors = Colors.light;
-
-// Kolajdaki kartlar sırayla hafif sağa/sola yatık durur (dergi kolajı havası)
-const TILTS = ['-4deg', '3deg', '-2deg', '4deg', '-3deg', '2deg'];
-// Kartlar birbirinin üstüne genişliklerinin bu kadarı binerek dizilir
-const OVERLAP = 0.25;
 
 export default function OutfitScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { items, outfits, saveOutfit } = useApp();
-  const { width: screenWidth } = useWindowDimensions();
   // Kullanıcının değiştirdikleri: kategori → parça kimliği (null = o kategoriyi çıkar).
   // Boşsa motorun önerisi aynen gösterilir.
   const [changes, setChanges] = useState<Partial<Record<Category, string | null>>>({});
@@ -107,7 +89,8 @@ export default function OutfitScreen() {
     .map((item) => item.id)
     .sort()
     .join(',');
-  const isSaved = outfits.some((saved) => [...saved.itemIds].sort().join(',') === piecesKey);
+  const savedOutfit = outfits.find((saved) => [...saved.itemIds].sort().join(',') === piecesKey);
+  const isSaved = savedOutfit !== undefined;
 
   function save(name: string | null) {
     saveOutfit(
@@ -128,7 +111,11 @@ export default function OutfitScreen() {
       'Örn: Cuma akşamı 🍸 (istersen boş bırak)',
       [
         { text: 'Adsız kaydet', onPress: () => save(null) },
-        { text: 'Kaydet', style: 'default', onPress: (text?: string) => save(text?.trim() || null) },
+        {
+          text: 'Kaydet',
+          style: 'default',
+          onPress: (text?: string) => save(text?.trim() || null),
+        },
       ],
       'plain-text',
     );
@@ -158,11 +145,6 @@ export default function OutfitScreen() {
     router.push({ pathname: '/add-item', params: { id: item.id } });
   }
 
-  // Kolaj kartlarının genişliği: hepsi (üst üste binerek) ekrana sığacak kadar, en fazla 130
-  const available = screenWidth - Spacing.four * 2;
-  const count = pieces.length;
-  const cardWidth = Math.min(130, available / (1 + (1 - OVERLAP) * (count - 1)));
-
   return (
     <SafeAreaView style={styles.screen} edges={['bottom']}>
       <Stack.Screen options={headerOptions} />
@@ -191,32 +173,7 @@ export default function OutfitScreen() {
         ) : (
           <>
             {/* Kombin kolajı */}
-            <View style={styles.collage}>
-              {pieces.map((item, index) => (
-                <Animated.View
-                  key={item.id}
-                  entering={FadeIn.duration(250)}
-                  style={[
-                    styles.collageItem,
-                    {
-                      width: cardWidth,
-                      marginLeft: index === 0 ? 0 : -cardWidth * OVERLAP,
-                      transform: [{ rotate: TILTS[index % TILTS.length] }],
-                      zIndex: count - index,
-                    },
-                  ]}>
-                  <Photo item={item} style={styles.collagePhoto} />
-                  {index === 0 && (
-                    <View style={styles.baseTag}>
-                      <Text style={styles.baseTagText}>Seçtiğin</Text>
-                    </View>
-                  )}
-                </Animated.View>
-              ))}
-            </View>
-            <Text style={styles.collageNames} numberOfLines={2}>
-              {pieces.map((item) => item.name).join(' + ')}
-            </Text>
+            <OutfitCollage pieces={pieces} firstTag="Seçtiğin" />
 
             <View style={styles.textCard}>
               {/* Motorun cümlesi önerdiği kombine göre; kullanıcı değiştirdiyse ona övgü */}
@@ -269,7 +226,7 @@ export default function OutfitScreen() {
                           onPress={() => togglePiece(match.item)}
                           accessibilityLabel={`${match.item.name}: ${inOutfit ? 'kombinden çıkar' : 'kombine ekle'}`}
                           style={({ pressed }) => pressed && styles.optionPressed}>
-                          <Photo
+                          <ClothingPhoto
                             item={match.item}
                             style={[styles.optionPhoto, inOutfit && styles.optionPhotoSelected]}
                           />
@@ -323,39 +280,24 @@ export default function OutfitScreen() {
       {pieces.length > 1 && (
         <View style={styles.footer}>
           <Pressable
-            onPress={handleSave}
-            disabled={isSaved}
+            onPress={
+              savedOutfit
+                ? () =>
+                    router.push({ pathname: '/saved-outfit/[id]', params: { id: savedOutfit.id } })
+                : handleSave
+            }
             style={({ pressed }) => [
               styles.saveButton,
               isSaved && styles.saveButtonDone,
-              pressed && styles.saveButtonPressed,
+              pressed && (isSaved ? styles.saveButtonDonePressed : styles.saveButtonPressed),
             ]}>
             <Text style={[styles.saveText, isSaved && styles.saveTextDone]}>
-              {isSaved ? 'Arşivde ✓' : 'Kombini kaydet 💾'}
+              {isSaved ? 'Arşivde ✓ · Kombine git →' : 'Kombini kaydet 💾'}
             </Text>
           </Pressable>
         </View>
       )}
     </SafeAreaView>
-  );
-}
-
-// 3:4 kıyafet fotoğrafı; fotoğraf yoksa pembe zeminde askı simgesi
-function Photo({ item, style }: { item: ClothingItem; style: StyleProp<ViewStyle> }) {
-  const uri = photoUri(item.photoFileName);
-  return (
-    <View style={[styles.photo, style]}>
-      {uri ? (
-        <Image source={{ uri }} style={styles.photoImage} contentFit="cover" />
-      ) : (
-        <SymbolView
-          name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
-          tintColor={colors.primary}
-          size={24}
-          weight="light"
-        />
-      )}
-    </View>
   );
 }
 
@@ -369,56 +311,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: Spacing.five,
     gap: Spacing.four,
-  },
-  photo: {
-    aspectRatio: 3 / 4,
-    borderRadius: Radius.md,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  photoImage: {
-    width: '100%',
-    height: '100%',
-  },
-  // Kolaj: kartlar ortada, üst üste binerek
-  collage: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.two,
-  },
-  collageItem: {
-    backgroundColor: colors.card,
-    borderRadius: Radius.md + 4,
-    padding: 4,
-    ...Shadows.card,
-  },
-  collagePhoto: {
-    width: '100%',
-  },
-  // Kartın içinde, sol üstte (dışarı taşınca yatık kartta kesiliyordu)
-  baseTag: {
-    position: 'absolute',
-    top: Spacing.two,
-    left: Spacing.two,
-    backgroundColor: colors.primary,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-  },
-  baseTagText: {
-    ...Typography.caption,
-    color: colors.onPrimary,
-    fontWeight: '700',
-  },
-  collageNames: {
-    ...Typography.caption,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: -Spacing.two,
   },
   textCard: {
     backgroundColor: colors.card,
@@ -551,12 +443,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...Shadows.button,
   },
-  // Kaydedildiyse: beyaz zemin, pembe yazı (artık basılmaz)
+  // Kaydedildiyse: beyaz zemin, pembe yazı (basınca kayıtlı kombinin sayfası açılır)
   saveButtonDone: {
     backgroundColor: colors.card,
     borderWidth: 1.5,
     borderColor: colors.accent,
     shadowOpacity: 0,
+  },
+  saveButtonDonePressed: {
+    backgroundColor: colors.primarySoft,
   },
   saveButtonPressed: {
     backgroundColor: colors.primaryPressed,

@@ -93,8 +93,7 @@ export default function WardrobeScreen() {
   const isFiltering = query !== '' || category !== ALL;
 
   // Tek sayıda kıyafet varsa son kart tüm satırı kaplamasın diye sona boş bir yer eklenir
-  const data: (ClothingItem | null)[] =
-    filtered.length % 2 === 1 ? [...filtered, null] : filtered;
+  const data: (ClothingItem | null)[] = filtered.length % 2 === 1 ? [...filtered, null] : filtered;
 
   return (
     <ScreenBackground>
@@ -118,17 +117,35 @@ export default function WardrobeScreen() {
                     </Text>
                   )}
                 </View>
-                <Pressable
-                  onPress={() => router.push('/add-item')}
-                  accessibilityLabel="Yeni parça ekle"
-                  style={({ pressed }) => [styles.addButton, pressed && styles.addButtonPressed]}>
-                  <SymbolView
-                    name={{ ios: 'plus', android: 'add', web: 'add' }}
-                    tintColor={colors.onPrimary}
-                    size={22}
-                    weight="bold"
-                  />
-                </Pressable>
+                <View style={styles.headerButtons}>
+                  {/* Kaydedilen kombinler (arşiv) */}
+                  <Pressable
+                    onPress={() => router.push('/outfits')}
+                    accessibilityLabel="Kombinlerim"
+                    style={({ pressed }) => [
+                      styles.outfitsButton,
+                      pressed && styles.outfitsButtonPressed,
+                    ]}>
+                    <SymbolView
+                      name={{ ios: 'square.grid.2x2', android: 'grid_view', web: 'grid_view' }}
+                      tintColor={colors.primary}
+                      size={16}
+                      weight="semibold"
+                    />
+                    <Text style={styles.outfitsButtonText}>Kombinlerim</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => router.push('/add-item')}
+                    accessibilityLabel="Yeni parça ekle"
+                    style={({ pressed }) => [styles.addButton, pressed && styles.addButtonPressed]}>
+                    <SymbolView
+                      name={{ ios: 'plus', android: 'add', web: 'add' }}
+                      tintColor={colors.onPrimary}
+                      size={22}
+                      weight="bold"
+                    />
+                  </Pressable>
+                </View>
               </View>
 
               <View style={styles.searchRow}>
@@ -271,6 +288,30 @@ const styles = StyleSheet.create({
   },
   titleText: {
     gap: Spacing.one,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  // Beyaz hap: "Kombinlerim" (pembe "+" ana buton olarak öne çıksın diye sade)
+  outfitsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one + Spacing.half,
+    height: 40,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.card,
+    ...Shadows.card,
+  },
+  outfitsButtonPressed: {
+    backgroundColor: colors.primarySoft,
+    transform: [{ scale: 0.95 }],
+  },
+  outfitsButtonText: {
+    ...Typography.bodyBold,
+    color: colors.primary,
   },
   addButton: {
     width: 48,

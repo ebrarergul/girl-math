@@ -291,14 +291,19 @@ const { outfits, saveOutfit, toggleFavoriteOutfit, renameOutfit, deleteOutfit, w
 saveOutfit(outfit.items.map((i) => i.id), 'Cuma akşamı 🍸')  // ad isteğe bağlı; kimliği döner.
                                     //   Aynı parçalardan kombin zaten varsa yenisini eklemez.
 toggleFavoriteOutfit(id) / renameOutfit(id, 'Yeni ad' | null) / deleteOutfit(id)
-wearOutfit(id)                      // Bütün parçalara Giydim (ödül bildirimi dahil) + kombin tarihi
+wearOutfit(id)                      // Bütün parçalara Giydim (ödül bildirimi dahil) + kombin tarihi.
+                                    //   Bugün zaten giyilmiş parça atlanır, kombin tarihi günde 1 kez.
+undoWearOutfit(id)                  // Geri al: bugün giyilen parçaların son Giydim'i + kombinin bugünkü
+                                    //   tarihi silinir (Ebrar ekledi; kombin sayfasındaki ↩)
 sortOutfits(outfits)                // Arşiv sırası: favoriler üstte, sonra en yeni
 outfitItems(outfit, items)          // Kombinin kıyafetleri (silinenler atlanır)
 outfitName(outfit, items)           // Görünen ad: verilen ad ya da “Beyaz tişört” kombini
 ```
 Kayıt: `SavedOutfit` (`types.ts`) → `id, itemIds, name, favorite, wornDates, createdAt`, telefonda
 `girlmath.outfits`. Kıyafet silinince kombinlerden çıkar; parçasız kalan kombin silinir.
-`resetAll` kombinleri de siler.
+`resetAll` kombinleri de siler. Bir parçanın bugünkü tek Giydim'i `undoWear` ile geri alınınca o
+parçayı içeren kombinlerin bugünkü tarihi de silinir (Ebrar ekledi; yoksa kombin sayfası parça
+giyilmediği halde "Bugün giydin" diyordu).
 
 **Giyim yerleri** (`@/lib/places`) – "Nereye giderken giydin?"
 ```tsx
@@ -350,8 +355,9 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Sonra: uygulama simgesi (taslaklar beğenilmedi, ertelendi)
   - Renk seçici ✅ (+ fotoğraftan renk tahmini ✅), detayda RENK satırı ✅, **"Bununla ne
     giyerim? ✨"** ekranı ✅ (kolaj, seçenekle değiştirme, "Kombini kaydet 💾")
-  - **Sırada:** Kombin arşivi sayfası, Ana sayfada "Günün kombini" kartı, "Nereye?" seçimi,
-    burç kartı (aşağıdaki "Yeni kararlaştırılan özellikler" sırasıyla)
+  - Kombin arşivi ✅ (Dolap'ta "Kombinlerim" → arşiv → kayıtlı kombin sayfası)
+  - **Sırada:** Ana sayfada "Günün kombini" kartı, "Nereye?" seçimi, burç kartı (aşağıdaki
+    "Yeni kararlaştırılan özellikler" sırasıyla)
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -368,9 +374,9 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - `resetAll` – aynı şekilde Ebrar ekledi (Ayarlar'daki "Bütün verileri sil" kullanır).
   - **Yeni kararlaştırılan özellikler (16 Ekim, Onur + Ebrar), bu sırayla:**
     1. Renk + kombin motoru ✅
-    2. **Favori kombin arşivi:** mantık ✅ (Onur), öneri ekranında "Kombini kaydet 💾" ✅ (Ebrar).
-       **Sırada ekran (Ebrar):** Arşiv sayfası (`sortOutfits`, yıldız, ad değiştirme, sil,
-       "Bu kombini giydim").
+    2. **Favori kombin arşivi:** mantık ✅ (Onur), ekranlar ✅ (Ebrar): "Kombini kaydet 💾",
+       Kombinlerim (arşiv), kayıtlı kombin sayfası (yıldız, ad değiştirme, sil, "Bu kombini
+       giydim" + ↩).
     3. **"Nereye giderken giydin?":** mantık ✅ (Onur, `src/lib/places.ts`). **Sırada ekran
        (Ebrar):** Giydim'de isteğe bağlı yer seçme ("Geç" seçeneğiyle; hızlı Giydim yer sormaz),
        `repeatWarning` varsa uyarı penceresi (soft: "💭 Hatırlatma", strong: "🚨") + "Bunun yerine"
@@ -437,7 +443,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
       parça"** kartı + "Utanç Duvarı'nın tamamı →"; **"Dolabının yıldızı"** (en çok giyilen,
       başlıkta pembe ★). Sağ üstte ⚙️ butonu Ayarlar'ı açar. Dolap boşsa ekleme butonu. Onur'un kombin motoru
       gelince vitrin kartının yerine/yanına "Günün kombini" gelebilir.
-    - `wardrobe.tsx` – Dolap: büyük başlık + pembe "+" butonu, arama + sıralama butonu
+    - `wardrobe.tsx` – Dolap: büyük başlık + beyaz "Kombinlerim" hapı + pembe "+" butonu, arama + sıralama butonu
       (En yeni / En pahalı / En az giyilen / Amortiye en yakın; varsayılan dışındaysa buton
       pembe), kategori hapları, 2 sütunlu `ClothingCard`'lar, boş dolap mesajı. Karta kısa
       dokunuş detayı açar, **basılı tutmak hızlı Giydim** (tekrar basılı tutmak geri alır).
@@ -468,7 +474,14 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     seçilen parçanın rengi yoksa "renk seçersen…" satırı; **"Başka seçenekler"** (`matchesFor`,
     her kartta renk + sebep hapı). Seçeneğe dokununca kombine girer/çıkar (elbise ↔ üst/alt
     birbirini çıkarır), "Öneriye dön ↺". Altta "Kombini kaydet 💾" (`saveOutfit`, iPhone'da
-    isteğe bağlı ad sorar; kayıtlıysa "Arşivde ✓").
+    isteğe bağlı ad sorar; kayıtlıysa "Arşivde ✓ · Kombine git →" kayıtlı kombini açar).
+  - `outfits.tsx` – Kombinlerim (arşiv, Dolap'tan açılır): "⭐ Favoriler" + "Tüm kombinler",
+    2 sütunlu kartlar (2×2 fotoğraf ızgarası, 4'ten fazla parçada "+N", ad, giyim sayısı), köşede
+    favori yıldızı (favoride `highlight` ★). Karta dokununca kayıtlı kombin sayfası.
+  - `saved-outfit/[id].tsx` – kayıtlı kombin: kolaj, ad (✏️ ile değiştirilir, iPhone'da), "3 parça
+    · 2 kere giydin · en son dün", parça listesi (dokununca kıyafet detayı), "Bu kombini sil",
+    sağ üstte yıldız. Altta "Bu kombini giydim ✨" (`wearOutfit`, kutlama balonu); bugün
+    giyildiyse "Bugün giydin ✓" + ↩ (`undoWearOutfit`).
   - `shame-wall.tsx` – Utanç Duvarı: toplam boşa giden + unutulan bütün parçalar (en çok
     zarar yazandan aza).
   - `settings.tsx` – Ayarlar (iPhone ayarları tarzı gruplar): BİLDİRİMLER (izin durumu + "Aç";
@@ -487,6 +500,9 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `quick-wear.tsx` – ortak hızlı Giydim: `useQuickWear()` → `{ toggleWear, toastView }`
     (ışık düğmesi: giyilmediyse Giydim + titreşim + "Geri al"lı balon, bugün giyildiyse geri al).
     Ana sayfa şeridi ve Dolap'ta basılı tutma kullanır.
+  - `outfit-collage.tsx` – kombin kolajı `OutfitCollage` (yamuk, üst üste binen 3:4 kartlar +
+    parça adları, isteğe bağlı ilk parça etiketi) ve `ClothingPhoto` (3:4 fotoğraf, yoksa askı).
+    "Bununla ne giyerim?" ve kayıtlı kombin sayfası kullanır.
   - `color-picker.tsx` – renk seçici (`ColorPicker`: yatay kayan renk yuvarlakları, tekrar
     dokununca seçim kalkar, `note` ile alt yazı) ve tek renk yuvarlağı `ColorSwatch` (beyazın
     kenarı var, "Desenli" çok renkli). Form, detay ve kombin ekranı kullanır.
