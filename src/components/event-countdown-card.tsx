@@ -1,18 +1,20 @@
 /**
- * ETKİNLİK GERİ SAYIM KARTI (Ana sayfa)
+ * ETKİNLİK GERİ SAYIMI (Ana sayfa, "Senin için" kartında bir satır)
  *
- * Zaman Aşımı = Bedava: etkinliğine 7 gün ya da daha az kalmış parçalardan en yakını. Solda
- * küçük fotoğraf, sağda "ETKİNLİK · 3 GÜN KALDI" / "YARIN" / "BUGÜN 🆓" ve Onur'un geri sayım
- * cümlesi (eventCountdownText). Etkinlik günü yeşil çerçeveli. Dokununca kıyafetin detayı açılır.
+ * Zaman Aşımı = Bedava: etkinliğine 7 gün ya da daha az kalmış parçalardan en yakını.
+ * Solda takvim simgesi, ortada etkinlik adı ("Düğün") ve altında
+ * "3 gün kaldı · “Elbise”" / "Yarın · “Elbise”" / "Bugün · “Elbise” bedava", sağda ok.
+ * Etkinlik günü simge ve yazı yeşil (bedava). Dokununca kıyafetin detayı açılır.
  * Yakında etkinlik yoksa hiçbir şey göstermez.
  */
 
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { StyleSheet, Text } from 'react-native';
 
-import { ClothingPhoto } from '@/components/outfit-collage';
-import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { eventCountdownText, eventStatus } from '@/lib/events';
+import { IconCircle, TodayRow, todayDetailStyle } from '@/components/today-row';
+import { Colors } from '@/constants/theme';
+import { eventStatus } from '@/lib/events';
 import type { ClothingItem } from '@/lib/types';
 
 const colors = Colors.light;
@@ -40,67 +42,47 @@ export function EventCountdownCard({ items }: { items: ClothingItem[] }) {
         entry.days !== null && entry.days <= SHOW_DAYS_BEFORE,
     )
     .sort((a, b) => a.days - b.days)[0];
-  const text = next ? eventCountdownText(next.item) : null;
-  if (!next || !text) {
+  const event = next?.item.event;
+  if (!next || !event) {
     return null;
   }
 
   const today = next.days === 0;
-  const eyebrow = today
-    ? 'ETKİNLİK · BUGÜN 🆓'
+  // Emoji yok: "Diğer"de kullanıcının yazdığı ad, yoksa tür adı
+  const title =
+    event.type === 'Diğer' && event.customName?.trim() ? event.customName.trim() : event.type;
+  const name = `“${next.item.name}”`;
+  const detail = today
+    ? `Bugün · ${name} bedava`
     : next.days === 1
-      ? 'ETKİNLİK · YARIN'
-      : `ETKİNLİK · ${next.days} GÜN KALDI`;
+      ? `Yarın · ${name}`
+      : `${next.days} gün kaldı · ${name}`;
 
   return (
-    <Pressable
+    <TodayRow
+      icon={
+        <IconCircle>
+          <SymbolView
+            name={today ? 'gift' : 'calendar'}
+            tintColor={today ? colors.success : colors.primary}
+            size={18}
+          />
+        </IconCircle>
+      }
+      title={title}
+      detail={
+        <Text style={[todayDetailStyle, today && styles.today]} numberOfLines={1}>
+          {detail}
+        </Text>
+      }
       onPress={() => router.push({ pathname: '/item/[id]', params: { id: next.item.id } })}
-      style={({ pressed }) => [styles.card, today && styles.cardToday, pressed && styles.pressed]}>
-      <ClothingPhoto item={next.item} style={styles.photo} />
-      <View style={styles.body}>
-        <Text style={[styles.eyebrow, today && styles.eyebrowToday]}>{eyebrow}</Text>
-        <Text style={styles.text}>{text}</Text>
-      </View>
-    </Pressable>
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    backgroundColor: colors.card,
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
-    padding: Spacing.three,
-    ...Shadows.card,
-  },
-  // Etkinlik günü: yeşil çerçeve ("bugün bedava")
-  cardToday: {
-    borderColor: colors.success,
-  },
-  pressed: {
-    transform: [{ scale: 0.98 }],
-  },
-  photo: {
-    width: 56,
-    borderRadius: Radius.sm,
-  },
-  body: {
-    flex: 1,
-    gap: Spacing.half,
-  },
-  eyebrow: {
-    ...Typography.label,
-    color: colors.primary,
-  },
-  eyebrowToday: {
+  // Etkinlik günü: yeşil yazı ("bugün bedava")
+  today: {
     color: colors.success,
-  },
-  text: {
-    ...Typography.bodyBold,
-    color: colors.text,
   },
 });

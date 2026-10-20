@@ -2,11 +2,13 @@
  * CÜZDAN EKRANI
  *
  * Dolabın parasal özeti: dolap değeri ve Starbucks Endeksi karşılığı, şaka istatistik
- * "Girl Math kazancın" ve 4 küçük istatistik kutusu. Tüm sayılar getWardrobeStats'tan gelir.
+ * "Girl Math kazancın" (sayfanın tek pembe vurgusu) ve 4 küçük istatistik kutusu. Tüm sayılar
+ * getWardrobeStats'tan gelir. Altta tek kartta Analizlerin + Almalı mıyım? satırları.
+ * Aylık harcama ("bu ay dolaba giren") Analizlerin → Aylık özet'te; burada tekrar edilmez.
  */
 
 import { useRouter } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -23,8 +25,6 @@ import {
   Typography,
 } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
-import { findComparison } from '@/lib/comparisons';
-import { todayString } from '@/lib/girl-math';
 import { starbucksIndexText } from '@/lib/starbucks-index';
 import { getWardrobeStats } from '@/lib/stats';
 
@@ -35,12 +35,6 @@ export default function WalletScreen() {
   const { items, isLoaded } = useApp();
   const stats = getWardrobeStats(items);
   const isEmpty = isLoaded && items.length === 0;
-
-  // Bu ay dolaba giren: bu ay eklenen parçaların sayısı ve toplam fiyatı (aylık harcama özeti)
-  const thisMonth = todayString().slice(0, 7); // Örn: "2026-10"
-  const addedThisMonth = items.filter((item) => item.createdAt.startsWith(thisMonth));
-  const spentThisMonth = addedThisMonth.reduce((sum, item) => sum + item.price, 0);
-  const spentMatch = findComparison(spentThisMonth);
 
   return (
     <ScreenBackground>
@@ -56,12 +50,12 @@ export default function WalletScreen() {
               <Pressable
                 onPress={() => router.push('/share')}
                 accessibilityLabel="Dolabını paylaş"
-                style={({ pressed }) => [styles.shareButton, pressed && styles.emptyButtonPressed]}>
+                style={({ pressed }) => [styles.shareButton, pressed && styles.shareButtonPressed]}>
                 <SymbolView
                   name={{ ios: 'square.and.arrow.up', android: 'share', web: 'share' }}
-                  tintColor={colors.onPrimary}
+                  tintColor={colors.primary}
                   size={20}
-                  weight="bold"
+                  weight="semibold"
                 />
               </Pressable>
             )}
@@ -96,7 +90,6 @@ export default function WalletScreen() {
                   {stats.totalValue.toLocaleString('tr-TR')}
                   <Text style={styles.heroCurrency}> ₺</Text>
                 </Text>
-                <Text style={styles.heroNote}>{stats.totalItems} parça</Text>
                 <View style={styles.divider} />
                 <Text style={styles.starbucks}>
                   Dolabın {starbucksIndexText(stats.totalValue)}
@@ -108,20 +101,6 @@ export default function WalletScreen() {
                 value={formatTL(stats.girlMathSavings)}
                 caption="Giydikçe kazandığın. Bankan bunu tanımıyor ama biz tanıyoruz 💅"
                 tone="primary"
-              />
-
-              <StatTile
-                label="Bu ay dolaba giren"
-                value={formatTL(spentThisMonth)}
-                caption={
-                  addedThisMonth.length === 0
-                    ? 'Bu ay hiç alışveriş yok, cüzdanın sana minnettar 🫶'
-                    : `${addedThisMonth.length} yeni parça 🛍️${
-                        spentMatch
-                          ? ` · ${Math.floor(spentThisMonth / spentMatch.price)} ${spentMatch.unit} ${spentMatch.emoji} demek`
-                          : ''
-                      }`
-                }
               />
 
               <View style={styles.row}>
@@ -153,56 +132,66 @@ export default function WalletScreen() {
             </>
           )}
 
-          {/* Analizler: renk analizi, aylık özet, satmayı düşün (dolap boşken analiz edilecek bir şey yok) */}
-          {!isEmpty && isLoaded && (
-            <Pressable
-              onPress={() => router.push('/insights')}
-              style={({ pressed }) => [styles.askCard, pressed && styles.askCardPressed]}>
-              <View style={styles.askIcon}>
-                <SymbolView
-                  name={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
-                  tintColor={colors.primary}
-                  size={22}
-                />
-              </View>
-              <View style={styles.askBody}>
-                <Text style={styles.askTitle}>Analizlerin</Text>
-                <Text style={styles.askText}>Renklerin, aylık özetin, satmayı düşün</Text>
-              </View>
-              <SymbolView
-                name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-                tintColor={colors.primary}
-                size={14}
-              />
-            </Pressable>
-          )}
-
-          {/* "Almalı mıyım?" dolap boşken de görünür: ilk alışverişten önce de işe yarar */}
+          {/* iPhone Ayarları gibi tek kartta satırlar: Analizlerin (dolap boşken yok) + Almalı mıyım?
+              ("Almalı mıyım?" dolap boşken de görünür: ilk alışverişten önce de işe yarar) */}
           {isLoaded && (
-            <Pressable
-              onPress={() => router.push('/should-i-buy')}
-              style={({ pressed }) => [styles.askCard, pressed && styles.askCardPressed]}>
-              <View style={styles.askIcon}>
-                <SymbolView
-                  name={{ ios: 'bag.badge.questionmark', android: 'help', web: 'help' }}
-                  tintColor={colors.primary}
-                  size={22}
+            <View style={styles.linkGroup}>
+              {!isEmpty && (
+                <LinkRow
+                  icon="chart.bar"
+                  title="Analizlerin"
+                  text="Aylık özet, renklerin, satmayı düşün"
+                  onPress={() => router.push('/insights')}
                 />
-              </View>
-              <View style={styles.askBody}>
-                <Text style={styles.askTitle}>Almalı mıyım?</Text>
-                <Text style={styles.askText}>{"Almadan önce Girl Math'e sor"}</Text>
-              </View>
-              <SymbolView
-                name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-                tintColor={colors.primary}
-                size={14}
+              )}
+              <LinkRow
+                icon="bag.badge.questionmark"
+                title="Almalı mıyım?"
+                text="Almadan önce Girl Math'e sor"
+                onPress={() => router.push('/should-i-buy')}
+                divider={!isEmpty}
               />
-            </Pressable>
+            </View>
           )}
         </ScrollView>
       </SafeAreaView>
     </ScreenBackground>
+  );
+}
+
+// Alttaki karttaki tek satır: pembe simge, başlık + açıklama, sağda ok
+function LinkRow({
+  icon,
+  title,
+  text,
+  onPress,
+  divider,
+}: {
+  icon: SFSymbol;
+  title: string;
+  text: string;
+  onPress: () => void;
+  divider?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}>
+      <View style={styles.linkIcon}>
+        <SymbolView name={icon} tintColor={colors.primary} size={18} />
+      </View>
+      <View style={[styles.linkBody, divider && styles.linkDivider]}>
+        <View style={styles.linkText}>
+          <Text style={styles.linkTitle}>{title}</Text>
+          <Text style={styles.linkCaption}>{text}</Text>
+        </View>
+        <SymbolView
+          name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+          tintColor={colors.textMuted}
+          size={13}
+        />
+      </View>
+    </Pressable>
   );
 }
 
@@ -229,10 +218,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: Radius.pill,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.button,
+    ...Shadows.card,
+  },
+  shareButtonPressed: {
+    transform: [{ scale: 0.95 }],
   },
   label: {
     ...Typography.label,
@@ -265,10 +257,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0,
   },
-  heroNote: {
-    ...Typography.body,
-    color: colors.textSecondary,
-  },
   divider: {
     height: 1,
     backgroundColor: colors.border,
@@ -282,39 +270,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.three,
   },
-  askCard: {
+  // iPhone Ayarları gibi: tek beyaz kart, satırlar arasında ince çizgi (simgenin sağından başlar)
+  linkGroup: {
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    paddingLeft: Spacing.three,
+    ...Shadows.card,
+  },
+  linkRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
-    backgroundColor: colors.card,
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
-    padding: Spacing.three,
-    ...Shadows.card,
   },
-  askCardPressed: {
-    transform: [{ scale: 0.98 }],
+  linkRowPressed: {
+    opacity: 0.6,
   },
-  // Welcome kartlarındaki gibi: açık pembe daire içinde pembe simge
-  askIcon: {
-    width: 44,
-    height: 44,
+  // Açık pembe daire içinde pembe simge
+  linkIcon: {
+    width: 36,
+    height: 36,
     borderRadius: Radius.pill,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  askBody: {
+  linkBody: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    paddingRight: Spacing.three,
+  },
+  linkDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  linkText: {
     flex: 1,
     gap: Spacing.half,
   },
-  askTitle: {
-    ...Typography.heading,
+  linkTitle: {
+    ...Typography.bodyBold,
     color: colors.text,
   },
-  askText: {
-    ...Typography.body,
+  linkCaption: {
+    ...Typography.caption,
     color: colors.textSecondary,
   },
   empty: {

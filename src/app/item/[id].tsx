@@ -19,6 +19,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import Animated, {
   FadeInDown,
   FadeOutDown,
+  Keyframe,
   useAnimatedStyle,
   useSharedValue,
   withSequence,
@@ -42,6 +43,14 @@ import { starbucksIndexList } from '@/lib/starbucks-index';
 import type { ClothingItem } from '@/lib/types';
 
 const colors = Colors.light;
+
+// Kıyas kartının "yeni cümle" animasyonu: Giydim / geri al ile cümle değişince kart hafif
+// küçük ve saydam başlar, biraz büyüyüp ("pıt") yerine oturur
+const compareEntering = new Keyframe({
+  0: { opacity: 0, transform: [{ translateY: 12 }, { scale: 0.94 }] },
+  60: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1.03 }] },
+  100: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
+}).duration(450);
 
 // Son giyilme bilgisini insan diliyle yazar
 function lastWornText(wears: number, days: number): string {
@@ -215,15 +224,17 @@ export default function ItemDetailScreen() {
             <Fact label="Kategori" value={item.category} />
             {item.color && <Fact label="Renk" value={item.color} color={item.color} />}
             <Fact label="Giyim" value={`${wears} / ${item.targetWears}`} />
-            <Fact label="Son giyim" value={lastWornText(wears, daysSinceLastWear(item))} />
-            {lastPlace && <Fact label="Son yer" value={placeLabel(lastPlace)} />}
+            {/* Son yer ayrı satır değil, son giyimin yanında: "Bugün · 🌙 Gece" (sütun kısa kalsın) */}
+            <Fact
+              label="Son giyim"
+              value={`${lastWornText(wears, daysSinceLastWear(item))}${lastPlace ? ` · ${placeLabel(lastPlace)}` : ''}`}
+            />
             {item.event && (
               <Fact
                 label="Etkinlik"
                 value={`${eventLabel(item.event)} · ${dateFromString(item.event.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}`}
               />
             )}
-            <Fact label="Eklendi" value={item.createdAt.split('-').reverse().join('.')} />
           </View>
           <View style={styles.photoBox}>
             {uri ? (
@@ -275,20 +286,32 @@ export default function ItemDetailScreen() {
             )}
           </View>
 
-          {/* Etkinlik geri sayımı (Onur'un cümlesi); etkinlik günü yeşil çerçeveli */}
-          {countdown && (
-            <View style={[styles.eventCard, eventDay && styles.eventCardToday]}>
-              <Text style={styles.eventText}>{countdown}</Text>
-            </View>
-          )}
-
-          {/* Kıyas cümlesi sadece en az 1 kere giyildiyse anlamlı */}
-          <View style={styles.compareCard}>
+          {/* Kıyas cümlesi: sayfanın yıldızı (büyük, kalın, beyaz kart). Giyim sayısı değişince
+              key değişir, kart yeniden doğar ve compareEntering animasyonu oynar */}
+          <Animated.View
+            key={`compare-${wears}`}
+            entering={compareEntering}
+            style={styles.compareCard}>
             <Text style={styles.compareText}>
               {itemComparisonText(item) ??
                 'Giymediğin sürece maliyeti sonsuz 😱 İlk "Giydim" ile düşmeye başlasın!'}
             </Text>
-          </View>
+          </Animated.View>
+
+          {/* Etkinlik geri sayımı (Onur'un cümlesi): küçük sade satır; etkinlik günü yeşil */}
+          {countdown && (
+            <View style={styles.eventRow}>
+              <View style={styles.eventIcon}>
+                <SymbolView
+                  name={eventDay ? 'gift' : 'calendar'}
+                  tintColor={eventDay ? colors.success : colors.primary}
+                  size={16}
+                />
+              </View>
+              <Text style={[styles.eventText, eventDay && styles.eventTextToday]}>{countdown}</Text>
+            </View>
+          )}
+
 
           {/* Kombin önerisi ekranı (Onur'un kombin motoru) */}
           <Pressable
@@ -298,7 +321,7 @@ export default function ItemDetailScreen() {
               <SymbolView
                 name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
                 tintColor={colors.primary}
-                size={20}
+                size={18}
               />
             </View>
             <View style={styles.outfitBody}>
@@ -307,8 +330,8 @@ export default function ItemDetailScreen() {
             </View>
             <SymbolView
               name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-              tintColor={colors.primary}
-              size={14}
+              tintColor={colors.textMuted}
+              size={13}
             />
           </Pressable>
 
@@ -340,9 +363,15 @@ export default function ItemDetailScreen() {
             </View>
           )}
 
-          <Pressable onPress={handleDelete} style={styles.deleteButton}>
-            <Text style={styles.deleteText}>Bu parçayı sil</Text>
-          </Pressable>
+          {/* En altta küçük not: ne zaman eklendi (üstteki bilgi sütunu kısa kalsın diye burada) */}
+          <View style={styles.bottomInfo}>
+            <Text style={styles.addedText}>
+              {item.createdAt.split('-').reverse().join('.')} tarihinde eklendi
+            </Text>
+            <Pressable onPress={handleDelete} style={styles.deleteButton}>
+              <Text style={styles.deleteText}>Bu parçayı sil</Text>
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
 
@@ -555,21 +584,7 @@ const styles = StyleSheet.create({
     color: colors.onPrimary,
     fontWeight: '800',
   },
-  // Geri sayım kartı: açık pembe; etkinlik günü beyaz + yeşil çerçeve
-  eventCard: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: Radius.lg,
-    padding: Spacing.three,
-  },
-  eventCardToday: {
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.success,
-  },
-  eventText: {
-    ...Typography.bodyBold,
-    color: colors.text,
-  },
+  // Kıyas cümlesi: beyaz kart, büyük kalın yazı (Girl Math'in asıl "anı")
   compareCard: {
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
@@ -580,24 +595,46 @@ const styles = StyleSheet.create({
     ...Typography.heading,
     color: colors.text,
   },
-  // "Bununla ne giyerim?" satırı (Cüzdan'daki "Almalı mıyım?" kartıyla aynı stil)
+  // Etkinlik geri sayımı: çerçevesiz küçük satır (simge + yazı)
+  eventRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.one,
+  },
+  eventIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eventText: {
+    ...Typography.caption,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  eventTextToday: {
+    color: colors.success,
+    fontWeight: '700',
+  },
+  // "Bununla ne giyerim?" satırı (Cüzdan'daki satırlarla aynı: beyaz, çerçevesiz, gri ok)
   outfitCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
     padding: Spacing.three,
     ...Shadows.card,
   },
   outfitCardPressed: {
-    transform: [{ scale: 0.98 }],
+    opacity: 0.7,
   },
   outfitIcon: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     borderRadius: Radius.pill,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
@@ -608,11 +645,11 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   outfitTitle: {
-    ...Typography.heading,
+    ...Typography.bodyBold,
     color: colors.text,
   },
   outfitText: {
-    ...Typography.body,
+    ...Typography.caption,
     color: colors.textSecondary,
   },
   section: {
@@ -667,6 +704,15 @@ const styles = StyleSheet.create({
   indexCount: {
     ...Typography.price,
     color: colors.primary,
+  },
+  bottomInfo: {
+    alignItems: 'center',
+    gap: Spacing.one,
+    marginTop: Spacing.two,
+  },
+  addedText: {
+    ...Typography.caption,
+    color: colors.textMuted,
   },
   deleteButton: {
     alignSelf: 'center',

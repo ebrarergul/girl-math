@@ -3,6 +3,7 @@
  *
  * Dolaptaki kıyafetleri 2 sütunlu kartlar halinde gösterir. Üstte arama kutusu, sıralama
  * butonu ve kategori hapları var. Dolap boşsa "ilk parçanı ekle" mesajı çıkar.
+ * Kartlar mağaza vitrini gibi (beyaz kart yok, bkz. clothing-card.tsx), üst araçlar ince.
  * Karta basılı tutunca hızlı Giydim (sadece ekler; bugün zaten giyildiyse "zaten giyildi ✓" balonu,
  * geri almak balondaki "Geri al" ile).
  */
@@ -147,7 +148,7 @@ export default function WardrobeScreen() {
               {/* Alt yazı başlık satırının altında, tam genişlikte (butonları itmesin) */}
               {isLoaded && items.length > 0 && (
                 <Text style={styles.subtitle}>
-                  {items.length} parça · Basılı tut, Giydim sayılsın
+                  {items.length} parça
                 </Text>
               )}
 
@@ -274,7 +275,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.four, // Diğer ekranlarla aynı kenar boşluğu (kartlar başlıkla hizalı)
     paddingBottom: BottomTabInset + Spacing.four,
-    gap: Spacing.three,
+    gap: Spacing.four, // Kart satırları arası: beyaz kart olmadığı için biraz daha geniş
   },
   row: {
     gap: Spacing.three,
@@ -301,8 +302,8 @@ const styles = StyleSheet.create({
   // Beyaz yuvarlak "Kombinlerim" (pembe "+" ana buton olarak öne çıksın diye sade). Yazılı hap
   // olunca uzun alt yazıyla birlikte sığmıyor, "+" ekrandan taşıyordu.
   outfitsButton: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: Radius.pill,
     backgroundColor: colors.card,
     alignItems: 'center',
@@ -314,8 +315,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.95 }],
   },
   addButton: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: Radius.pill,
     backgroundColor: colors.primary,
     alignItems: 'center',
@@ -367,8 +368,8 @@ const styles = StyleSheet.create({
     ...Shadows.card,
   },
   sortButton: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     borderRadius: Radius.pill,
     backgroundColor: colors.card,
     alignItems: 'center',
@@ -391,7 +392,7 @@ const styles = StyleSheet.create({
     flex: 1,
     ...Typography.body,
     color: colors.text,
-    paddingVertical: Spacing.three,
+    height: 40,
   },
   // Hap sırası ekranın iki kenarına kadar uzansın diye listenin iç boşluğu kadar dışarı
   // taşırılır; ilk hap yine başlıkla aynı hizada başlar
@@ -402,7 +403,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     gap: Spacing.two,
     paddingTop: Spacing.three,
-    paddingBottom: Spacing.one,
+    paddingBottom: 0,
   },
   chip: {
     backgroundColor: colors.card,
@@ -410,14 +411,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
+    paddingVertical: Spacing.one + Spacing.half,
   },
   chipSelected: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
   chipText: {
-    ...Typography.bodyBold,
+    ...Typography.caption,
+    fontSize: 13,
     color: colors.textSecondary,
   },
   chipTextSelected: {

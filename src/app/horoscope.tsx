@@ -8,7 +8,8 @@
  * - "Bugün" / "Bu hafta" sekme hapları.
  * - Bugün: stil kişiliği (italik), gökyüzü cümleleri, 🍀 şanslı renk, dolaptan önerilen parça
  *   + "Kombini gör →" ("Bununla ne giyerim?" o parçayla açılır).
- * - Bu hafta: tarih aralığı, 💘 Aşk / 💸 Para / 👗 Dolap kartları.
+ * - Bu hafta: tarih aralığı, tek kartta AŞK / PARA / DOLAP bölümleri (Onur'un cümleleri zaten
+ *   emojiyle başladığı için başlıklarda emoji yok, yoksa iki kere yazılıyordu).
  * Sağ üstte "Değiştir" burç seçimini açar. Burç seçilmemişse seçmeye çağıran bir mesaj çıkar.
  */
 
@@ -176,18 +177,20 @@ export default function HoroscopeScreen() {
         ) : (
           <>
             <Text style={styles.range}>{weekly.range}</Text>
-            {(
-              [
-                ['💘', 'Aşk', weekly.love],
-                ['💸', 'Para', weekly.money],
-                ['👗', 'Dolap', weekly.wardrobe],
-              ] as const
-            ).map(([emoji, title, text]) => (
-              <View key={title} style={styles.card}>
-                <Text style={styles.weekTitle}>{`${emoji} ${title}`}</Text>
-                <Text style={styles.lineText}>{text}</Text>
-              </View>
-            ))}
+            <View style={styles.card}>
+              {(
+                [
+                  ['AŞK', weekly.love],
+                  ['PARA', weekly.money],
+                  ['DOLAP', weekly.wardrobe],
+                ] as const
+              ).map(([title, text], index) => (
+                <View key={title} style={[styles.weekPart, index > 0 && styles.weekDivider]}>
+                  <Text style={styles.weekLabel}>{title}</Text>
+                  <Text style={styles.lineText}>{text}</Text>
+                </View>
+              ))}
+            </View>
           </>
         )}
       </ScrollView>
@@ -364,9 +367,20 @@ const styles = StyleSheet.create({
     ...Typography.bodyBold,
     color: colors.textSecondary,
   },
-  weekTitle: {
-    ...Typography.heading,
-    color: colors.text,
+  // "Bu hafta" kartındaki her bölüm (AŞK / PARA / DOLAP), aralarında ince çizgi
+  weekPart: {
+    gap: Spacing.one,
+    paddingVertical: Spacing.one,
+  },
+  weekDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    paddingTop: Spacing.three,
+    marginTop: Spacing.one,
+  },
+  weekLabel: {
+    ...Typography.label,
+    color: colors.primary,
   },
   empty: {
     flex: 1,

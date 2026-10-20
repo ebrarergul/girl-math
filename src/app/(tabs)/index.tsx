@@ -3,13 +3,16 @@
  *
  * Her gün açılan "bugün" ekranı:
  * - Saate göre selamlama ve bugünün tarihi
- * - Pembe "vitrin" kartı: her gün farklı bir Girl Math gerçeği; dokununca sıradakine geçer
- * - Etkinlik geri sayımı (7 gün kala; etkinlik günü "🆓 bugün bedava"), yoksa hiç görünmez
- * - "Bugün ne giydin?" hızlı check-in şeridi (ışık düğmesi gibi: dokun ✓, tekrar dokun geri al)
+ * - Pembe "vitrin" kartı (sayfanın tek pembe vurgusu): her gün farklı bir Girl Math gerçeği;
+ *   dokununca sıradakine geçer, altta kaçıncı gerçek olduğunu gösteren noktalar
+ * - "Bugün ne giydin?" hızlı check-in şeridi (ışık düğmesi gibi: dokun ✓, tekrar dokun geri al).
+ *   Bütün dolap değil, en fazla QUICK_WEAR_LIMIT parça (quickWearItems) + sonda "Tümü →" (Dolap)
  * - "Günün kombini": unutulan bir parçanın etrafında kombin (dokununca "Bununla ne giyerim?")
- * - Burç şeridi (gümüş): burç + şanslı renk; dokununca burç sayfası (seçilmediyse burç seçimi)
- * - Dolap Kahoot'u kartı: hafta sonu "Oyna", oynandıysa rozet, hafta içi "Cumartesi açılıyor"
- * - "Unutulan parça" (Utanç Duvarı'nın ilk hali) ve "Dolabının yıldızı" (en çok giyilen) kartları
+ * - "Senin için": tek beyaz kartta satırlar (today-row.tsx): etkinlik geri sayımı (7 gün kala),
+ *   burç (gümüş madalyon + şanslı renk), Dolap Kahoot'u (sadece hafta sonu)
+ * - "Unutulan parça" (başlığın sağında "Utanç Duvarı →")
+ * Bütün bölüm başlıkları kartın üstünde, aynı stilde (sectionTitle); kartların içinde etiket yok.
+ * "Dolabının yıldızı" kaldırıldı: Analizlerin → Aylık özet'te "Ayın yıldızı" olarak var.
  * Dolap boşsa ekleme butonu çıkar. Tüm sayılar getWardrobeStats'tan gelir.
  */
 
@@ -17,18 +20,20 @@ import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { FORGOTTEN_DAYS, formatTL, lossText } from '@/components/clothing-card';
+import { FORGOTTEN_DAYS, lossText } from '@/components/clothing-card';
 import { ScreenBackground } from '@/components/screen-background';
 import { useQuickWear } from '@/components/quick-wear';
 import { DailyOutfitCard } from '@/components/daily-outfit-card';
 import { EventCountdownCard } from '@/components/event-countdown-card';
+import { stringFromDate } from '@/components/event-picker';
 import { HoroscopeStrip } from '@/components/horoscope-strip';
 import { KahootCard } from '@/components/kahoot-card';
+import { TodayGroup } from '@/components/today-row';
 import {
   BottomTabInset,
   Colors,
@@ -39,7 +44,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
-import { costPerWear, todayString, wearCount } from '@/lib/girl-math';
+import { todayString, wearCount } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
 import { starbucksIndexText } from '@/lib/starbucks-index';
 import { getWardrobeStats, type WardrobeStats } from '@/lib/stats';
@@ -61,6 +66,32 @@ function todayLabel(): string {
     .toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' })
     .replace(',', '')
     .toLocaleUpperCase('tr');
+}
+
+// "Bugün ne giydin?" şeridinde en fazla kaç parça (fazlası için sondaki "Tümü →" Dolap'ı açar)
+const QUICK_WEAR_LIMIT = 8;
+// Sık giyilenler bu kadar güne bakılarak bulunur
+const QUICK_WEAR_DAYS = 30;
+
+// Şeritteki parçalar: son 30 günde en sık giyilenler (eşitse en son eklenen). Bugünkü giyimler
+// sayılmaz, yoksa dokunduğun parça parmağının altından kayardı. Bugün Dolap'tan giyilip
+// listeye girmeyen parça ✓ ile başa eklenir. Hiç giyim yoksa en son eklenenler gelir.
+// Not (20 Ekim): geçici çözüm, Ebrar sonra yeniden düşünecek (CLAUDE.md → Bilinen durumlar).
+function quickWearItems(items: ClothingItem[], today: string): ClothingItem[] {
+  const since = new Date();
+  since.setDate(since.getDate() - QUICK_WEAR_DAYS);
+  const sinceString = stringFromDate(since); // "2026-09-20"
+  const recentWears = (item: ClothingItem) =>
+    item.wearDates.filter((date) => date >= sinceString && date < today).length;
+
+  // items en yeni en başta geliyor; sort eşitlerde bu sırayı korur
+  const top = [...items]
+    .sort((a, b) => recentWears(b) - recentWears(a))
+    .slice(0, QUICK_WEAR_LIMIT);
+  const wornElsewhere = items.filter(
+    (item) => item.wearDates.includes(today) && !top.includes(item),
+  );
+  return [...wornElsewhere, ...top].slice(0, Math.max(QUICK_WEAR_LIMIT, wornElsewhere.length));
 }
 
 // Yılın kaçıncı günü (vitrin kartı her gün başka bir gerçekle başlasın diye)
@@ -154,8 +185,6 @@ export default function HomeScreen() {
     }
   }
 
-  const star = stats.mostWorn;
-
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.screen} edges={['top']}>
@@ -208,7 +237,7 @@ export default function HomeScreen() {
                     end={{ x: 1, y: 1 }}
                     style={styles.hero}>
                     <View style={styles.heroSparkle}>
-                      <SymbolView name="sparkles" tintColor={colors.onPrimary} size={36} />
+                      <SymbolView name="sparkles" tintColor={colors.onPrimary} size={24} />
                     </View>
                     <Text style={styles.heroLabel}>{fact.label}</Text>
                     <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
@@ -217,25 +246,28 @@ export default function HomeScreen() {
                       {fact.suffix && <Text style={styles.heroSuffix}> {fact.suffix}</Text>}
                     </Text>
                     <Text style={styles.heroText}>{fact.text}</Text>
-                    <Text style={styles.heroHint}>Dokun, sıradaki gerçek →</Text>
+                    {/* Sayfa noktaları: kaçıncı gerçek (dokununca sıradakine geçtiği belli olsun) */}
+                    <View style={styles.heroDots}>
+                      {facts.map((current) => (
+                        <View
+                          key={current.label}
+                          style={[styles.heroDot, current === fact && styles.heroDotActive]}
+                        />
+                      ))}
+                    </View>
                   </LinearGradient>
                 </Pressable>
               )}
 
-              <EventCountdownCard items={items} />
-
               {items.length > 0 && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Bugün ne giydin?</Text>
-                  <Text style={styles.sectionNote}>
-                    Dokun, Giydim sayılsın ✨ Tekrar dokunursan geri alınır.
-                  </Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     style={styles.stripScroll}
                     contentContainerStyle={styles.strip}>
-                    {items.map((item) => (
+                    {quickWearItems(items, today).map((item) => (
                       <QuickWearButton
                         key={item.id}
                         item={item}
@@ -243,45 +275,54 @@ export default function HomeScreen() {
                         onPress={() => toggleWear(item)}
                       />
                     ))}
+                    {items.length > QUICK_WEAR_LIMIT && (
+                      <Pressable
+                        onPress={() => router.push('/wardrobe')}
+                        accessibilityLabel="Bütün dolabı aç"
+                        style={({ pressed }) => [styles.quick, pressed && styles.quickPressed]}>
+                        <View style={[styles.quickPhoto, styles.quickAll]}>
+                          <SymbolView
+                            name="square.grid.2x2"
+                            tintColor={colors.primary}
+                            size={20}
+                            weight="light"
+                          />
+                        </View>
+                        <Text style={styles.quickName}>Tümü →</Text>
+                      </Pressable>
+                    )}
                   </ScrollView>
                 </View>
               )}
 
               <DailyOutfitCard items={items} />
 
-              <HoroscopeStrip />
-
-              <KahootCard />
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Senin için</Text>
+                <TodayGroup>
+                  <EventCountdownCard items={items} />
+                  <HoroscopeStrip />
+                  <KahootCard />
+                </TodayGroup>
+              </View>
 
               {forgotten && forgottenMessage && (
-                <HighlightCard
-                  eyebrow="UNUTULAN PARÇA"
-                  icon="clock.badge.exclamationmark"
-                  item={forgotten.item}
-                  message={forgottenMessage}
-                  extra={lossText(forgotten.item.price, forgotten.days)}
-                  tone="warning"
-                  onPress={() => openItem(forgotten.item)}
-                />
-              )}
-              {forgotten && forgottenMessage && (
-                <Pressable
-                  onPress={() => router.push('/shame-wall')}
-                  hitSlop={8}
-                  style={styles.wallLink}>
-                  <Text style={styles.wallLinkText}>{"Utanç Duvarı'nın tamamı →"}</Text>
-                </Pressable>
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Unutulan parça</Text>
+                    <Pressable onPress={() => router.push('/shame-wall')} hitSlop={8}>
+                      <Text style={styles.sectionLink}>{'Utanç Duvarı →'}</Text>
+                    </Pressable>
+                  </View>
+                  <HighlightCard
+                    item={forgotten.item}
+                    message={forgottenMessage}
+                    extra={lossText(forgotten.item.price, forgotten.days)}
+                    onPress={() => openItem(forgotten.item)}
+                  />
+                </View>
               )}
 
-              {star && (
-                <HighlightCard
-                  eyebrow="DOLABININ YILDIZI"
-                  icon="star.fill"
-                  item={star}
-                  message={`${wearCount(star)} kere giydin · ${formatTL(costPerWear(star))} /giyim`}
-                  onPress={() => openItem(star)}
-                />
-              )}
             </>
           )}
         </ScrollView>
@@ -316,7 +357,7 @@ function QuickWearButton({
           <SymbolView
             name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
             tintColor={colors.primary}
-            size={24}
+            size={20}
             weight="light"
           />
         )}
@@ -338,22 +379,16 @@ function QuickWearButton({
   );
 }
 
-// Fotoğraflı vurgu kartı: solda küçük fotoğraf, sağda başlık, kıyafet adı ve mesaj
+// Fotoğraflı vurgu kartı: solda küçük fotoğraf, sağda kıyafet adı ve mesaj (başlık kartın üstünde)
 function HighlightCard({
-  eyebrow,
-  icon,
   item,
   message,
   extra,
-  tone = 'default',
   onPress,
 }: {
-  eyebrow: string;
-  icon?: SFSymbol; // Başlığın yanındaki küçük pembe simge
   item: ClothingItem;
   message: string;
   extra?: string | null; // Mesajın altında pembe vurgulu ek satır (ör. Utanç Duvarı zararı)
-  tone?: 'default' | 'warning';
   onPress: () => void;
 }) {
   const uri = photoUri(item.photoFileName);
@@ -361,11 +396,7 @@ function HighlightCard({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.highlight,
-        tone === 'warning' && styles.highlightWarning,
-        pressed && styles.highlightPressed,
-      ]}>
+      style={({ pressed }) => [styles.highlight, pressed && styles.highlightPressed]}>
       <View style={styles.thumb}>
         {uri ? (
           <Image source={{ uri }} style={styles.thumbImage} contentFit="cover" />
@@ -379,10 +410,6 @@ function HighlightCard({
         )}
       </View>
       <View style={styles.highlightBody}>
-        <View style={styles.eyebrowRow}>
-          {icon && <SymbolView name={icon} tintColor={colors.primary} size={11} />}
-          <Text style={styles.eyebrow}>{eyebrow}</Text>
-        </View>
         <Text style={styles.highlightName} numberOfLines={1}>
           {item.name}
         </Text>
@@ -405,7 +432,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.four,
     paddingBottom: BottomTabInset + Spacing.four,
-    gap: Spacing.three,
+    gap: Spacing.four,
   },
   header: {
     paddingTop: Spacing.four,
@@ -442,14 +469,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.three,
   },
-  wallLink: {
-    alignSelf: 'flex-end',
-    marginTop: -Spacing.two,
-  },
-  wallLinkText: {
-    ...Typography.bodyBold,
-    color: colors.primary,
-  },
   heroWrap: {
     borderRadius: Radius.xl,
     ...Shadows.button,
@@ -459,15 +478,16 @@ const styles = StyleSheet.create({
   },
   hero: {
     borderRadius: Radius.xl,
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
     gap: Spacing.one,
     overflow: 'hidden',
   },
   heroSparkle: {
     position: 'absolute',
-    right: Spacing.four,
-    top: Spacing.four,
-    opacity: 0.35,
+    right: Spacing.three,
+    top: Spacing.three,
+    opacity: 0.3,
   },
   heroLabel: {
     ...Typography.label,
@@ -475,41 +495,57 @@ const styles = StyleSheet.create({
   },
   heroValue: {
     ...Typography.hero,
-    fontSize: 44,
-    lineHeight: 52,
     color: colors.onPrimary,
   },
   heroCurrency: {
     fontFamily: Fonts?.sans,
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '700',
     letterSpacing: 0,
   },
   heroSuffix: {
     fontFamily: Fonts?.sans,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0,
   },
   heroText: {
-    ...Typography.bodyBold,
+    ...Typography.body,
     color: colors.onPrimary,
   },
-  heroHint: {
-    ...Typography.caption,
-    color: colors.primarySoft,
+  heroDots: {
+    flexDirection: 'row',
+    gap: Spacing.one,
     marginTop: Spacing.two,
   },
+  heroDot: {
+    width: 5,
+    height: 5,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.onPrimary,
+    opacity: 0.35,
+  },
+  heroDotActive: {
+    width: 14,
+    opacity: 1,
+  },
+  // Bölüm: başlık kartın üstünde (daily-outfit-card.tsx da aynı stili kullanır)
   section: {
-    gap: Spacing.half,
+    gap: Spacing.two,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
   },
   sectionTitle: {
     ...Typography.heading,
     color: colors.text,
   },
-  sectionNote: {
+  sectionLink: {
     ...Typography.caption,
-    color: colors.textMuted,
+    color: colors.primary,
+    fontWeight: '700',
   },
   // Şerit ekranın iki kenarına kadar uzansın diye sayfanın iç boşluğu kadar dışarı taşırılır
   stripScroll: {
@@ -517,19 +553,19 @@ const styles = StyleSheet.create({
   },
   strip: {
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
+    paddingTop: Spacing.half,
     paddingBottom: Spacing.one,
     gap: Spacing.three,
   },
   quick: {
-    width: 96,
+    width: 72,
     gap: Spacing.one,
   },
   quickPressed: {
     transform: [{ scale: 0.94 }],
   },
   quickPhoto: {
-    width: 96,
+    width: 72,
     aspectRatio: 3 / 4,
     borderRadius: Radius.md,
     backgroundColor: colors.primarySoft,
@@ -543,6 +579,10 @@ const styles = StyleSheet.create({
   // Giyildiyse çerçeve açık pembe: asıl işaret köşedeki ✓, şerit fazla "dolu" görünmesin
   quickPhotoWorn: {
     borderColor: colors.accent,
+  },
+  // "Tümü →" kutusu: fotoğraf kutusuyla aynı boy, beyaz
+  quickAll: {
+    backgroundColor: colors.card,
   },
   quickCheck: {
     position: 'absolute',
@@ -575,10 +615,6 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     ...Shadows.card,
   },
-  highlightWarning: {
-    borderWidth: 1.5,
-    borderColor: colors.accent,
-  },
   highlightPressed: {
     transform: [{ scale: 0.98 }],
   },
@@ -598,15 +634,6 @@ const styles = StyleSheet.create({
   highlightBody: {
     flex: 1,
     gap: Spacing.half,
-  },
-  eyebrowRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-  },
-  eyebrow: {
-    ...Typography.label,
-    color: colors.primary,
   },
   highlightName: {
     ...Typography.heading,

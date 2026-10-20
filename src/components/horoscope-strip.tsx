@@ -1,20 +1,21 @@
 /**
- * BURÇ ŞERİDİ (Ana sayfa)
+ * BURÇ SATIRI (Ana sayfa, "Senin için" kartında bir satır)
  *
- * Eski Dolap Tarotu şeridinin yerinde, aynı gümüş (krom) zemin ve boyda: "büyü" anı burası.
- * Solda beyaz mini kartta pembe burç sembolü, ortada "BURCUN · BUGÜN", burç adı ve 🍀 şanslı
- * renk, sağda Ay evresi simgesi. Dokununca burç sayfası (horoscope.tsx) açılır.
+ * Solda küçük gümüş (krom) madalyon içinde pembe burç sembolü: "büyü" anı burası, ama gümüş
+ * sadece bu küçük yuvarlakta (bütün şerit gri olunca donuk duruyordu). Ortada burç adı ve
+ * altında şanslı renk, sağda Ay evresi simgesi ve ok. Dokununca burç sayfası (horoscope.tsx).
  * Burç seçilmemişse "Burcunu seç" der ve burç seçimini (zodiac.tsx) açar.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { ColorSwatch } from '@/components/color-picker';
+import { ICON_SIZE, TodayRow, todayDetailStyle } from '@/components/today-row';
 import { MOON_SYMBOLS, zodiacGlyph } from '@/components/zodiac-grid';
-import { Colors, Gradients, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
+import { Colors, Gradients, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { dailyHoroscope, getSky, zodiacSign } from '@/lib/zodiac';
 
@@ -27,109 +28,73 @@ export function HoroscopeStrip() {
   const daily = zodiac ? dailyHoroscope(zodiac, items) : null;
 
   return (
-    <Pressable
-      onPress={() => router.push(zodiac ? '/horoscope' : '/zodiac')}
-      accessibilityLabel={zodiac ? 'Burç yorumunu aç' : 'Burcunu seç'}
-      style={({ pressed }) => [styles.container, pressed && styles.pressed]}>
-      <LinearGradient
-        colors={Gradients.chrome}
-        locations={[0, 0.35, 0.7, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.fill}>
-        {/* Mini kart: burç sembolü (seçilmediyse kristal küre) */}
-        <View style={styles.miniCard}>
+    <TodayRow
+      icon={
+        // Gümüş madalyon
+        <LinearGradient
+          colors={Gradients.chrome}
+          locations={[0, 0.35, 0.7, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.medal}>
           {zodiac ? (
             <Text style={styles.glyph}>{zodiacGlyph(zodiacSign(zodiac).emoji)}</Text>
           ) : (
-            <SymbolView name="sparkles" tintColor={colors.primary} size={24} />
+            <SymbolView name="sparkles" tintColor={colors.primary} size={18} />
           )}
+        </LinearGradient>
+      }
+      title={zodiac ?? 'Burcunu seç'}
+      detail={
+        daily ? (
+          <View style={styles.luckyRow}>
+            <Text style={todayDetailStyle}>Şanslı renk</Text>
+            <ColorSwatch color={daily.luckyColor} size={10} />
+            <Text style={[todayDetailStyle, styles.luckyName]}>{daily.luckyColor}</Text>
+          </View>
+        ) : (
+          <Text style={todayDetailStyle}>Yıldızlar dolabına baksın</Text>
+        )
+      }
+      right={
+        <View style={styles.right}>
+          <SymbolView name={MOON_SYMBOLS[sky.moonPhase]} tintColor={colors.textSecondary} size={16} />
+          <SymbolView name="chevron.right" tintColor={colors.textMuted} size={13} />
         </View>
-
-        <View style={styles.body}>
-          <Text style={styles.eyebrow}>{zodiac ? 'BURCUN · BUGÜN' : 'BURÇ YORUMU'}</Text>
-          <Text style={styles.title} numberOfLines={1}>
-            {zodiac ?? 'Burcunu seç'}
-          </Text>
-          {daily ? (
-            <View style={styles.luckyRow}>
-              <Text style={styles.hint}>🍀 Şanslı renk</Text>
-              <ColorSwatch color={daily.luckyColor} size={12} />
-              <Text style={styles.luckyName}>{daily.luckyColor}</Text>
-            </View>
-          ) : (
-            <Text style={styles.hint}>Yıldızlar dolabına baksın 🔮</Text>
-          )}
-        </View>
-
-        <SymbolView name={MOON_SYMBOLS[sky.moonPhase]} tintColor={colors.text} size={22} />
-      </LinearGradient>
-    </Pressable>
+      }
+      accessibilityLabel={zodiac ? 'Burç yorumunu aç' : 'Burcunu seç'}
+      onPress={() => router.push(zodiac ? '/horoscope' : '/zodiac')}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    height: 112,
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-    borderWidth: 1.5,
+  medal: {
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
     borderColor: colors.card,
-    ...Shadows.card,
-  },
-  pressed: {
-    transform: [{ scale: 0.98 }],
-  },
-  fill: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    padding: Spacing.three,
-  },
-  // Tarot kartı oranında (2:3) beyaz mini kart
-  miniCard: {
-    width: 52,
-    height: 78,
-    borderRadius: Radius.sm,
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   glyph: {
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 18,
+    lineHeight: 22,
     color: colors.primary,
-  },
-  body: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: Spacing.half,
-  },
-  eyebrow: {
-    ...Typography.label,
-    color: colors.primary,
-  },
-  title: {
-    ...Typography.title,
-    fontSize: 24,
-    lineHeight: 30,
-    color: colors.text,
   },
   luckyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.one,
   },
-  hint: {
-    ...Typography.caption,
-    color: colors.textSecondary,
-  },
   luckyName: {
-    ...Typography.caption,
     color: colors.text,
     fontWeight: '700',
+  },
+  right: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
 });

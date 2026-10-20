@@ -1,9 +1,9 @@
 /**
  * KIYAFET KARTI
  *
- * Dolap ekranındaki 2 sütunlu listede tek bir kıyafeti gösterir:
- * fotoğraf (yoksa pembe yer tutucu), giyilme rozeti, hedef çubuğu, ad, kategori,
- * üstü çizili satın alma fiyatı ve pembe renkli giyim başına maliyet.
+ * Dolap ekranındaki 2 sütunlu listede tek bir kıyafeti gösterir, mağaza vitrini gibi (beyaz kart
+ * yok): fotoğraf (yoksa beyaz zeminde pembe askı) + üstünde "3/30" giyim rozeti; altında ad ve
+ * giyim başına maliyet (düştüyse yanında, sığmazsa altında üstü çizili satın alma fiyatı).
  * Amorti edilen kıyafetin köşesinde kalp rozeti çıkar.
  * Basılı tutunca onLongPress çağrılır (Dolap'ta hızlı Giydim). Bugün giyildiyse giyim
  * rozeti pembe dolu olur ve başında ✓ çıkar.
@@ -114,8 +114,8 @@ export function ClothingCard({ item, onPress, onLongPress }: Props) {
   const paidOff = isPaidOff(item);
   const uri = photoUri(item.photoFileName);
   const wornToday = item.wearDates.includes(todayString());
-  const progress = Math.min(wears / item.targetWears, 1);
 
+  // Mağaza vitrini gibi: beyaz kart yok, fotoğraf doğrudan zeminde, altında sadece ad + maliyet
   return (
     <Pressable
       onPress={onPress}
@@ -129,7 +129,7 @@ export function ClothingCard({ item, onPress, onLongPress }: Props) {
           <SymbolView
             name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
             tintColor={colors.primary}
-            size={36}
+            size={32}
             weight="light"
           />
         )}
@@ -137,7 +137,7 @@ export function ClothingCard({ item, onPress, onLongPress }: Props) {
         <View style={[styles.wearBadge, wornToday && styles.wearBadgeToday]}>
           <Text style={[styles.wearBadgeText, wornToday && styles.wearBadgeTextToday]}>
             {wornToday ? '✓ ' : ''}
-            {wears}/{item.targetWears} giyim
+            {wears}/{item.targetWears}
           </Text>
         </View>
 
@@ -148,35 +148,18 @@ export function ClothingCard({ item, onPress, onLongPress }: Props) {
         )}
       </View>
 
-      {/* Hedef çubuğu: hedefe ne kadar yaklaşıldığını gösterir */}
-      <View style={styles.track}>
-        <View style={[styles.trackFill, { width: `${progress * 100}%` }]} />
-      </View>
-
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={1}>
           {item.name}
         </Text>
-        {/* Ad kategoriyle aynıysa ("Ayakkabı" / "Ayakkabı") kategori tekrar yazılmaz */}
-        {item.name.trim().toLocaleLowerCase('tr') !== item.category.toLocaleLowerCase('tr') && (
-          <Text style={styles.category}>{item.category}</Text>
-        )}
-
-        <View style={styles.priceBlock}>
-          {/* Pembe fiyatın üstündeki satır: maliyet düştüyse üstü çizili satın alma fiyatı;
-              henüz düşmediyse bir sonraki adımın ipucu ("1. giyimde → 2.500 ₺",
-              "2. giyimde → 1.250 ₺"). Satır hep dolu olduğu için bütün kartlar aynı boyda kalır. */}
-          {wears >= 2 ? (
-            <Text style={styles.oldPrice}>{formatTL(item.price)}</Text>
-          ) : (
-            <Text style={styles.nextHint} numberOfLines={1}>
-              {wears + 1}. giyimde → {formatTL(Math.round(item.price / (wears + 1)))}
-            </Text>
-          )}
-          <Text style={styles.cost}>
+        {/* Güncel giyim maliyeti; düştüyse yanında üstü çizili satın alma fiyatı.
+            "1. giyimde → …" ipucu kartı kalabalıklaştırdığı için sadece detay sayfasında. */}
+        <View style={styles.priceRow}>
+          <Text style={styles.cost} numberOfLines={1}>
             {costLabel(item)}
             <Text style={styles.perWear}> /giyim</Text>
           </Text>
+          {wears >= 2 && <Text style={styles.oldPrice}>{formatTL(item.price)}</Text>}
         </View>
       </View>
     </Pressable>
@@ -186,22 +169,20 @@ export function ClothingCard({ item, onPress, onLongPress }: Props) {
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: Radius.lg,
-    padding: Spacing.two,
     gap: Spacing.two,
-    ...Shadows.card,
   },
   cardPressed: {
-    transform: [{ scale: 0.97 }],
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
   photoBox: {
     aspectRatio: 3 / 4, // Fotoğraflar 3:4 dikey kırpılıyor, kart da aynı oranda: kıyafet tam görünür
     borderRadius: Radius.md,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.card, // Fotoğrafsız parça beyaz: ürün fotoğraflarının açık zeminiyle uyumlu
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    ...Shadows.card,
   },
   photo: {
     width: '100%',
@@ -218,7 +199,8 @@ const styles = StyleSheet.create({
   },
   wearBadgeText: {
     ...Typography.caption,
-    color: colors.primary,
+    fontSize: 11,
+    color: colors.text,
   },
   wearBadgeToday: {
     backgroundColor: colors.primary,
@@ -230,61 +212,45 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: Spacing.two,
     top: Spacing.two,
-    width: 28,
-    height: 28,
+    width: 24,
+    height: 24,
     borderRadius: Radius.pill,
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
   heartText: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 16,
     color: colors.highlight,
   },
-  track: {
-    height: 4,
-    marginHorizontal: Spacing.one,
-    borderRadius: Radius.pill,
-    backgroundColor: colors.primarySoft,
-    overflow: 'hidden',
-  },
-  trackFill: {
-    height: '100%',
-    borderRadius: Radius.pill,
-    backgroundColor: colors.primary,
-  },
   info: {
-    paddingHorizontal: Spacing.one,
-    paddingBottom: Spacing.one,
+    paddingHorizontal: Spacing.half,
+    gap: Spacing.half,
   },
   name: {
-    ...Typography.bodyBold,
+    ...Typography.body,
     color: colors.text,
   },
-  category: {
-    ...Typography.caption,
-    color: colors.textMuted,
-  },
-  priceBlock: {
-    marginTop: Spacing.two,
-  },
-  // Okunur ama pembe fiyattan daha geri planda
-  nextHint: {
-    ...Typography.caption,
-    color: colors.primary,
-    opacity: 0.75,
-  },
-  oldPrice: {
-    ...Typography.priceStrike,
-    color: colors.textMuted,
+  // Sığmazsa üstü çizili fiyat alt satıra geçer (kesilmez)
+  priceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    columnGap: Spacing.two,
   },
   cost: {
-    ...Typography.price,
-    color: colors.primary,
+    ...Typography.bodyBold,
+    fontSize: 15,
+    color: colors.text,
   },
   perWear: {
     ...Typography.caption,
+    fontWeight: '500',
+    color: colors.textMuted,
+  },
+  oldPrice: {
+    ...Typography.priceStrike,
     color: colors.textMuted,
   },
 });
