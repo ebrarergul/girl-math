@@ -273,10 +273,15 @@ colorHex(item.color) // Renk yuvarlağı çizmek için kod (tema rengi değil, k
 addItem({ ..., color: 'Beyaz' }) / updateItem(id, { color: 'Pembe' })  // renk isteğe bağlı
 ```
 Eski kayıtlarda ve renk seçilmediyse `item.color` yok (undefined); ekranlar bunu kontrol etmeli.
+**Paletten seçilen tam ton** (`item.colorHex`, örn. "#8E3A59", Ebrar ekledi 21 Ekim): formdaki gökkuşağı
+"Diğer" yuvarlağı 12×6 + gri tonluk palet açar. Ton seçilince `colorHex` saklanır, `color` ise en yakın
+renk adı olur (`colorNameForHex`). **Kombin motoru, analizler, burç hep `color`'a bakar**; `colorHex`
+sadece ekranda (form, detaydaki RENK yuvarlağı "Bordo tonu"). `ColorSwatch color={…} hex={item.colorHex}`.
 
 **Fotoğraftan renk tahmini** (`@/lib/photo-color`, Ebrar ekledi) – ekleme formunda fotoğraf seçilince
 ```tsx
 const color = await guessPhotoColor(photoUri(fileName));  // 'Bej' | 'Desenli' | ... ya da null
+colorNameForHex('#8E3A59')                                 // 'Bordo' – paletten seçilen tonun renk adı
 ```
 Telefonda, internetsiz: fotoğraf 160 piksele küçültülür (`expo-image-manipulator`), pikselleri
 okunur (`jpeg-js`). Önce desen kontrolü (yan yana piksellerde sert geçiş oranı > %9 → "Desenli"),
@@ -429,7 +434,7 @@ Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olm
 (en sonda; ekranda "Rengi girilmemiş · Ekle 🎨" hapı olarak, dokununca düzenleme formu açılır).
 
 **Veri tipi** (`@/lib/types`): `ClothingItem` → `id, name, category, price, photoFileName,
-wearDates, targetWears, createdAt, color?`. Kategoriler `CATEGORIES` listesinde.
+wearDates, targetWears, createdAt, color?, colorHex?, wearPlaces?, event?`. Kategoriler `CATEGORIES` listesinde.
 
 Örnek kullanım için `src/components/dev-test-panel.tsx` dosyasına bakılabilir.
 
@@ -449,7 +454,11 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 16 Ekim'de kararlaştırılan 4 özelliğin ekranları bitti ✅ (17 Ekim).
   - Etkinlik modu / Zaman Aşımı ekranları ✅ (20 Ekim)
   - Analiz ekranları ✅ (20 Ekim): renk analizi, aylık özet (+ Story kartı), satmayı düşün
-  - **Sırada (Onur'un mantığı hazır):** veri yedeği (Ayarlar); sonra uygulama simgesi.
+  - Veri yedeği ekranları ✅ (20 Ekim, Ayarlar → VERİLER: dışa aktar / yükle + onay)
+  - Tasarım sadeleştirme ✅ (20-21 Ekim: Ana sayfa, Dolap, Cüzdan, detay, Analizler, burç; kurallar
+    "Tasarım" bölümünde)
+  - **Sırada:** kalan ekranlara tasarım turu (form, Kombinlerim, Bununla ne giyerim?, Ayarlar),
+    "Bugün ne giydin?" şeridini yeniden düşünmek, uygulama simgesi.
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -527,7 +536,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   Ana sayfada en yakın etkinlik için küçük geri sayım kartı (7 gün kala).
   Uygulamada: tarih seçici iPhone'un kendi takvimi (`@react-native-community/datetimepicker`,
   "compact"); etkinlik günü buton "Bugün bedavaya giy ✨".
-- **Veri yedeği (Ebrar, sırada):** Ayarlar → VERİLER grubuna iki satır: "📤 Yedeği dışa aktar"
+- **Veri yedeği (Ebrar) ✅ (20 Ekim):** Ayarlar → VERİLER grubuna iki satır: "📤 Yedeği dışa aktar"
   (basınca kısa "Hazırlanıyor…" göstergesi; büyük dolapta birkaç saniye sürebilir) ve "📥 Yedeği yükle"
   (`readBackup` → onay penceresi: `summary` + "Şu anki dolabın silinip yedektekiyle değiştirilecek",
   [Vazgeç] [Yükle] kırmızı; sonra "✅ Dolabın geri geldi!"). Altına küçük not: "Uygulamayı silmeden
@@ -577,22 +586,26 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
       giyildiyse "bugün zaten giyildi ✓" balonu, geri almak balondaki "Geri al" ile).
     - `wallet.tsx` – Cüzdan ("para" ekranı): dolap değeri + Starbucks Endeksi cümlesi,
       pembe "GIRL MATH kazancın" kutusu (sayfanın tek pembe vurgusu), 2×2 kutu (ortalama maliyet,
-      toplam giyim, amorti edilen, hiç giyilmeyen), en altta tek kartta iki satır: "Analizlerin"
-      (dolap boşken yok) + "Almalı mıyım?"; başlığın yanında beyaz yuvarlak Story paylaş butonu.
+      toplam giyim, amorti edilen, hiç giyilmeyen), en altta tek kartta satırlar: "Analizlerin" ve
+      "Utanç Duvarı" ("3 parça askıda · 4.200 ₺ boşa gidiyor" / "Duvar bomboş"; ikisi de dolap boşken
+      yok) + "Almalı mıyım?"; başlığın yanında beyaz yuvarlak Story paylaş butonu.
       ("Bu ay dolaba giren" 20 Ekim'de kalktı → Analizlerin → Aylık özet.)
       Dolap boşsa ekleme butonu.
     - `explore.tsx` – "Test" sekmesi, sadece `<DevTestPanel />` gösterir (sadece geliştirmede)
   - `add-item.tsx` – kıyafet ekleme **ve düzenleme** formu (fotoğraf, ad, kategori, renk, fiyat,
-    hedef). Fotoğraf seçilince renk `guessPhotoColor` ile tahmin edilip seçili gelir.
+    hedef). Kategori hapları 4 eşit sütunlu ızgara. Fotoğraf seçilince renk `guessPhotoColor` ile
+    tahmin edilip seçili gelir; renk sırasının sonunda "Diğer" paleti (`colorHex`, "Bu ton kombinlerde
+    bordo gibi sayılır" notu). Fotoğraf kutusu beyaz, kesikli pembe çizgi.
     Parametresiz: yeni parça (`addItem`). `params: { id }`: düzenleme, form dolu gelir
     (`updateItem`; detaydaki "Düzenle" açar). `params: { price }`: fiyat dolu gelir ("Almalı
     mıyım?" → "Aldım!"). Kaydetmeden çıkılırsa bu formda yeni seçilen fotoğrafı siler.
-    En altta "🎉 Etkinlik için aldım" (`EventPicker`): tür + tarih → `item.event`; anahtar kapalı
+    En altta "Etkinlik için aldım" (`EventPicker`): tür + tarih → `item.event`; anahtar kapalı
     kaydedilirse etkinlik silinir.
-  - `should-i-buy.tsx` – "Almalı mıyım?": fiyat + ayda kaç kere giyileceği → karar cümlesi
-    (iced latteye düşme süresine göre), "Bunu alırsan şunlardan vazgeçiyorsun" (Starbucks
-    Endeksi), "Girl Math'e göre" (Brunch/Manikür/Iced latte/Filtre kahve fiyatına düşmesi için
-    kaç giyim ve ne kadar süre). Kalemler `TARGET_NAMES` listesinde; fiyatlar comparisons.ts'ten.
+  - `should-i-buy.tsx` – "Almalı mıyım?": açılınca fiyat kutusu seçili, klavye açık (boş durum yok;
+    soluk örnek ve "dene" hapları denendi, beğenilmedi). Fiyat + ayda kaç kere → pembe ana kart
+    ("AYDA 4 GİYİMLE / ~4 ay / giyim başı iced latte fiyatına iner" + karar cümlesi; çok ucuzsa
+    "Zaten ucuz"), "Bu parayla" (3 küçük kutu: 13 iced latte…), "Yol haritası" (solda zaman çizgisi,
+    her durak tek satır: Bu ay · Brunch · 625 ₺ giyim başı). Kalemler `TARGET_NAMES`; fiyatlar comparisons.ts'ten.
   - `item/[id].tsx` – kıyafet detay sayfası (sağ üstte "Düzenle"): bilgi satırları (KATEGORİ,
     renk varsa RENK + renk yuvarlağı, GİYİM, SON GİYİM – yer seçildiyse yanında "Bugün · 🌙 Gece",
     ETKİNLİK) + büyük fotoğraf, maliyet, **kıyas cümlesi** (beyaz kart, büyük kalın; giyim sayısı
@@ -617,18 +630,21 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `outfit/[id].tsx` – "Bununla ne giyerim? ✨" (detaydan açılır): `outfitFor` kombini yamuk,
     üst üste binen fotoğraf **kolajı** ("Seçtiğin" etiketi), kombin cümlesi, eksik kategori notu,
     seçilen parçanın rengi yoksa "renk seçersen…" satırı; **"Başka seçenekler"** (`matchesFor`,
-    her kartta renk + sebep hapı). Seçeneğe dokununca kombine girer/çıkar (elbise ↔ üst/alt
+    her kartın altında küçük gri renk + sebep yazısı; kutu yok, seçili kartta pembe çerçeve + ✓;
+    rengi yoksa pembe "Rengi yok · Ekle"). Seçeneğe dokununca kombine girer/çıkar (elbise ↔ üst/alt
     birbirini çıkarır), "Öneriye dön ↺". Altta "Kombini kaydet 💾" (`saveOutfit`, iPhone'da
     isteğe bağlı ad sorar; kayıtlıysa "Arşivde ✓ · Kombine git →" kayıtlı kombini açar).
-  - `outfits.tsx` – Kombinlerim (arşiv, Dolap'tan açılır): üstte "2 kombin · 1 favori", "⭐ Favoriler" + "Tüm kombinler", en altta yeni kombin ipucu,
-    2 sütunlu kartlar (2×2 fotoğraf ızgarası, 4'ten fazla parçada "+N", ad, giyim sayısı), köşede
-    favori yıldızı (favoride `highlight` ★). Karta dokununca kayıtlı kombin sayfası.
+  - `outfits.tsx` – Kombinlerim (arşiv, Dolap'tan açılır): üstte "2 kombin · 1 favori", "Favoriler" +
+    "Tüm kombinler", en altta soluk yeni kombin ipucu. Beyaz kart yok: 2×2 fotoğraf mozaiği tek blok
+    (4'ten fazla parçada "+N"), altında zeminde ad + giyim sayısı, köşede favori yıldızı (favoride
+    `highlight` ★). Karta dokununca kayıtlı kombin sayfası. (Fikir: sağ üste "+ Yeni kombin" → parça seç.)
   - `saved-outfit/[id].tsx` – kayıtlı kombin: kolaj, ad (✏️ ile değiştirilir, iPhone'da), "3 parça
     · 2 kere giydin · en son dün", parça listesi (dokununca kıyafet detayı), "Bu kombini sil",
     sağ üstte yıldız. Altta "Bu kombini giydim ✨" (`wearOutfit`, kutlama balonu); bugün
     giyildiyse "Bugün giydin ✓" + ↩ (`undoWearOutfit`). Giymeden önce "Bu kombinle nereye?".
   - `shame-wall.tsx` – Utanç Duvarı: toplam boşa giden + unutulan bütün parçalar (en çok
-    zarar yazandan aza).
+    zarar yazandan aza). Her zaman açık girişi Cüzdan'daki satır; Ana sayfadaki "Utanç Duvarı →"
+    sadece unutulan parça varken (hiç giyilmemiş ya da `FORGOTTEN_DAYS` = 7+ gün) görünür.
   - `insights.tsx` – Analizlerin (Cüzdan'daki satırdan), sırayla: aylık özet ("EKİM 2026 / Aylık
     özetin", etiket–değer satırları, ayın yorumu açık pembe italik alıntı, sağ üstte Story paylaş),
     renkler ("En çok siyah giyiyorsun %65", iki parçalı "Bu ay / Tüm zamanlar" seçici, renk çubuğu,
@@ -637,7 +653,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     ekranda diziliyor (sadece `verdict` cümlesi aynen). Hesaplar `insights.ts`.
   - `settings.tsx` – Ayarlar (iPhone ayarları tarzı gruplar): BİLDİRİMLER (izin durumu + "Aç";
     izin daha önce reddedildiyse iPhone Ayarları'nı açar, deneme bildirimi), GIRL MATH
-    (Burcum, Kullanım Sözleşmesi, sürüm), VERİLER ("Bütün verileri sil", iki kez sorar, `resetAll`),
+    (Burcum, Kullanım Sözleşmesi, sürüm), VERİLER ("Yedeği dışa aktar" / "Yedeği yükle" – `backup.ts`,
+    yüklemeden önce özetle onay; "Bütün verileri sil", iki kez sorar, `resetAll`),
     Gizlilik notu ve imza.
   - `horoscope.tsx` – Burç sayfası (Ana sayfa şeridinden): gümüş kart (sembol, tarih, element,
     gezegen, Ay'ın burcu ve evresi, Merkür hapı), "Bugün" (kişilik, gökyüzü cümleleri, şanslı
@@ -666,11 +683,12 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     ince çizgi) + `TodayRow` (simge dairesi, başlık + açıklama, sağda ok) + `IconCircle`. Etkinlik,
     burç ve Kahoot satırları bunu kullanır; yeni küçük Ana sayfa bilgisi de buraya satır olarak eklenir.
   - `outfit-collage.tsx` – kombin kolajı `OutfitCollage` (yamuk, üst üste binen 3:4 kartlar +
-    parça adları, isteğe bağlı ilk parça etiketi) ve `ClothingPhoto` (3:4 fotoğraf, yoksa askı).
+    parça adları, isteğe bağlı ilk parça etiketi) ve `ClothingPhoto` (3:4 fotoğraf, yoksa beyaz zeminde askı).
     "Bununla ne giyerim?" ve kayıtlı kombin sayfası kullanır.
   - `color-picker.tsx` – renk seçici (`ColorPicker`: yatay kayan renk yuvarlakları, tekrar
-    dokununca seçim kalkar, `note` ile alt yazı) ve tek renk yuvarlağı `ColorSwatch` (beyazın
-    kenarı var, "Desenli" çok renkli). Form, detay ve kombin ekranı kullanır.
+    dokununca seçim kalkar, `note` ile alt yazı; `onPickCustom` verilirse sonda gökkuşağı "+" →
+    alttan `PaletteSheet`, seçilen ton `customHex` olarak sıranın başında) ve tek renk yuvarlağı
+    `ColorSwatch` (beyazın kenarı var, "Desenli" çok renkli, `hex` verilirse o ton). Form, detay ve kombin ekranı kullanır.
   - `horoscope-strip.tsx` – "Senin için" kartındaki burç satırı (küçük gümüş madalyonda pembe burç
     sembolü, şanslı renk, Ay evresi; dokununca burç sayfası, burç yoksa burç seçimi)
   - `zodiac-grid.tsx` – 12 burç ızgarası + burç yardımcıları (`zodiacGlyph`, `zodiacRange`,
@@ -681,7 +699,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `kahoot-card.tsx` – "Senin için" kartındaki Kahoot satırı: hafta sonu "Dolap Kahoot'u açıldı" +
     pembe "Oyna" hapı, oynandıysa kupa simgesi + rozet adı + puan/seri (dokununca sonuç). Hafta içi
     ve dolap yetersizken **görünmez**; `__DEV__`'de soluk "Kahoot test" satırı.
-  - `event-picker.tsx` – formdaki "🎉 Etkinlik için aldım" kutusu (anahtar, `EVENT_TYPES` hapları,
+  - `event-picker.tsx` – formdaki "Etkinlik için aldım" kutusu (anahtar, `EVENT_TYPES` hapları 3 eşit
+    sütun, emojisiz – emojiler sadece detaydaki "💍 Düğün" satırında ve bildirimlerde,
     "Diğer"de ad, iPhone tarih seçicisi). `dateFromString` / `stringFromDate` ("2026-12-05" ↔ Date).
   - `event-countdown-card.tsx` – "Senin için" kartındaki etkinlik satırı (7 gün kala; "Düğün" +
     "3 gün kaldı · “Elbise”", etkinlik günü 🎁 ve yeşil "Bugün · … bedava"); dokununca detay.

@@ -222,7 +222,15 @@ export default function ItemDetailScreen() {
         <View style={styles.hero}>
           <View style={styles.facts}>
             <Fact label="Kategori" value={item.category} />
-            {item.color && <Fact label="Renk" value={item.color} color={item.color} />}
+            {item.color && (
+              // Paletten ton seçildiyse yuvarlak o tonda, yanında "Bordo tonu"
+              <Fact
+                label="Renk"
+                value={item.colorHex ? `${item.color} tonu` : item.color}
+                color={item.color}
+                hex={item.colorHex}
+              />
+            )}
             <Fact label="Giyim" value={`${wears} / ${item.targetWears}`} />
             {/* Son yer ayrı satır değil, son giyimin yanında: "Bugün · 🌙 Gece" (sütun kısa kalsın) */}
             <Fact
@@ -426,13 +434,23 @@ export default function ItemDetailScreen() {
 
 // Pembe alandaki küçük bilgi satırı (etiket + değer)
 // color verilirse değerin solunda küçük renk yuvarlağı çıkar (RENK satırı)
-function Fact({ label, value, color }: { label: string; value: string; color?: ColorName }) {
+function Fact({
+  label,
+  value,
+  color,
+  hex,
+}: {
+  label: string;
+  value: string;
+  color?: ColorName;
+  hex?: string;
+}) {
   return (
     <View style={styles.fact}>
       {/* Türkçe kurala göre büyük harf: "Giyim" → "GİYİM" */}
       <Text style={styles.factLabel}>{label.toLocaleUpperCase('tr')}</Text>
       <View style={styles.factValueRow}>
-        {color && <ColorSwatch color={color} size={14} />}
+        {color && <ColorSwatch color={color} hex={hex} size={14} />}
         <Text style={styles.factValue}>{value}</Text>
       </View>
     </View>

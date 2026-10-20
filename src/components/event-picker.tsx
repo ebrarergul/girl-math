@@ -1,8 +1,8 @@
 /**
  * "ETKİNLİK İÇİN ALDIM" ALANI (ekleme / düzenleme formu)
  *
- * Zaman Aşımı = Bedava (Onur'un events.ts'i): anahtar açılınca etkinlik türü hapları (emoji + ad,
- * EVENT_TYPES), "Diğer"de ad kutusu ve iPhone'un tarih seçicisi (@react-native-community/
+ * Zaman Aşımı = Bedava (Onur'un events.ts'i): anahtar açılınca etkinlik türü hapları (sadece ad,
+ * emoji yok: kategori haplarıyla aynı dil; EVENT_TYPES), "Diğer"de ad kutusu ve iPhone'un tarih seçicisi (@react-native-community/
  * datetimepicker, "compact": küçük tarih hapı, dokununca takvim açılır) gelir.
  * Bilgiyi form tutar; bu bileşen sadece gösterir ve değişiklikleri bildirir.
  */
@@ -50,12 +50,12 @@ export function EventPicker({
   onCustomNameChange,
 }: Props) {
   return (
-    <View style={[styles.box, enabled && styles.boxOn]}>
+    <View style={styles.box}>
       <View style={styles.switchRow}>
         <View style={styles.switchText}>
-          <Text style={styles.title}>🎉 Etkinlik için aldım</Text>
+          <Text style={styles.title}>Etkinlik için aldım</Text>
           <Text style={styles.hint}>
-            O gün maliyeti 0 TL görünür (parası çoktan ödendi!) ve bir gün önce hatırlatırım 💌
+            O gün maliyeti 0 TL görünür (parası çoktan ödendi!) ve bir gün önce hatırlatırım
           </Text>
         </View>
         <Switch
@@ -74,17 +74,22 @@ export function EventPicker({
             {EVENT_TYPES.map((event) => {
               const selected = event.name === type;
               return (
-                <Pressable
-                  key={event.name}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    onTypeChange(event.name);
-                  }}
-                  style={[styles.chip, selected && styles.chipSelected]}>
-                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                    {`${event.emoji} ${event.name}`}
-                  </Text>
-                </Pressable>
+                // Her hap eşit genişlikte bir hücrede: haplar sütun sütun hizalı durur
+                <View key={event.name} style={styles.chipCell}>
+                  <Pressable
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      onTypeChange(event.name);
+                    }}
+                    style={[styles.chip, selected && styles.chipSelected]}>
+                    <Text
+                      style={[styles.chipText, selected && styles.chipTextSelected]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit>
+                      {event.name}
+                    </Text>
+                  </Pressable>
+                </View>
               );
             })}
           </View>
@@ -131,11 +136,6 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     gap: Spacing.three,
   },
-  // Açıkken pembe çerçeve
-  boxOn: {
-    borderColor: colors.accent,
-    borderWidth: 1.5,
-  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -154,25 +154,34 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: colors.textMuted,
   },
+  // 3 sütunlu ızgara: hücre %33, aradaki boşluk hücrelerin iç payından (kenarlar hizalı kalsın
+  // diye ızgara o pay kadar dışarı taşırılır)
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.two,
+    marginHorizontal: -Spacing.one,
+    rowGap: Spacing.two,
+  },
+  chipCell: {
+    width: '33.333%',
+    paddingHorizontal: Spacing.one,
   },
   chip: {
+    alignItems: 'center',
     backgroundColor: colors.background,
     borderRadius: Radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.one, // Hücre eşit genişlikte, yazı ortalı: yan pay az (uzun adlar küçülmesin)
+    paddingVertical: Spacing.one + Spacing.half, // Dolap'taki haplarla aynı boy
   },
   chipSelected: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
   chipText: {
-    ...Typography.bodyBold,
+    ...Typography.caption,
+    fontSize: 13,
     color: colors.textSecondary,
   },
   chipTextSelected: {

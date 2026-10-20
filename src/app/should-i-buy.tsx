@@ -6,14 +6,20 @@
  * - "Girl Math'e göre": maliyetin bir brunch'a, kahveye… düşmesi için kaç kere giyilmesi
  *   gerektiği ve bunun ne kadar süreceği
  * "Aldım! Dolabıma ekle" ekleme formunu fiyatı dolu açar.
+ * Sayfa açılınca fiyat kutusu seçili gelir, klavye açılır (hesap makinesi gibi); boş durum yok.
+ * (Soluk örnek kartlar ve "dene" hapları denendi; biri "bozuk" gibi durdu, öteki kutuyu tekrarladı.)
+ * Sonuç: pembe ana kart (iced latte fiyatına ne zaman iner + karar cümlesi), "Bu parayla" 3 küçük
+ * kutu, "Yol haritası" (solda zaman çizgisi, her durak tek satır, sağda giyim başı maliyet).
  * Cüzdan ekranındaki "Almalı mıyım?" kartıyla açılır.
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { formatTL } from '@/components/clothing-card';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { COMPARISONS } from '@/lib/comparisons';
 import { starbucksIndexList } from '@/lib/starbucks-index';
@@ -34,9 +40,9 @@ function parseAmount(text: string): number {
   return Number(text.replace(/\./g, '').replace(',', '.').trim());
 }
 
-// Ay sayısını insan diliyle yazar: "bu ay", "~7 ay", "~1,5 yıl"
+// Ay sayısını kısa yazar (zaman çizelgesinin sol sütunu): "Bu ay", "~7 ay", "~1,5 yıl"
 function durationText(months: number): string {
-  if (months <= 1) return 'bu ay içinde';
+  if (months <= 1) return 'Bu ay';
   if (months < 12) return `~${Math.ceil(months)} ay`;
   const years = Math.round((months / 12) * 10) / 10;
   return `~${years.toLocaleString('tr-TR')} yıl`;
@@ -104,6 +110,7 @@ export default function ShouldIBuyScreen() {
             placeholderTextColor={colors.textMuted}
             style={styles.input}
             keyboardType="decimal-pad"
+            autoFocus
           />
         </View>
 
@@ -128,44 +135,75 @@ export default function ShouldIBuyScreen() {
 
         {hasPrice && (
           <>
-            {verdict && (
-              <View style={styles.verdict}>
-                <Text style={styles.verdictText}>{verdictText(verdict.months)}</Text>
-              </View>
-            )}
+            {/* Sayfanın tek pembe vurgusu: cevap tek bakışta (ne zaman iced latte fiyatına iner) */}
+            <LinearGradient
+              colors={[colors.primaryPressed, colors.primary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}>
+              {verdict ? (
+                <>
+                  <Text style={styles.heroLabel}>{`AYDA ${perMonth} GİYİMLE`}</Text>
+                  <Text style={styles.heroValue}>{durationText(verdict.months)}</Text>
+                  <Text style={styles.heroText}>giyim başı iced latte fiyatına iner</Text>
+                  <View style={styles.heroDivider} />
+                  <Text style={styles.heroVerdict}>{verdictText(verdict.months)}</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.heroLabel}>GIRL MATH KARARI</Text>
+                  <Text style={styles.heroValue}>Zaten ucuz</Text>
+                  <Text style={styles.heroText}>Bir iced latteden bile ucuz, düşünme bile 💅</Text>
+                </>
+              )}
+            </LinearGradient>
 
+            {/* Bu parayla neler yapılırdı: yan yana küçük kutular */}
             {spend.length > 0 && (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Bunu alırsan şunlardan vazgeçiyorsun:</Text>
-                {spend.map((entry) => (
-                  <View key={entry.comparison.name} style={styles.cardRow}>
-                    <Text style={styles.emoji}>{entry.comparison.emoji}</Text>
-                    <Text style={styles.rowText}>
-                      <Text style={styles.rowStrong}>{entry.count}</Text> {entry.comparison.unit}
-                    </Text>
-                  </View>
-                ))}
-                <Text style={styles.cardNote}>Değer mi? 🤔</Text>
-              </View>
-            )}
-
-            {targets.length > 0 && (
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>{"Girl Math'e göre"}</Text>
-                {targets.map((target) => (
-                  <View key={target.comparison.name} style={styles.cardRow}>
-                    <Text style={styles.emoji}>{target.comparison.emoji}</Text>
-                    <View style={styles.rowBody}>
-                      <Text style={styles.rowText}>
-                        {target.comparison.name} fiyatına düşmesi için{' '}
-                        <Text style={styles.rowStrong}>{target.wears} kere</Text> giymelisin
-                      </Text>
-                      <Text style={styles.rowNote}>
-                        Ayda {perMonth} kere giyersen: {durationText(target.months)}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Bu parayla</Text>
+                <View style={styles.tiles}>
+                  {spend.map((entry) => (
+                    <View key={entry.comparison.name} style={styles.tile}>
+                      <Text style={styles.tileValue}>{entry.count}</Text>
+                      <Text style={styles.tileLabel} numberOfLines={2}>
+                        {entry.comparison.unit}
                       </Text>
                     </View>
-                  </View>
-                ))}
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Yol haritası: seçili sıklıkla ne zaman hangi fiyata iner (sağda giyim başı maliyet) */}
+            {targets.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Yol haritası</Text>
+                <View style={styles.card}>
+                  {targets.map((target, index) => (
+                    <View key={target.comparison.name} style={styles.stop}>
+                      {/* Sol çizgi: noktalar arası ince hat, ilk ve son durakta yarım */}
+                      <View style={styles.rail}>
+                        <View style={[styles.railLine, index === 0 && styles.railHidden]} />
+                        <View style={styles.railDot} />
+                        <View
+                          style={[
+                            styles.railLine,
+                            index === targets.length - 1 && styles.railHidden,
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.stopWhen}>{durationText(target.months)}</Text>
+                      <Text style={styles.stopName} numberOfLines={1}>
+                        {target.comparison.name}
+                      </Text>
+                      <Text style={styles.stopCost}>
+                        {formatTL(Math.round(price / target.wears))}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.note}>Sağdaki rakam o noktada giyim başı maliyet.</Text>
               </View>
             )}
           </>
@@ -230,70 +268,132 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingVertical: Spacing.two,
+    paddingVertical: Spacing.one + Spacing.half, // Diğer formlardaki haplarla aynı boy
   },
   chipSelected: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
   chipText: {
-    ...Typography.bodyBold,
+    ...Typography.caption,
+    fontSize: 13,
     color: colors.textSecondary,
   },
   chipTextSelected: {
     color: colors.onPrimary,
   },
-  verdict: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: Radius.lg,
-    padding: Spacing.three,
+  // Pembe ana kart (Ana sayfadaki vitrin kartıyla aynı dil)
+  hero: {
+    borderRadius: Radius.xl,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three + Spacing.one,
+    gap: Spacing.one,
+    ...Shadows.button,
   },
-  verdictText: {
+  heroLabel: {
+    ...Typography.label,
+    color: colors.primarySoft,
+  },
+  heroValue: {
+    ...Typography.hero,
+    color: colors.onPrimary,
+  },
+  heroText: {
+    ...Typography.body,
+    color: colors.onPrimary,
+  },
+  heroDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.primarySoft,
+    opacity: 0.5,
+    marginVertical: Spacing.two,
+  },
+  heroVerdict: {
+    ...Typography.bodyBold,
+    color: colors.onPrimary,
+  },
+  // Başlık kartın üstünde (Ana sayfadaki bölümler gibi)
+  section: {
+    gap: Spacing.two,
+  },
+  sectionTitle: {
     ...Typography.heading,
-    color: colors.primary,
+    color: colors.text,
+  },
+  tiles: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  tile: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.two,
+    gap: Spacing.half,
+    ...Shadows.card,
+  },
+  tileValue: {
+    ...Typography.title,
+    color: colors.text,
+  },
+  tileLabel: {
+    ...Typography.caption,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   card: {
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
-    padding: Spacing.three,
-    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
     ...Shadows.card,
   },
-  cardTitle: {
-    ...Typography.heading,
-    color: colors.text,
-  },
-  cardRow: {
+  // Yol haritasında tek durak: çizgi · süre · ad · giyim başı maliyet
+  stop: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
-    paddingVertical: Spacing.one,
+    minHeight: 44,
   },
-  emoji: {
-    fontSize: 22,
-    lineHeight: 28,
+  rail: {
+    width: 10,
+    alignSelf: 'stretch',
+    alignItems: 'center',
   },
-  rowBody: {
+  railLine: {
     flex: 1,
-    gap: Spacing.half,
+    width: 2,
+    backgroundColor: colors.accent, // primarySoft beyaz kartta neredeyse görünmüyordu
   },
-  rowText: {
-    ...Typography.body,
-    color: colors.text,
-    flexShrink: 1,
+  railHidden: {
+    backgroundColor: 'transparent',
   },
-  rowStrong: {
+  railDot: {
+    width: 10,
+    height: 10,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.primary,
+  },
+  stopWhen: {
     ...Typography.bodyBold,
     color: colors.primary,
+    width: 52,
   },
-  rowNote: {
+  stopName: {
+    ...Typography.body,
+    color: colors.text,
+    flex: 1,
+  },
+  stopCost: {
+    ...Typography.bodyBold,
+    color: colors.text,
+  },
+  note: {
     ...Typography.caption,
     color: colors.textMuted,
-  },
-  cardNote: {
-    ...Typography.body,
-    color: colors.textSecondary,
+    textAlign: 'center',
   },
   footer: {
     paddingHorizontal: Spacing.four,

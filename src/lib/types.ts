@@ -33,6 +33,10 @@ export type ClothingItem = {
   targetWears: number; // Hedef giyilme sayısı. Buna ulaşınca "amorti edildi" sayılır
   createdAt: string; // Dolaba eklendiği tarih, örn: "2026-10-14"
   color?: ColorName; // Kıyafetin rengi (kombin önerisi için). Eski kayıtlarda ve seçilmediyse yok
+  // Paletten seçilen tam ton, örn: "#8E3A59" (Ebrar ekledi, 21 Ekim). Sadece ekranda gösterilir;
+  // kombin motoru/analizler hep `color`'a bakar (bu ton seçilince `color` en yakın renk adı olur).
+  // 18 hazır renkten biri seçildiyse ya da eski kayıtlarda yok.
+  colorHex?: string;
   // Her giyimin yeri, wearDates ile aynı sırada (wearPlaces[3] = wearDates[3]'teki yer).
   // Yer seçilmediyse null. Eski kayıtlarda bu alan hiç yok. Sadece AppContext değiştirir.
   wearPlaces?: (PlaceName | null)[];

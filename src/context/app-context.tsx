@@ -47,6 +47,7 @@ export type NewClothingItem = {
   photoFileName: string | null;
   targetWears?: number;
   color?: ColorName; // İsteğe bağlı: kıyafetin rengi (kombin önerisi için)
+  colorHex?: string; // İsteğe bağlı: paletten seçilen tam ton (sadece ekranda; Ebrar ekledi)
   event?: ItemEvent; // İsteğe bağlı: "Etkinlik için aldım" (kaldırmak için updateItem(id, { event: undefined }))
 };
 
@@ -188,6 +189,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       price: newItem.price,
       photoFileName: newItem.photoFileName,
       ...(newItem.color ? { color: newItem.color } : {}),
+      ...(newItem.colorHex ? { colorHex: newItem.colorHex } : {}),
       ...(newItem.event ? { event: newItem.event } : {}),
       wearDates: [],
       targetWears: newItem.targetWears ?? DEFAULT_TARGET_WEARS,

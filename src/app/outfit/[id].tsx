@@ -7,7 +7,8 @@
  *   fotoğraf kartları halinde (dergi kolajı gibi). Seçilen parçada "Seçtiğin" etiketi.
  * - Kombin cümlesi ve varsa eksik kategori notu ("Dolabında uygun ayakkabı yok 👀").
  * - Başka seçenekler: her kategoriden uyan parçalar (matchesFor), altlarında uyum sebebi.
- *   Rengi girilmemiş parçada sebep yerine "Rengi girilmemiş · Ekle 🎨" hapı (düzenlemeyi açar).
+ *   Sebep pembe kutu değil, renk satırının altında küçük gri yazı (8 pembe kutu ekranı boğuyordu).
+ *   Rengi girilmemiş parçada sebep yerine pembe "Rengi yok · Ekle" yazısı (düzenlemeyi açar).
  *   Seçeneğe dokununca kombine girer (aynı kategoridekinin yerine), kombindekine dokununca çıkar.
  *   Elbise seçilince üst/alt, üst ya da alt seçilince elbise çıkar. "Öneriye dön ↺" sıfırlar.
  * - Altta "Kombini kaydet 💾": isteğe bağlı ad sorar, Onur'un arşivine (saveOutfit) kaydeder.
@@ -248,22 +249,23 @@ export default function OutfitScreen() {
                           // Bu parçanın rengi yok: sebep yerine renk eklemeye çağır
                           <Pressable
                             onPress={() => editColor(match.item)}
-                            style={({ pressed }) => [
-                              styles.reasonPill,
-                              styles.addColorPill,
-                              pressed && styles.pillPressed,
-                            ]}>
-                            <Text style={styles.reasonText}>Rengi girilmemiş · Ekle 🎨</Text>
+                            hitSlop={6}
+                            style={({ pressed }) => [styles.reasonBlock, pressed && styles.pillPressed]}>
+                            <Text style={styles.addColorText}>Rengi yok · Ekle</Text>
                           </Pressable>
                         ) : (
                           // Önce bu parçanın kendi rengi (cümle kimin rengini anlatıyor karışmasın),
                           // sonra uyum sebebi. Seçilen parçanın rengi yoksa sebep anlamsız, yazılmaz.
-                          <View style={styles.reasonPill}>
+                          <View style={styles.reasonBlock}>
                             <View style={styles.colorRow}>
-                              <ColorSwatch color={match.item.color} size={12} />
+                              <ColorSwatch color={match.item.color} size={10} />
                               <Text style={styles.colorName}>{match.item.color}</Text>
                             </View>
-                            {base.color && <Text style={styles.reasonText}>{match.reason}</Text>}
+                            {base.color && (
+                              <Text style={styles.reasonText} numberOfLines={2}>
+                                {match.reason}
+                              </Text>
+                            )}
                           </View>
                         )}
                       </View>
@@ -367,17 +369,18 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   option: {
-    width: 136,
+    width: 120,
     gap: Spacing.one,
   },
+  // Çerçeve yok (mağaza vitrini); kenarlık zemin renginde, seçilince pembe olur (boy değişmesin)
   optionPhoto: {
     width: '100%',
     borderWidth: 2,
-    borderColor: colors.card,
+    borderColor: colors.background,
     ...Shadows.card,
   },
   optionPhotoSelected: {
-    borderColor: colors.accent,
+    borderColor: colors.primary,
   },
   optionCheck: {
     position: 'absolute',
@@ -393,21 +396,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionName: {
-    ...Typography.bodyBold,
+    ...Typography.body,
     color: colors.text,
   },
-  reasonPill: {
+  // Kartın altındaki renk + sebep: kutu yok, küçük yazı
+  reasonBlock: {
     gap: Spacing.half,
-    backgroundColor: colors.primarySoft,
-    borderRadius: Radius.sm,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
   },
-  addColorPill: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderStyle: 'dashed',
+  addColorText: {
+    ...Typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
   },
   colorRow: {
     flexDirection: 'row',
@@ -416,8 +415,7 @@ const styles = StyleSheet.create({
   },
   colorName: {
     ...Typography.caption,
-    color: colors.text,
-    fontWeight: '700',
+    color: colors.textSecondary,
   },
   pillPressed: {
     opacity: 0.6,
@@ -428,7 +426,8 @@ const styles = StyleSheet.create({
   },
   reasonText: {
     ...Typography.caption,
-    color: colors.primary,
+    fontWeight: '500',
+    color: colors.textMuted,
   },
   footer: {
     paddingHorizontal: Spacing.four,

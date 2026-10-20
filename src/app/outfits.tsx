@@ -3,9 +3,9 @@
  *
  * "Bununla ne giyerim?" ekranında kaydedilen kombinler (Onur'un arşivi: outfits, sortOutfits).
  * Dolap'taki "Kombinlerim" butonuyla açılır.
- * - Üstte "⭐ Favoriler", altında "Tüm kombinler"; 2 sütunlu kartlar.
- * - Her kartta parçaların 2×2 küçük fotoğraf ızgarası (4'ten fazlaysa son kutuda "+2"),
- *   altında kombinin adı ve kaç kere giyildiği.
+ * - Üstte "Favoriler", altında "Tüm kombinler"; 2 sütun.
+ * - Beyaz kart yok (Dolap gibi mağaza vitrini): parçaların 2×2 fotoğraf mozaiği tek blok
+ *   (4'ten fazlaysa son kutuda "+2"), altında zeminde kombinin adı ve kaç kere giyildiği.
  * - Sağ üstteki yıldız favorilere ekler/çıkarır (favoride neon pembe dolgulu ★).
  * Karta dokununca kombinin sayfası (saved-outfit/[id]) açılır.
  * Arşiv boşsa nasıl kombin kaydedileceği anlatılır.
@@ -27,6 +27,8 @@ import type { ClothingItem, SavedOutfit } from '@/lib/types';
 const colors = Colors.light;
 
 const COLUMN_GAP = Spacing.three;
+// 2×2 mozaikte kutular arası ince çizgi
+const CELL_GAP = 2;
 
 export default function OutfitsScreen() {
   const router = useRouter();
@@ -109,7 +111,7 @@ export default function OutfitsScreen() {
 
             {favorites.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>⭐ Favoriler</Text>
+                <Text style={styles.sectionTitle}>Favoriler</Text>
                 {renderGrid(favorites)}
               </View>
             )}
@@ -121,14 +123,11 @@ export default function OutfitsScreen() {
             )}
 
             {/* Yeni kombin nasıl eklenir */}
-            <View style={styles.tip}>
-              <SymbolView name="sparkles" tintColor={colors.primary} size={16} />
-              <Text style={styles.tipText}>
-                {
-                  'Yeni kombin için bir parçanın detayında "Bununla ne giyerim?"e bas, beğendiğini kaydet.'
-                }
-              </Text>
-            </View>
+            <Text style={styles.tipText}>
+              {
+                'Yeni kombin için bir parçanın detayında "Bununla ne giyerim?"e bas, beğendiğini kaydet.'
+              }
+            </Text>
           </>
         )}
       </ScrollView>
@@ -160,32 +159,37 @@ function OutfitCard({
     cells.push(null);
   }
   const worn = outfit.wornDates.length;
+  // Mozaikte kutular arası ince çizgi (CELL_GAP) kadar pay bırakılır
+  const cellWidth = (width - CELL_GAP) / 2;
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.card, { width }, pressed && styles.cardPressed]}>
-      <View style={styles.cellGrid}>
-        {cells.map((piece, index) => {
-          const isExtra = extra > 0 && index === 3;
-          const uri = piece ? photoUri(piece.photoFileName) : undefined;
-          return (
-            <View key={index} style={styles.cell}>
-              {isExtra ? (
-                <Text style={styles.extraText}>+{extra}</Text>
-              ) : uri ? (
-                <Image source={{ uri }} style={styles.cellImage} contentFit="cover" />
-              ) : piece ? (
-                <SymbolView
-                  name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
-                  tintColor={colors.accent}
-                  size={18}
-                  weight="light"
-                />
-              ) : null}
-            </View>
-          );
-        })}
+      {/* Gölge dışta, köşe kırpma içte (ikisi aynı kutuda olunca gölge kayboluyor) */}
+      <View style={styles.mosaicShadow}>
+        <View style={styles.cellGrid}>
+          {cells.map((piece, index) => {
+            const isExtra = extra > 0 && index === 3;
+            const uri = piece ? photoUri(piece.photoFileName) : undefined;
+            return (
+              <View key={index} style={[styles.cell, { width: cellWidth }]}>
+                {isExtra ? (
+                  <Text style={styles.extraText}>+{extra}</Text>
+                ) : uri ? (
+                  <Image source={{ uri }} style={styles.cellImage} contentFit="cover" />
+                ) : piece ? (
+                  <SymbolView
+                    name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
+                    tintColor={colors.primary}
+                    size={18}
+                    weight="light"
+                  />
+                ) : null}
+              </View>
+            );
+          })}
+        </View>
       </View>
 
       <View style={styles.cardBody}>
@@ -232,18 +236,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: -Spacing.two,
   },
-  tip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    backgroundColor: colors.primarySoft,
-    borderRadius: Radius.lg,
-    padding: Spacing.three,
-  },
+  // En alttaki ipucu: kutu yok, soluk ortalı yazı
   tipText: {
-    ...Typography.body,
-    color: colors.textSecondary,
-    flex: 1,
+    ...Typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.four,
   },
   sectionTitle: {
     ...Typography.heading,
@@ -255,27 +253,30 @@ const styles = StyleSheet.create({
     gap: COLUMN_GAP,
   },
   card: {
-    backgroundColor: colors.card,
-    borderRadius: Radius.lg,
-    padding: Spacing.two,
     gap: Spacing.two,
-    ...Shadows.card,
   },
   cardPressed: {
-    transform: [{ scale: 0.97 }],
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
-  // 2×2 fotoğraf ızgarası (her kutu 3:4)
+  mosaicShadow: {
+    borderRadius: Radius.md,
+    backgroundColor: colors.card,
+    ...Shadows.card,
+  },
+  // 2×2 fotoğraf mozaiği (her kutu 3:4); aradaki ince çizgiler zemin rengi
   cellGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.one,
-  },
-  // Boş/fotoğrafsız kutular soluk zeminde (parlak pembe, ürün fotoğraflarının yanında sırıtıyordu)
-  cell: {
-    width: '48.5%',
-    aspectRatio: 3 / 4,
-    borderRadius: Radius.sm,
+    gap: CELL_GAP,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
     backgroundColor: colors.background,
+  },
+  // Fotoğrafsız/boş kutu: beyaz zeminde pembe askı (Dolap'la aynı)
+  cell: {
+    aspectRatio: 3 / 4,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -289,12 +290,11 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   cardBody: {
-    paddingHorizontal: Spacing.one,
-    paddingBottom: Spacing.one,
+    paddingHorizontal: Spacing.half,
     gap: Spacing.half,
   },
   cardName: {
-    ...Typography.bodyBold,
+    ...Typography.body,
     color: colors.text,
   },
   cardNote: {
@@ -304,10 +304,10 @@ const styles = StyleSheet.create({
   // Sağ üstte beyaz daire içinde yıldız
   star: {
     position: 'absolute',
-    top: Spacing.three,
-    right: Spacing.three,
-    width: 30,
-    height: 30,
+    top: Spacing.two,
+    right: Spacing.two,
+    width: 28,
+    height: 28,
     borderRadius: Radius.pill,
     backgroundColor: colors.card,
     alignItems: 'center',

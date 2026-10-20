@@ -3,7 +3,8 @@
  *
  * Dolabın parasal özeti: dolap değeri ve Starbucks Endeksi karşılığı, şaka istatistik
  * "Girl Math kazancın" (sayfanın tek pembe vurgusu) ve 4 küçük istatistik kutusu. Tüm sayılar
- * getWardrobeStats'tan gelir. Altta tek kartta Analizlerin + Almalı mıyım? satırları.
+ * getWardrobeStats'tan gelir. Altta tek kartta Analizlerin + Utanç Duvarı + Almalı mıyım? satırları
+ * (Utanç Duvarı'nın her zaman açık girişi burası; Ana sayfadaki bağlantı sadece unutulan parça varken çıkar).
  * Aylık harcama ("bu ay dolaba giren") Analizlerin → Aylık özet'te; burada tekrar edilmez.
  */
 
@@ -12,7 +13,7 @@ import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { formatTL } from '@/components/clothing-card';
+import { formatTL, shameWallItems } from '@/components/clothing-card';
 import { StatTile } from '@/components/stat-tile';
 import { ScreenBackground } from '@/components/screen-background';
 import {
@@ -35,6 +36,10 @@ export default function WalletScreen() {
   const { items, isLoaded } = useApp();
   const stats = getWardrobeStats(items);
   const isEmpty = isLoaded && items.length === 0;
+
+  // Utanç Duvarı satırı: kaç parça askıda ve toplam ne kadar zarar yazıyor (duvar sayfasıyla aynı hesap)
+  const wall = shameWallItems(items);
+  const wallLoss = wall.reduce((sum, entry) => sum + entry.loss, 0);
 
   return (
     <ScreenBackground>
@@ -142,6 +147,19 @@ export default function WalletScreen() {
                   title="Analizlerin"
                   text="Aylık özet, renklerin, satmayı düşün"
                   onPress={() => router.push('/insights')}
+                />
+              )}
+              {!isEmpty && (
+                <LinkRow
+                  icon="clock.badge.exclamationmark"
+                  title="Utanç Duvarı"
+                  text={
+                    wall.length === 0
+                      ? 'Duvar bomboş, helal olsun'
+                      : `${wall.length} parça askıda · ${formatTL(wallLoss)} boşa gidiyor`
+                  }
+                  onPress={() => router.push('/shame-wall')}
+                  divider
                 />
               )}
               <LinkRow

@@ -20,6 +20,7 @@
  * Bu bir TAHMİN: ekranda "doğru mu?" diye sorulur, kullanıcı değiştirebilir.
  * Ekranda kullanımı:
  *   const color = await guessPhotoColor(photoUri(fileName));  // 'Yeşil' ya da null
+ *   colorNameForHex('#8E3A59')  // 'Bordo' – paletten seçilen tonun renk adı
  * (Ebrar ekledi, Onur'un haberi var – kural 2: yeni şey eklemek serbest)
  */
 
@@ -129,6 +130,13 @@ function colorName(lab: Lab): ColorName {
     return 'Beyaz';
   }
   return nearestColor(lab).name;
+}
+
+// Paletten seçilen bir tonun ("#8E3A59") hangi renk adına sayılacağı: fotoğraf tahminiyle aynı
+// kural (renksizse açıklığa göre siyah/gri/beyaz, değilse en yakın renk). Formdaki "Diğer" renk
+// paleti kullanır; kombin motoru ve analizler bu adı görür.
+export function colorNameForHex(hex: string): ColorName {
+  return colorName(hexToLab(hex));
 }
 
 // base64 yazıyı baytlara çevirir

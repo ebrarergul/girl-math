@@ -26,7 +26,7 @@ import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme'
 import { DEFAULT_TARGET_WEARS, useApp } from '@/context/app-context';
 import type { ColorName } from '@/lib/colors';
 import type { EventTypeName } from '@/lib/events';
-import { guessPhotoColor } from '@/lib/photo-color';
+import { colorNameForHex, guessPhotoColor } from '@/lib/photo-color';
 import { deletePhoto, pickAndSavePhoto, photoUri } from '@/lib/photos';
 import { CATEGORIES, type Category } from '@/lib/types';
 
@@ -49,6 +49,8 @@ export default function AddItemScreen() {
   const [name, setName] = useState(editing?.name ?? '');
   const [category, setCategory] = useState<Category | null>(editing?.category ?? null);
   const [color, setColor] = useState<ColorName | undefined>(editing?.color);
+  // Paletten ("Diğer") seçilen tam ton; seçildiyse `color` onun en yakın renk adıdır
+  const [colorHex, setColorHex] = useState<string | undefined>(editing?.colorHex);
   // Fotoğraftan tahmin edilen renk (kullanıcı seçiciye dokununca silinir)
   const [guessedColor, setGuessedColor] = useState<ColorName | null>(null);
   const [priceText, setPriceText] = useState(editing ? String(editing.price) : (priceParam ?? ''));
@@ -98,7 +100,7 @@ export default function AddItemScreen() {
 
     // Rengi fotoğraftan tahmin et; ama kullanıcı rengi kendisi seçtiyse ona dokunma
     const guess = await guessPhotoColor(photoUri(fileName));
-    if (guess && (color === undefined || color === guessedColor)) {
+    if (guess && colorHex === undefined && (color === undefined || color === guessedColor)) {
       setColor(guess);
       setGuessedColor(guess);
     }
@@ -106,6 +108,14 @@ export default function AddItemScreen() {
 
   function handleColorChange(next: ColorName | undefined) {
     setColor(next);
+    setColorHex(undefined);
+    setGuessedColor(null);
+  }
+
+  // Paletten ton seçildi: tonu sakla, kombinler için en yakın renk adını kullan
+  function handlePickCustom(hex: string) {
+    setColorHex(hex);
+    setColor(colorNameForHex(hex));
     setGuessedColor(null);
   }
 
@@ -117,6 +127,7 @@ export default function AddItemScreen() {
       name: name.trim(),
       category,
       color, // Seçilmediyse undefined: düzenlemede rengi kaldırmak da böyle olur
+      colorHex, // Paletten ton seçilmediyse undefined (eski ton da böylece kalkar)
       price: Math.round(price),
       photoFileName,
       targetWears: target,
@@ -208,12 +219,19 @@ export default function AddItemScreen() {
             {CATEGORIES.map((name) => {
               const selected = name === category;
               return (
-                <Pressable
-                  key={name}
-                  onPress={() => setCategory(name)}
-                  style={[styles.chip, selected && styles.chipSelected]}>
-                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{name}</Text>
-                </Pressable>
+                // Her hap eşit genişlikte bir hücrede: haplar sütun sütun hizalı durur
+                <View key={name} style={styles.chipCell}>
+                  <Pressable
+                    onPress={() => setCategory(name)}
+                    style={[styles.chip, selected && styles.chipSelected]}>
+                    <Text
+                      style={[styles.chipText, selected && styles.chipTextSelected]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit>
+                      {name}
+                    </Text>
+                  </Pressable>
+                </View>
               );
             })}
           </View>
@@ -224,10 +242,14 @@ export default function AddItemScreen() {
           <ColorPicker
             value={color}
             onChange={handleColorChange}
+            customHex={colorHex}
+            onPickCustom={handlePickCustom}
             note={
-              guessedColor && color === guessedColor
-                ? `Fotoğraftan tahmin ettim: ${guessedColor}. Doğru mu? 🎨`
-                : null
+              colorHex && color
+                ? `Bu ton kombinlerde ${color.toLocaleLowerCase('tr')} gibi sayılır`
+                : guessedColor && color === guessedColor
+                  ? `Fotoğraftan tahmin ettim: ${guessedColor}. Doğru mu?`
+                  : null
             }
           />
         </View>
@@ -306,7 +328,7 @@ const styles = StyleSheet.create({
     width: 180,
     aspectRatio: 3 / 4,
     borderRadius: Radius.xl,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.card, // Beyaz: kesikli pembe çizgi "buraya dokun" demeye yetiyor
     borderWidth: 2,
     borderColor: colors.accent,
     borderStyle: 'dashed',
@@ -353,25 +375,34 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: colors.textMuted,
   },
+  // 4 sütunlu ızgara: hücre %25, aradaki boşluk hücrelerin iç payından (kenarlar hizalı kalsın
+  // diye ızgara o pay kadar dışarı taşırılır)
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.two,
+    marginHorizontal: -Spacing.one,
+    rowGap: Spacing.two,
+  },
+  chipCell: {
+    width: '25%',
+    paddingHorizontal: Spacing.one,
   },
   chip: {
+    alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: Radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.one, // Hücre eşit genişlikte, yazı ortalı: yan pay az (uzun adlar küçülmesin)
+    paddingVertical: Spacing.one + Spacing.half, // Dolap'taki haplarla aynı boy
   },
   chipSelected: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
   chipText: {
-    ...Typography.bodyBold,
+    ...Typography.caption,
+    fontSize: 13,
     color: colors.textSecondary,
   },
   chipTextSelected: {

@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     width: 72,
     aspectRatio: 3 / 4,
     borderRadius: Radius.md,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.card, // Fotoğrafsız parça: beyaz zeminde pembe askı (Dolap'la aynı)
     borderWidth: 2,
     borderColor: colors.card,
     alignItems: 'center',

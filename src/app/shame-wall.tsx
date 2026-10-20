@@ -3,7 +3,7 @@
  *
  * Unutulan bütün parçalar: hiç giyilmeyenler ve FORGOTTEN_DAYS+ gündür giyilmeyenler,
  * en çok zarar yazandan aza doğru. En üstte toplam boşa giden para ve Girl Math kıyası.
- * Ana sayfadaki "Utanç Duvarı'nın tamamı →" linkiyle açılır. Bir parçaya dokununca detayı açılır.
+ * Ana sayfadaki "Utanç Duvarı →" bağlantısıyla ve Cüzdan'daki "Utanç Duvarı" satırıyla açılır. Bir parçaya dokununca detayı açılır.
  */
 
 import { Image } from 'expo-image';
@@ -32,8 +32,8 @@ export default function ShameWallScreen() {
     <SafeAreaView style={styles.screen} edges={['bottom']}>
       <Stack.Screen
         options={{
-          title: 'Utanç Duvarı 👀',
-          headerBackTitle: 'Ana sayfa',
+          title: 'Utanç Duvarı',
+          headerBackTitle: 'Geri',
           headerTintColor: colors.primary,
           headerTitleStyle: { color: colors.text },
           headerStyle: { backgroundColor: colors.background },
