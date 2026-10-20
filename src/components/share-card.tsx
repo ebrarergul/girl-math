@@ -5,6 +5,7 @@
  * iPhone'un paylaşım penceresini açar.
  * - ItemShareCard: tek kıyafet ("“Ceket” artık 67 ₺ /giyim")
  * - WardrobeShareCard: dolap özeti ("Dolabım = 51 iced latte 🧋", Girl Math kazancım)
+ * - KahootShareCard: Dolap Kahoot'u rozeti (🏆 Merkez Bankası Başkanı, 4/5 doğru, puan, seri)
  * Kartın genişliği dışarıdan verilir; yükseklik 16/9 oranında otomatik.
  */
 
@@ -17,10 +18,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { INFINITE_COST, formatTL, itemComparisonText } from '@/components/clothing-card';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
+import { QUESTION_COUNT, quizBadge } from '@/lib/quiz';
 import { photoUri } from '@/lib/photos';
 import { starbucksIndexText } from '@/lib/starbucks-index';
 import type { WardrobeStats } from '@/lib/stats';
-import type { ClothingItem } from '@/lib/types';
+import type { ClothingItem, QuizResult } from '@/lib/types';
 
 const colors = Colors.light;
 
@@ -112,6 +114,37 @@ export function WardrobeShareCard({ stats, width }: { stats: WardrobeStats; widt
         <Text style={styles.note}>
           {stats.totalItems} parça · {stats.totalWears} kere Giydim ✨
         </Text>
+      </View>
+    </CardFrame>
+  );
+}
+
+export function KahootShareCard({
+  result,
+  streak,
+  width,
+}: {
+  result: QuizResult;
+  streak: number;
+  width: number;
+}) {
+  const badge = quizBadge(result.correctCount);
+  return (
+    <CardFrame width={width}>
+      <View style={styles.textBlock}>
+        <Text style={styles.statLabel}>{"BU HAFTANIN DOLAP KAHOOT'U"}</Text>
+        <Text style={styles.badgeEmoji}>{badge.emoji}</Text>
+        <Text style={styles.badgeTitle}>{badge.title}</Text>
+      </View>
+
+      <View style={styles.statBox}>
+        <BigAmount value={result.score} suffix="puan" />
+        <Text style={styles.note}>{`${result.correctCount}/${QUESTION_COUNT} doğru`}</Text>
+      </View>
+
+      <View style={styles.textBlock}>
+        {streak > 1 && <Text style={styles.punchline}>{`🔥 ${streak} haftalık seri`}</Text>}
+        <Text style={styles.note}>Dolabını benden iyi tanıyan var mı? 👀</Text>
       </View>
     </CardFrame>
   );
@@ -224,6 +257,15 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.three,
     gap: Spacing.one,
+  },
+  badgeEmoji: {
+    fontSize: 72,
+    lineHeight: 86,
+  },
+  badgeTitle: {
+    ...Typography.title,
+    color: colors.text,
+    textAlign: 'center',
   },
   statLabel: {
     ...Typography.label,

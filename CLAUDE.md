@@ -69,7 +69,8 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   ve etrafında kombin. `tarot-card.tsx` silindi; gümüş "büyü" şeridi burç şeridine geçti.
 - **Dolap Kahoot'u (haftalık hafıza testi):** Hafta sonları süreli mini yarışma: "Bu ceketi en
   son ne zaman giydin?", "En çok hangi rengi giyerek kâr ettin?". Başarıya "Tasarruf
-  Kraliçesi" gibi rozetler.
+  Kraliçesi" gibi rozetler. ✅ Mantık (Onur, `quiz.ts`) + ekranlar (Ebrar, 20 Ekim): Ana sayfa
+  kartı, `kahoot.tsx` yarışma + sonuç, Story rozet kartı.
 - **Kombin önerisi (Ebrar'ın fikri, makara dışı "işe yarar" özellik):** Renk ve kategoriye
   göre kombin: Üst + Alt + Ayakkabı (+ Çanta) ya da Elbise + Ayakkabı (+ Dış giyim). Renk
   uyumu basit kurallarla (nötrler her şeyle; aynı rengin tonları; tamamlayıcı renkler),
@@ -423,14 +424,15 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 4. aşama: Dolap ekranı (2 sütunlu kartlar), kıyafet detay ekranı, kıyafet ekleme formu ✅
   - Ana sayfa ve Cüzdan ✅
   - Kıyafet düzenleme ✅ (`updateItem`'ı da Ebrar ekledi, Onur'un haberi var), Dolap sıralama
-    butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, burç yorumu ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅, Ayarlar ekranı ✅
+    butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, burç yorumu ✅, Dolap Kahoot'u ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅, Ayarlar ekranı ✅
   - Sonra: uygulama simgesi (taslaklar beğenilmedi, ertelendi)
   - Renk seçici ✅ (+ fotoğraftan renk tahmini ✅), detayda RENK satırı ✅, **"Bununla ne
     giyerim? ✨"** ekranı ✅ (kolaj, seçenekle değiştirme, "Kombini kaydet 💾")
   - Kombin arşivi ✅ (Dolap'ta "Kombinlerim" → arşiv → kayıtlı kombin sayfası), Ana sayfada
     "Günün kombini" ✅, "Nereye giderken giydin?" + tekrar uyarısı ✅
   - 16 Ekim'de kararlaştırılan 4 özelliğin ekranları bitti ✅ (17 Ekim).
-  - **Sırada:** uygulama simgesi, Dolap Kahoot'u (Onur'un mantığı gelince), Zaman Aşımı.
+  - **Sırada (Onur'un mantığı hazır):** etkinlik modu / Zaman Aşımı, veri yedeği (Ayarlar), analizler;
+    sonra uygulama simgesi.
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -493,13 +495,14 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   adı, öneri parçasının küçük fotoğrafı + "Kombini gör →" (öneri ekranına gider).
   Bu hafta: 💘 / 💸 / 👗 üç satır, her biri ayrı küçük kart. Burç seçilmediyse kart soluk +
   "Burcunu seç, yıldızlar dolabına baksın 🔮" butonu.
-- **Dolap Kahoot'u ekranları (Ebrar, sırada):** Ana sayfada hafta sonu küçük kart "🎯 Hafta sonu
+- **Dolap Kahoot'u ekranları (Ebrar) ✅ (20 Ekim):** Ana sayfada hafta sonu küçük kart "🎯 Hafta sonu
   Kahoot'u açıldı!" (hafta içi soluk: "Cumartesi açılıyor ⏳", oynandıysa rozet + seri 🔥).
   Yarışma: tam ekran, üstte 15 sn'lik küçülen `primary` süre çubuğu + "Soru 2/5", şıklar büyük
   hap butonlar (kıyafet şıklarında küçük fotoğraf), dokununca doğru = `success` yeşil + titreşim,
   yanlış = sallanma + doğrusu yeşil yanar, altta `correctText`/`wrongText` balonu, "Sıradaki →".
   🔍 sorusunda fotoğraf büyük ve bulanık, süre ilerledikçe netleşebilir. Sonuç: büyük rozet emojisi
   (`Typography.hero`), rozet adı, puan, "🔥 3 haftalık seri", Story'de paylaş (share-card'a rozet kartı).
+  Uygulamada fark: 🔍 sorusunda şıklarda fotoğraf **yok** (küçük fotoğraf cevabı ele veriyordu).
 - **Etkinlik modu ekranları (Ebrar, sırada):** ekleme/düzenleme formunda "🎉 Etkinlik için aldım"
   anahtarı → açılınca `EVENT_TYPES` hapları (emoji + ad; "Diğer"de ad kutusu) + tarih seçici.
   Detayda geri sayım kartı (`eventCountdownText`); etkinlik günü maliyet yerine büyük "0 ₺ 🆓"
@@ -538,7 +541,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     - `index.tsx` – Ana sayfa ("bugün" ekranı), yukarıdan aşağı: tarih + saate göre selamlama
       ("Günaydın / Merhaba / İyi akşamlar aşko"); pembe **vitrin kartı** (her gün farklı bir
       Girl Math gerçeği, dokununca sıradakine geçer – `buildFacts`); **"Bugün ne giydin?"**
-      şeridi (dokun ✓ Giydim, tekrar dokun geri al); **"Günün kombini"** kartı; gümüş **burç şeridi** (`HoroscopeStrip`); **"Unutulan
+      şeridi (dokun ✓ Giydim, tekrar dokun geri al); **"Günün kombini"** kartı; gümüş **burç şeridi** (`HoroscopeStrip`); **Dolap Kahoot'u** kartı (`KahootCard`); **"Unutulan
       parça"** kartı + "Utanç Duvarı'nın tamamı →"; **"Dolabının yıldızı"** (en çok giyilen,
       başlıkta pembe ★). Sağ üstte ⚙️ butonu Ayarlar'ı açar. Dolap boşsa ekleme butonu.
     - `wardrobe.tsx` – Dolap: büyük başlık + beyaz yuvarlak ⊞ "Kombinlerim" + pembe "+" butonu (alt yazı
@@ -568,7 +571,15 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     "Giydim"de maliyet rakamı zıplar (reanimated) ve kutlama balonu çıkar (mesajlar `handleWear`'da).
   - `share.tsx` – Story paylaşımı: kartın önizlemesi + "Story'de paylaş" (fotoğrafını çeker,
     paylaşım penceresini açar). `params: { id }` → kıyafet kartı (detaydaki paylaş simgesi),
-    parametresiz → dolap kartı (Cüzdan'daki paylaş butonu).
+    parametresiz → dolap kartı (Cüzdan'daki paylaş butonu), `params: { kahoot: '1' }` → bu haftanın
+    Kahoot rozet kartı (Kahoot sonuç ekranından).
+  - `kahoot.tsx` – Dolap Kahoot'u (Ana sayfadaki Kahoot kartından): haftanın 5 sorusu sayfa açılınca
+    sabitlenir; süre çubuğu + "Soru 2/5" + kalan saniye, soru kartı (🔍'de fotoğraf yakın ve bulanık,
+    süreyle netleşir; 🔍'de şıklarda fotoğraf yok), hap şıklar (doğru yeşil, yanlış sallanır), açıklama
+    balonu + puan, "Sıradaki →". Bitince `saveQuizResult` + sonuç ekranı (rozet emojisi zıplar, rozet
+    adı/mesajı, doğru | puan, rekor, seri, "Story'de paylaş"). Bu hafta oynandıysa doğrudan sonuç.
+    `params: { test: '1' }` (sadece `__DEV__`): hafta içi yaklaşan Cumartesi'nin soruları. Dikkat:
+    test oyunu da o haftanın gerçek sonucu olarak kaydedilir (Expo Go'daki deneme verisi).
   - `outfit/[id].tsx` – "Bununla ne giyerim? ✨" (detaydan açılır): `outfitFor` kombini yamuk,
     üst üste binen fotoğraf **kolajı** ("Seçtiğin" etiketi), kombin cümlesi, eksik kategori notu,
     seçilen parçanın rengi yoksa "renk seçersen…" satırı; **"Başka seçenekler"** (`matchesFor`,
@@ -621,7 +632,11 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     dokununca burç sayfası, burç yoksa burç seçimi)
   - `zodiac-grid.tsx` – 12 burç ızgarası + burç yardımcıları (`zodiacGlyph`, `zodiacRange`,
     `MOON_SYMBOLS`, `mercuryNote`). Burç seçimi ve Welcome kullanır.
-  - `share-card.tsx` – Story kartları (`ItemShareCard`, `WardrobeShareCard`, pembe geçişli 9:16)
+  - `share-card.tsx` – Story kartları (`ItemShareCard`, `WardrobeShareCard`, `KahootShareCard`,
+    pembe geçişli 9:16)
+  - `kahoot-card.tsx` – Ana sayfadaki Dolap Kahoot'u kartı: hafta sonu pembe çerçeveli "Oyna →",
+    oynandıysa rozet + puan + seri (dokununca sonuç), hafta içi soluk "Cumartesi açılıyor ⏳",
+    dolap yetersizse Onur'un `blockedMessage`'ı. `__DEV__`'de "🧪 Test: şimdi oyna".
   - `screen-background.tsx` – sekmeler, Welcome ve Sözleşme'nin "üstten pembe ışık" zemini
   - `stat-tile.tsx` – küçük istatistik kutusu (etiket, büyük değer, açıklama; `tone="primary"`
     pembe dolgulu). Ana sayfa ve Cüzdan kullanır. Etiketi Türkçe kuralla büyük harfe çevirir.
@@ -709,7 +724,7 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
    - Renk + kombin, kombin arşivi, Günün kombini, "Nereye?", burç yorumu ✅ (17 Ekim)
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
 6. Ekstra özellikler – Starbucks simülatörü ✅, Utanç Duvarı ✅, burç yorumu ✅, kombin önerisi ✅,
-   Kahoot, Zaman Aşımı, OCR – ayrıntılar "Özellik
+   Kahoot ✅, Zaman Aşımı, OCR – ayrıntılar "Özellik
    detayları" bölümünde
 7. App Store hazırlığı (Apple Developer hesabı, EAS Build/Xcode, TestFlight, gizlilik
    politikası, izin metinleri)

@@ -7,6 +7,7 @@
  * - "Bugün ne giydin?" hızlı check-in şeridi (ışık düğmesi gibi: dokun ✓, tekrar dokun geri al)
  * - "Günün kombini": unutulan bir parçanın etrafında kombin (dokununca "Bununla ne giyerim?")
  * - Burç şeridi (gümüş): burç + şanslı renk; dokununca burç sayfası (seçilmediyse burç seçimi)
+ * - Dolap Kahoot'u kartı: hafta sonu "Oyna", oynandıysa rozet, hafta içi "Cumartesi açılıyor"
  * - "Unutulan parça" (Utanç Duvarı'nın ilk hali) ve "Dolabının yıldızı" (en çok giyilen) kartları
  * Dolap boşsa ekleme butonu çıkar. Tüm sayılar getWardrobeStats'tan gelir.
  */
@@ -25,6 +26,7 @@ import { ScreenBackground } from '@/components/screen-background';
 import { useQuickWear } from '@/components/quick-wear';
 import { DailyOutfitCard } from '@/components/daily-outfit-card';
 import { HoroscopeStrip } from '@/components/horoscope-strip';
+import { KahootCard } from '@/components/kahoot-card';
 import {
   BottomTabInset,
   Colors,
@@ -244,6 +246,8 @@ export default function HomeScreen() {
               <DailyOutfitCard items={items} />
 
               <HoroscopeStrip />
+
+              <KahootCard />
 
               {forgotten && forgottenMessage && (
                 <HighlightCard
