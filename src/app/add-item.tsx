@@ -9,6 +9,8 @@
  * Fotoğraf, ad, kategori, isteğe bağlı renk (kombin önerileri için), fiyat ve isteğe bağlı hedef
  * giyilme sayısı girilir. Fotoğraf seçilince rengi fotoğraftan tahmin edilip seçili gelir
  * ("Fotoğraftan tahmin ettim … doğru mu?"); kullanıcı elle seçtiyse tahmin üstüne yazılmaz.
+ * En altta "🎉 Etkinlik için aldım" (EventPicker): tür + tarih → item.event (Zaman Aşımı = Bedava).
+ * Anahtar kapatılıp kaydedilirse etkinlik kaldırılır (event: undefined).
  */
 
 import { Image } from 'expo-image';
@@ -19,9 +21,11 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ColorPicker } from '@/components/color-picker';
+import { EventPicker, stringFromDate } from '@/components/event-picker';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { DEFAULT_TARGET_WEARS, useApp } from '@/context/app-context';
 import type { ColorName } from '@/lib/colors';
+import type { EventTypeName } from '@/lib/events';
 import { guessPhotoColor } from '@/lib/photo-color';
 import { deletePhoto, pickAndSavePhoto, photoUri } from '@/lib/photos';
 import { CATEGORIES, type Category } from '@/lib/types';
@@ -41,18 +45,24 @@ export default function AddItemScreen() {
   // Kimlik verildiyse düzenleme modu: form bu kıyafetin bilgileriyle başlar
   const editing = id ? items.find((item) => item.id === id) : undefined;
 
-  const [photoFileName, setPhotoFileName] = useState<string | null>(
-    editing?.photoFileName ?? null,
-  );
+  const [photoFileName, setPhotoFileName] = useState<string | null>(editing?.photoFileName ?? null);
   const [name, setName] = useState(editing?.name ?? '');
   const [category, setCategory] = useState<Category | null>(editing?.category ?? null);
   const [color, setColor] = useState<ColorName | undefined>(editing?.color);
   // Fotoğraftan tahmin edilen renk (kullanıcı seçiciye dokununca silinir)
   const [guessedColor, setGuessedColor] = useState<ColorName | null>(null);
-  const [priceText, setPriceText] = useState(
-    editing ? String(editing.price) : (priceParam ?? ''),
-  );
+  const [priceText, setPriceText] = useState(editing ? String(editing.price) : (priceParam ?? ''));
   const [targetText, setTargetText] = useState(editing ? String(editing.targetWears) : '');
+  // Etkinlik: varsayılan tarih 2 hafta sonrası
+  const [eventOn, setEventOn] = useState(editing?.event !== undefined);
+  const [eventType, setEventType] = useState<EventTypeName | null>(editing?.event?.type ?? null);
+  const [eventDate, setEventDate] = useState(() => {
+    if (editing?.event) return editing.event.date;
+    const inTwoWeeks = new Date();
+    inTwoWeeks.setDate(inTwoWeeks.getDate() + 14);
+    return stringFromDate(inTwoWeeks);
+  });
+  const [eventName, setEventName] = useState(editing?.event?.customName ?? '');
 
   // Kaydetmeden çıkılırsa bu formda YENİ seçilen fotoğraf telefonda boşuna yer kaplamasın diye
   // silinir. Düzenlemede kıyafetin eski fotoğrafına dokunulmaz (o, kaydedince updateItem'da silinir).
@@ -73,7 +83,8 @@ export default function AddItemScreen() {
     category !== null &&
     price > 0 &&
     Number.isInteger(target) &&
-    target > 0;
+    target > 0 &&
+    (!eventOn || eventType !== null); // Etkinlik açıksa türü seçilmeli
 
   async function handlePickPhoto() {
     const fileName = await pickAndSavePhoto();
@@ -109,6 +120,17 @@ export default function AddItemScreen() {
       price: Math.round(price),
       photoFileName,
       targetWears: target,
+      // Anahtar kapalıysa undefined: düzenlemede etkinliği kaldırmak da böyle olur
+      event:
+        eventOn && eventType
+          ? {
+              type: eventType,
+              date: eventDate,
+              ...(eventType === 'Diğer' && eventName.trim()
+                ? { customName: eventName.trim() }
+                : {}),
+            }
+          : undefined,
     };
     if (editing) {
       updateItem(editing.id, values);
@@ -190,9 +212,7 @@ export default function AddItemScreen() {
                   key={name}
                   onPress={() => setCategory(name)}
                   style={[styles.chip, selected && styles.chipSelected]}>
-                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                    {name}
-                  </Text>
+                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{name}</Text>
                 </Pressable>
               );
             })}
@@ -238,6 +258,17 @@ export default function AddItemScreen() {
             Bu kadar giyince parça kendini amorti etmiş sayılır. Boş bırakırsan 30.
           </Text>
         </View>
+
+        <EventPicker
+          enabled={eventOn}
+          type={eventType}
+          date={eventDate}
+          customName={eventName}
+          onToggle={setEventOn}
+          onTypeChange={setEventType}
+          onDateChange={setEventDate}
+          onCustomNameChange={setEventName}
+        />
       </ScrollView>
 
       <View style={styles.footer}>

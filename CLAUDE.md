@@ -62,7 +62,9 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   (`src/app/should-i-buy.tsx`, Cüzdan'dan açılır) bunu yapıyor.
 - **Zaman Aşımı = Bedava (etkinlik modu):** Kıyafet "Etkinlik için alındı" etiketi ve
   etkinlik tarihiyle kaydedilir. O gün: "Bu elbisenin parası hesaptan çoktan çıktı. Bugünkü
-  maliyeti 0 TL; bedavaya harika görünüyorsun!" bildirimi.
+  maliyeti 0 TL; bedavaya harika görünüyorsun!" bildirimi. ✅ Mantık + bildirimler (Onur,
+  `events.ts`), ekranlar (Ebrar, 20 Ekim): formda "🎉 Etkinlik için aldım", detayda geri sayım ve
+  etkinlik günü yeşil 0 ₺, Ana sayfada 7 gün kala geri sayım kartı.
 - **Dolap Tarotu → Burç yorumu (günün enerjisi):** İlk fikir Dolap Tarotu'ydu (kart çekip
   unutulmuş parça önerisi). 16 Ekim'de Onur + Ebrar kararıyla yerine **burç yorumu** geldi ✅
   (17 Ekim): gerçek gökyüzüne göre günlük/haftalık yorum, şanslı renk, dolaptan o renkte parça
@@ -431,7 +433,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Kombin arşivi ✅ (Dolap'ta "Kombinlerim" → arşiv → kayıtlı kombin sayfası), Ana sayfada
     "Günün kombini" ✅, "Nereye giderken giydin?" + tekrar uyarısı ✅
   - 16 Ekim'de kararlaştırılan 4 özelliğin ekranları bitti ✅ (17 Ekim).
-  - **Sırada (Onur'un mantığı hazır):** etkinlik modu / Zaman Aşımı, veri yedeği (Ayarlar), analizler;
+  - Etkinlik modu / Zaman Aşımı ekranları ✅ (20 Ekim)
+  - **Sırada (Onur'un mantığı hazır):** veri yedeği (Ayarlar), analizler;
     sonra uygulama simgesi.
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
@@ -503,11 +506,13 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   🔍 sorusunda fotoğraf büyük ve bulanık, süre ilerledikçe netleşebilir. Sonuç: büyük rozet emojisi
   (`Typography.hero`), rozet adı, puan, "🔥 3 haftalık seri", Story'de paylaş (share-card'a rozet kartı).
   Uygulamada fark: 🔍 sorusunda şıklarda fotoğraf **yok** (küçük fotoğraf cevabı ele veriyordu).
-- **Etkinlik modu ekranları (Ebrar, sırada):** ekleme/düzenleme formunda "🎉 Etkinlik için aldım"
+- **Etkinlik modu ekranları (Ebrar) ✅ (20 Ekim):** ekleme/düzenleme formunda "🎉 Etkinlik için aldım"
   anahtarı → açılınca `EVENT_TYPES` hapları (emoji + ad; "Diğer"de ad kutusu) + tarih seçici.
   Detayda geri sayım kartı (`eventCountdownText`); etkinlik günü maliyet yerine büyük "0 ₺ 🆓"
   (`eventDayCost`) + gümüş krom değil, `success` yeşil "Bugün bedava" rozeti ve öne çıkan "Giydim".
   Ana sayfada en yakın etkinlik için küçük geri sayım kartı (7 gün kala).
+  Uygulamada: tarih seçici iPhone'un kendi takvimi (`@react-native-community/datetimepicker`,
+  "compact"); etkinlik günü buton "Bugün bedavaya giy ✨".
 - **Veri yedeği (Ebrar, sırada):** Ayarlar → VERİLER grubuna iki satır: "📤 Yedeği dışa aktar"
   (basınca kısa "Hazırlanıyor…" göstergesi; büyük dolapta birkaç saniye sürebilir) ve "📥 Yedeği yükle"
   (`readBackup` → onay penceresi: `summary` + "Şu anki dolabın silinip yedektekiyle değiştirilecek",
@@ -540,7 +545,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     `(tabs)/_layout.tsx` bu ekranları `AppTabs` ile alt sekmelerde gösterir.
     - `index.tsx` – Ana sayfa ("bugün" ekranı), yukarıdan aşağı: tarih + saate göre selamlama
       ("Günaydın / Merhaba / İyi akşamlar aşko"); pembe **vitrin kartı** (her gün farklı bir
-      Girl Math gerçeği, dokununca sıradakine geçer – `buildFacts`); **"Bugün ne giydin?"**
+      Girl Math gerçeği, dokununca sıradakine geçer – `buildFacts`); **etkinlik geri sayımı**
+      (`EventCountdownCard`, sadece 7 gün kala); **"Bugün ne giydin?"**
       şeridi (dokun ✓ Giydim, tekrar dokun geri al); **"Günün kombini"** kartı; gümüş **burç şeridi** (`HoroscopeStrip`); **Dolap Kahoot'u** kartı (`KahootCard`); **"Unutulan
       parça"** kartı + "Utanç Duvarı'nın tamamı →"; **"Dolabının yıldızı"** (en çok giyilen,
       başlıkta pembe ★). Sağ üstte ⚙️ butonu Ayarlar'ı açar. Dolap boşsa ekleme butonu.
@@ -561,6 +567,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     Parametresiz: yeni parça (`addItem`). `params: { id }`: düzenleme, form dolu gelir
     (`updateItem`; detaydaki "Düzenle" açar). `params: { price }`: fiyat dolu gelir ("Almalı
     mıyım?" → "Aldım!"). Kaydetmeden çıkılırsa bu formda yeni seçilen fotoğrafı siler.
+    En altta "🎉 Etkinlik için aldım" (`EventPicker`): tür + tarih → `item.event`; anahtar kapalı
+    kaydedilirse etkinlik silinir.
   - `should-i-buy.tsx` – "Almalı mıyım?": fiyat + ayda kaç kere giyileceği → karar cümlesi
     (iced latteye düşme süresine göre), "Bunu alırsan şunlardan vazgeçiyorsun" (Starbucks
     Endeksi), "Girl Math'e göre" (Brunch/Manikür/Iced latte/Filtre kahve fiyatına düşmesi için
@@ -569,6 +577,9 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     RENK satırı + renk yuvarlağı, son giyimde yer seçildiyse SON YER) + büyük fotoğraf, maliyet, kıyas cümlesi, **"Bununla ne
     giyerim?"** kartı, hedef çubuğu, Starbucks Endeksi, silme; altta "Giydim ✨" ve ↩ geri al.
     "Giydim"de maliyet rakamı zıplar (reanimated) ve kutlama balonu çıkar (mesajlar `handleWear`'da).
+    Etkinlik varsa ETKİNLİK satırı + geri sayım kartı (`eventCountdownText`); etkinlik günü maliyet
+    yeşil "0 ₺" (normal maliyet üstü çizili, sadece gösterim), fotoğrafta "🆓 Bugün bedava", buton
+    "Bugün bedavaya giy ✨".
   - `share.tsx` – Story paylaşımı: kartın önizlemesi + "Story'de paylaş" (fotoğrafını çeker,
     paylaşım penceresini açar). `params: { id }` → kıyafet kartı (detaydaki paylaş simgesi),
     parametresiz → dolap kartı (Cüzdan'daki paylaş butonu), `params: { kahoot: '1' }` → bu haftanın
@@ -637,6 +648,10 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `kahoot-card.tsx` – Ana sayfadaki Dolap Kahoot'u kartı: hafta sonu pembe çerçeveli "Oyna →",
     oynandıysa rozet + puan + seri (dokununca sonuç), hafta içi soluk "Cumartesi açılıyor ⏳",
     dolap yetersizse Onur'un `blockedMessage`'ı. `__DEV__`'de "🧪 Test: şimdi oyna".
+  - `event-picker.tsx` – formdaki "🎉 Etkinlik için aldım" kutusu (anahtar, `EVENT_TYPES` hapları,
+    "Diğer"de ad, iPhone tarih seçicisi). `dateFromString` / `stringFromDate` ("2026-12-05" ↔ Date).
+  - `event-countdown-card.tsx` – Ana sayfada en yakın etkinliğin geri sayımı (7 gün kala; etkinlik
+    günü yeşil çerçeve "BUGÜN 🆓"); dokununca kıyafetin detayı. Yakında etkinlik yoksa görünmez.
   - `screen-background.tsx` – sekmeler, Welcome ve Sözleşme'nin "üstten pembe ışık" zemini
   - `stat-tile.tsx` – küçük istatistik kutusu (etiket, büyük değer, açıklama; `tone="primary"`
     pembe dolgulu). Ana sayfa ve Cüzdan kullanır. Etiketi Türkçe kuralla büyük harfe çevirir.
@@ -695,6 +710,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   Go'da çalışır. `expo-sharing` app.json'a kendi satırını ekledi. Pull sonrası `npm install`.
   17 Ekim: `expo-image-manipulator` ve `jpeg-js` (fotoğraftan renk tahmini; ikisi de Expo Go'da
   çalışır, app.json değişmedi). Pull sonrası `npm install`.
+  20 Ekim: `@react-native-community/datetimepicker` (etkinlik tarihi; Expo Go'da çalışır, app.json'a
+  kendi satırını ekledi). Pull sonrası `npm install`.
 - **İleride düşünülebilir (Ebrar'ın fikri):** renk adı yerine fotoğraftaki gerçek tonlara göre kombin
   önerisi. Şimdilik yapılmadı çünkü motorun kuralları ve kullanıcıya gösterilen sebepler renk
   adlarına dayanıyor; tonlara geçmek motoru baştan yazmak demek.
@@ -724,7 +741,7 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
    - Renk + kombin, kombin arşivi, Günün kombini, "Nereye?", burç yorumu ✅ (17 Ekim)
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
 6. Ekstra özellikler – Starbucks simülatörü ✅, Utanç Duvarı ✅, burç yorumu ✅, kombin önerisi ✅,
-   Kahoot ✅, Zaman Aşımı, OCR – ayrıntılar "Özellik
+   Kahoot ✅, Zaman Aşımı ✅, OCR – ayrıntılar "Özellik
    detayları" bölümünde
 7. App Store hazırlığı (Apple Developer hesabı, EAS Build/Xcode, TestFlight, gizlilik
    politikası, izin metinleri)

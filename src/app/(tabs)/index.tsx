@@ -4,6 +4,7 @@
  * Her gün açılan "bugün" ekranı:
  * - Saate göre selamlama ve bugünün tarihi
  * - Pembe "vitrin" kartı: her gün farklı bir Girl Math gerçeği; dokununca sıradakine geçer
+ * - Etkinlik geri sayımı (7 gün kala; etkinlik günü "🆓 bugün bedava"), yoksa hiç görünmez
  * - "Bugün ne giydin?" hızlı check-in şeridi (ışık düğmesi gibi: dokun ✓, tekrar dokun geri al)
  * - "Günün kombini": unutulan bir parçanın etrafında kombin (dokununca "Bununla ne giyerim?")
  * - Burç şeridi (gümüş): burç + şanslı renk; dokununca burç sayfası (seçilmediyse burç seçimi)
@@ -25,6 +26,7 @@ import { FORGOTTEN_DAYS, formatTL, lossText } from '@/components/clothing-card';
 import { ScreenBackground } from '@/components/screen-background';
 import { useQuickWear } from '@/components/quick-wear';
 import { DailyOutfitCard } from '@/components/daily-outfit-card';
+import { EventCountdownCard } from '@/components/event-countdown-card';
 import { HoroscopeStrip } from '@/components/horoscope-strip';
 import { KahootCard } from '@/components/kahoot-card';
 import {
@@ -219,6 +221,8 @@ export default function HomeScreen() {
                   </LinearGradient>
                 </Pressable>
               )}
+
+              <EventCountdownCard items={items} />
 
               {items.length > 0 && (
                 <View style={styles.section}>

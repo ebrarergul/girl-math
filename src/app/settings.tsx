@@ -5,7 +5,9 @@
  * - BİLDİRİMLER: izin durumu + "Bildirimleri aç" (izin daha önce reddedildiyse iPhone
  *   Ayarları'nı açar), deneme bildirimi
  * - GIRL MATH: Burcum (burç seçimi), Kullanım Sözleşmesi'ni tekrar okuma, gizlilik notu, sürüm
- * - VERİLER: "Bütün verileri sil" (iki kez sorar; sadece dolap silinir, sözleşme kalır)
+ * - VERİLER: "Yedeği dışa aktar" / "Yedeği yükle" (Onur'un backup.ts'i: tek dosya, fotoğraflar
+ *   dahil; yüklemeden önce özetle onay sorar) ve "Bütün verileri sil" (iki kez sorar; sadece dolap
+ *   silinir, sözleşme kalır)
  * Ana sayfanın sağ üstündeki ⚙️ butonuyla açılır.
  */
 
@@ -19,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { zodiacGlyph } from '@/components/zodiac-grid';
 import { useApp } from '@/context/app-context';
+import { backupErrorText, exportBackup, readBackup } from '@/lib/backup';
 import {
   hasNotificationPermission,
   requestNotificationPermission,
@@ -30,7 +33,9 @@ const colors = Colors.light;
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { items, resetAll, zodiac } = useApp();
+  const { items, outfits, quizResults, resetAll, restoreAll, zodiac } = useApp();
+  // Yedek hazırlanırken satırda "Hazırlanıyor…" yazar (büyük dolapta birkaç saniye sürebilir)
+  const [exporting, setExporting] = useState(false);
 
   // Bildirim izni: null = henüz okunmadı. Ekrana her dönüldüğünde yeniden okunur
   // (kullanıcı iPhone Ayarları'ndan izni açıp geri gelmiş olabilir).
@@ -66,6 +71,49 @@ export default function SettingsScreen() {
       sent
         ? '5 saniye içinde gelecek. Görmek için uygulamadan çıkabilirsin.'
         : 'Önce bildirimleri açman gerekiyor.',
+    );
+  }
+
+  // Yedek: tek dosya + iPhone'un paylaşım penceresi ("Dosyalar'a Kaydet", iCloud, WhatsApp…)
+  async function handleExport() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const ok = await exportBackup({ items, outfits, zodiac, quizResults });
+      if (!ok) {
+        Alert.alert('Yedek hazırlanamadı', 'Bu cihazda paylaşım penceresi açılamadı.');
+      }
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  // Yedeği yükle: önce dosyayı okur (hiçbir şeyi değiştirmez), özetle onay sorar, sonra değiştirir
+  async function handleImport() {
+    const read = await readBackup();
+    if (!read.ok) {
+      if (read.reason !== 'canceled') {
+        Alert.alert('Yüklenemedi', backupErrorText(read.reason));
+      }
+      return;
+    }
+    Alert.alert(
+      '📥 Yedeği yükle?',
+      `${read.summary}\n\nŞu anki dolabın silinip yedektekiyle değiştirilecek.`,
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Yükle',
+          style: 'destructive',
+          onPress: () => {
+            const ok = restoreAll(read.backup);
+            Alert.alert(
+              ok ? '✅ Dolabın geri geldi!' : 'Bir sorun oldu',
+              ok ? read.summary : 'Mevcut dolabına dokunulmadı.',
+            );
+          },
+        },
+      ],
     );
   }
 
@@ -152,6 +200,19 @@ export default function SettingsScreen() {
 
         <Section title="VERİLER">
           <Row
+            icon="square.and.arrow.up.fill"
+            title="Yedeği dışa aktar"
+            detail={exporting ? 'Hazırlanıyor…' : items.length === 0 ? 'Dolap boş' : undefined}
+            onPress={items.length > 0 && !exporting ? handleExport : undefined}
+            chevron={items.length > 0 && !exporting}
+          />
+          <Row
+            icon="square.and.arrow.down.fill"
+            title="Yedeği yükle"
+            onPress={handleImport}
+            chevron
+          />
+          <Row
             icon="trash.fill"
             title="Bütün verileri sil"
             destructive
@@ -159,6 +220,10 @@ export default function SettingsScreen() {
             detail={items.length === 0 ? 'Dolap boş' : undefined}
           />
         </Section>
+        <Text style={styles.note}>
+          Uygulamayı silmeden ya da telefon değiştirmeden önce yedek al 💾 Yedek tek dosyadır
+          (fotoğraflar dahil); Dosyalar’a, iCloud’a ya da kendine WhatsApp’tan gönderebilirsin.
+        </Text>
 
         <View style={styles.privacy}>
           <SymbolView name="lock.fill" tintColor={colors.primary} size={18} />

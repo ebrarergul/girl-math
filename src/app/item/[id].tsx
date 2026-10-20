@@ -5,6 +5,9 @@
  * sağda büyük fotoğraf; altında maliyet, kıyas cümlesi, hedef çubuğu ve
  * Starbucks Endeksi. En altta "Giydim" ve "Geri al" butonları.
  * "Giydim"e basınca maliyet rakamı zıplar ve kısa bir kutlama balonu çıkar.
+ * Etkinlik için alındıysa (Onur'un events.ts'i): ETKİNLİK satırı ve geri sayım kartı; etkinlik
+ * günü maliyet yeşil "0 ₺" (sadece gösterim, Sözleşme Madde 3), fotoğrafta "🆓 Bugün bedava"
+ * rozeti ve buton "Bugün bedavaya giy ✨".
  */
 
 import * as Haptics from 'expo-haptics';
@@ -26,10 +29,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { INFINITE_COST, formatTL, itemComparisonText } from '@/components/clothing-card';
 import { ColorSwatch } from '@/components/color-picker';
+import { dateFromString } from '@/components/event-picker';
 import { PlaceSheet } from '@/components/place-sheet';
 import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import type { ColorName } from '@/lib/colors';
+import { eventCountdownText, eventLabel, isEventDay } from '@/lib/events';
 import { costPerWear, daysSinceLastWear, isPaidOff, wearCount } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
 import { placeLabel, type PlaceName } from '@/lib/places';
@@ -112,6 +117,9 @@ export default function ItemDetailScreen() {
   const progress = Math.min(wears / item.targetWears, 1);
   const remaining = Math.max(item.targetWears - wears, 0);
   const starbucks = starbucksIndexList(item.price).slice(0, 3);
+  // Etkinlik: geri sayım cümlesi ve bugün etkinlik günü mü (o gün maliyet 0 ₺ gösterilir)
+  const countdown = eventCountdownText(item);
+  const eventDay = isEventDay(item);
 
   // "Giydim": kaydı yap, rakamı zıplat, duruma göre kutlama mesajı göster
   // Pencerede yer seçilince (ya da "Geç" → null) giyim kaydedilir
@@ -131,6 +139,8 @@ export default function ItemDetailScreen() {
 
     if (newWears === item!.targetWears) {
       showToast('Amorti edildi! Bu parça artık resmen bedava 💅');
+    } else if (eventDay) {
+      showToast('🎉 Bedavaya harika görünüyorsun! Bugün 0 ₺');
     } else if (newWears === 1) {
       showToast(`İlk giyim! 🎉 Maliyet ∞ → ${formatTL(newCost)} oldu`);
     } else if (cost - newCost > 0) {
@@ -207,6 +217,12 @@ export default function ItemDetailScreen() {
             <Fact label="Giyim" value={`${wears} / ${item.targetWears}`} />
             <Fact label="Son giyim" value={lastWornText(wears, daysSinceLastWear(item))} />
             {lastPlace && <Fact label="Son yer" value={placeLabel(lastPlace)} />}
+            {item.event && (
+              <Fact
+                label="Etkinlik"
+                value={`${eventLabel(item.event)} · ${dateFromString(item.event.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}`}
+              />
+            )}
             <Fact label="Eklendi" value={item.createdAt.split('-').reverse().join('.')} />
           </View>
           <View style={styles.photoBox}>
@@ -220,6 +236,11 @@ export default function ItemDetailScreen() {
                 weight="ultraLight"
               />
             )}
+            {eventDay && (
+              <View style={styles.freeBadge}>
+                <Text style={styles.freeBadgeText}>🆓 Bugün bedava</Text>
+              </View>
+            )}
             {paidOff && (
               <View style={styles.heartBadge}>
                 <Text style={styles.heartText}>♥</Text>
@@ -231,17 +252,35 @@ export default function ItemDetailScreen() {
         <View style={styles.body}>
           <View style={styles.titleRow}>
             <Text style={styles.name}>{item.name}</Text>
-            <View style={styles.priceBox}>
-              {cost < item.price && <Text style={styles.oldPrice}>{formatTL(item.price)}</Text>}
-              {/* Rakam dergi yazı tipinde; ₺ sade yazı tipinde (dergi yazı tipinde "Ł" gibi görünüyor).
+            {eventDay ? (
+              // Etkinlik günü: parası çoktan ödendi, bugün 0 ₺ (üstü çizili normal maliyet)
+              <View style={styles.priceBox}>
+                <Text style={styles.oldPrice}>{wears === 0 ? INFINITE_COST : formatTL(cost)}</Text>
+                <Animated.Text style={[styles.cost, styles.costFree, costAnimatedStyle]}>
+                  0<Text style={styles.costCurrency}> ₺</Text>
+                </Animated.Text>
+                <Text style={styles.perWear}>bugün, etkinlik günü 🆓</Text>
+              </View>
+            ) : (
+              <View style={styles.priceBox}>
+                {cost < item.price && <Text style={styles.oldPrice}>{formatTL(item.price)}</Text>}
+                {/* Rakam dergi yazı tipinde; ₺ sade yazı tipinde (dergi yazı tipinde "Ł" gibi görünüyor).
                   Hiç giyilmediyse ∞ (sonsuz) */}
-              <Animated.Text style={[styles.cost, costAnimatedStyle]}>
-                {wears === 0 ? INFINITE_COST : cost.toLocaleString('tr-TR')}
-                {wears > 0 && <Text style={styles.costCurrency}> ₺</Text>}
-              </Animated.Text>
-              <Text style={styles.perWear}>giyim başına</Text>
-            </View>
+                <Animated.Text style={[styles.cost, costAnimatedStyle]}>
+                  {wears === 0 ? INFINITE_COST : cost.toLocaleString('tr-TR')}
+                  {wears > 0 && <Text style={styles.costCurrency}> ₺</Text>}
+                </Animated.Text>
+                <Text style={styles.perWear}>giyim başına</Text>
+              </View>
+            )}
           </View>
+
+          {/* Etkinlik geri sayımı (Onur'un cümlesi); etkinlik günü yeşil çerçeveli */}
+          {countdown && (
+            <View style={[styles.eventCard, eventDay && styles.eventCardToday]}>
+              <Text style={styles.eventText}>{countdown}</Text>
+            </View>
+          )}
 
           {/* Kıyas cümlesi sadece en az 1 kere giyildiyse anlamlı */}
           <View style={styles.compareCard}>
@@ -337,7 +376,7 @@ export default function ItemDetailScreen() {
         <Pressable
           onPress={() => setPlaceOpen(true)}
           style={({ pressed }) => [styles.wearButton, pressed && styles.wearPressed]}>
-          <Text style={styles.wearText}>Giydim ✨</Text>
+          <Text style={styles.wearText}>{eventDay ? 'Bugün bedavaya giy ✨' : 'Giydim ✨'}</Text>
         </Pressable>
       </View>
       <PlaceSheet
@@ -497,6 +536,39 @@ const styles = StyleSheet.create({
   perWear: {
     ...Typography.caption,
     color: colors.textSecondary,
+  },
+  // Etkinlik günü: maliyet yeşil 0 ₺
+  costFree: {
+    color: colors.success,
+  },
+  freeBadge: {
+    position: 'absolute',
+    left: Spacing.two,
+    top: Spacing.two,
+    backgroundColor: colors.success,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
+  },
+  freeBadgeText: {
+    ...Typography.caption,
+    color: colors.onPrimary,
+    fontWeight: '800',
+  },
+  // Geri sayım kartı: açık pembe; etkinlik günü beyaz + yeşil çerçeve
+  eventCard: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: Radius.lg,
+    padding: Spacing.three,
+  },
+  eventCardToday: {
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.success,
+  },
+  eventText: {
+    ...Typography.bodyBold,
+    color: colors.text,
   },
   compareCard: {
     backgroundColor: colors.card,
