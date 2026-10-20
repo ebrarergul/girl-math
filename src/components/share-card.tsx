@@ -6,6 +6,7 @@
  * - ItemShareCard: tek kıyafet ("“Ceket” artık 67 ₺ /giyim")
  * - WardrobeShareCard: dolap özeti ("Dolabım = 51 iced latte 🧋", Girl Math kazancım)
  * - KahootShareCard: Dolap Kahoot'u rozeti (🏆 Merkez Bankası Başkanı, 4/5 doğru, puan, seri)
+ * - MonthlyShareCard: bu ayın özeti (kaç kere Giydim, ayın yıldızı, en çok giyilen renk, yorum)
  * Kartın genişliği dışarıdan verilir; yükseklik 16/9 oranında otomatik.
  */
 
@@ -18,6 +19,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { INFINITE_COST, formatTL, itemComparisonText } from '@/components/clothing-card';
 import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
+import type { MonthlySummary } from '@/lib/insights';
 import { QUESTION_COUNT, quizBadge } from '@/lib/quiz';
 import { photoUri } from '@/lib/photos';
 import { starbucksIndexText } from '@/lib/starbucks-index';
@@ -43,11 +45,20 @@ function CardFrame({ width, children }: { width: number; children: ReactNode }) 
 
 // Büyük rakam: rakam dergi yazı tipinde, ₺ sade yazı tipinde (dergi yazı tipinde "Ł" gibi görünüyor)
 // value null ise ∞ (sonsuz) yazılır: hiç giyilmemiş parçanın giyim başına maliyeti
-function BigAmount({ value, suffix }: { value: number | null; suffix?: string }) {
+// currency={false}: para olmayan sayılar için (giyim sayısı gibi), ₺ yazılmaz
+function BigAmount({
+  value,
+  suffix,
+  currency = true,
+}: {
+  value: number | null;
+  suffix?: string;
+  currency?: boolean;
+}) {
   return (
     <Text style={styles.bigAmount} numberOfLines={1} adjustsFontSizeToFit>
       {value === null ? INFINITE_COST : value.toLocaleString('tr-TR')}
-      {value !== null && <Text style={styles.bigCurrency}> ₺</Text>}
+      {value !== null && currency && <Text style={styles.bigCurrency}> ₺</Text>}
       {suffix && <Text style={styles.bigSuffix}> {suffix}</Text>}
     </Text>
   );
@@ -138,13 +149,59 @@ export function KahootShareCard({
       </View>
 
       <View style={styles.statBox}>
-        <BigAmount value={result.score} suffix="puan" />
+        <BigAmount value={result.score} currency={false} suffix="puan" />
         <Text style={styles.note}>{`${result.correctCount}/${QUESTION_COUNT} doğru`}</Text>
       </View>
 
       <View style={styles.textBlock}>
         {streak > 1 && <Text style={styles.punchline}>{`🔥 ${streak} haftalık seri`}</Text>}
         <Text style={styles.note}>Dolabını benden iyi tanıyan var mı? 👀</Text>
+      </View>
+    </CardFrame>
+  );
+}
+
+// Aylık özet kartı. Harcanan TL bilerek yazılmaz (Story herkese açık), sadece parça sayısı
+export function MonthlyShareCard({
+  summary,
+  colorText,
+  width,
+}: {
+  summary: MonthlySummary;
+  colorText: string | null; // "💖 En çok pembe giyiyorsun (%40)"; renkli giyim yoksa null
+  width: number;
+}) {
+  // "2026-10" → "Ekim 2026" (öğlen saati: gün dönümünde bir önceki aya kaymasın)
+  const monthName = new Date(`${summary.month}-01T12:00:00`).toLocaleDateString('tr-TR', {
+    month: 'long',
+    year: 'numeric',
+  });
+
+  return (
+    <CardFrame width={width}>
+      <View style={styles.textBlock}>
+        <Text style={styles.statLabel}>AYLIK ÖZETİM</Text>
+        <Text style={styles.badgeTitle}>{monthName}</Text>
+      </View>
+
+      <View style={styles.statBox}>
+        <BigAmount value={summary.wears} currency={false} suffix="kere Giydim" />
+        {summary.star && (
+          <Text style={styles.note} numberOfLines={2}>
+            ⭐ Ayın yıldızı: “{summary.star.item.name}”
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.textBlock}>
+        {colorText && <Text style={styles.note}>{colorText}</Text>}
+        <Text style={styles.note}>
+          {summary.newItemCount > 0
+            ? `🛍️ ${summary.newItemCount} yeni parça`
+            : '🛍️ Bu ay hiç alışveriş yok 🙌'}
+          {summary.paidOffCount > 0 ? ` · 💖 ${summary.paidOffCount} parça amorti` : ''}
+        </Text>
+        <Text style={styles.punchline}>{summary.verdict}</Text>
       </View>
     </CardFrame>
   );

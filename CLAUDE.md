@@ -83,8 +83,8 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   Gerekenler: `ClothingItem`'a renk bilgisi + kombin motoru `src/lib/outfits.ts` (Onur),
   ekleme formunda renk seçici + Ana sayfada "Günün kombini" kartı (Ebrar).
 - **Diğer mantıklı fikirler:** "Almalı mıyım?" hesaplayıcısı ✅ (Starbucks simülatörüyle
-  birleştirildi: "kaç kere giyersen bir kahve fiyatına düşer?"), aylardır giyilmeyenlerden "satmayı düşün" listesi,
-  aylık harcama özeti. Premium'daki "hangi rengi daha çok giyiyorum" analizi de renk
+  birleştirildi: "kaç kere giyersen bir kahve fiyatına düşer?"), aylardır giyilmeyenlerden "satmayı düşün" listesi ✅,
+  aylık özet ✅, renk analizi ✅ (üçü `src/app/insights.tsx`, 20 Ekim). Premium'daki "hangi rengi daha çok giyiyorum" analizi de renk
   bilgisine dayanır.
 
 ## Kesinleşmiş kararlar
@@ -434,8 +434,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     "Günün kombini" ✅, "Nereye giderken giydin?" + tekrar uyarısı ✅
   - 16 Ekim'de kararlaştırılan 4 özelliğin ekranları bitti ✅ (17 Ekim).
   - Etkinlik modu / Zaman Aşımı ekranları ✅ (20 Ekim)
-  - **Sırada (Onur'un mantığı hazır):** veri yedeği (Ayarlar), analizler;
-    sonra uygulama simgesi.
+  - Analiz ekranları ✅ (20 Ekim): renk analizi, aylık özet (+ Story kartı), satmayı düşün
+  - **Sırada (Onur'un mantığı hazır):** veri yedeği (Ayarlar); sonra uygulama simgesi.
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -518,11 +518,13 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   (`readBackup` → onay penceresi: `summary` + "Şu anki dolabın silinip yedektekiyle değiştirilecek",
   [Vazgeç] [Yükle] kırmızı; sonra "✅ Dolabın geri geldi!"). Altına küçük not: "Uygulamayı silmeden
   önce yedek al 💾". Örnek akış: `dev-test-panel.tsx` → `testExport` / `testImport`.
-- **Analizler (Ebrar, sırada):** Cüzdan'ın altına ya da ayrı "Analiz" sayfasına: renk analizi için
+- **Analizler (Ebrar) ✅ (20 Ekim, ayrı "Analizlerin 📊" sayfası, Cüzdan'dan):** renk analizi için
   "Bu ay / Tüm zamanlar" hap seçici + yatay yüzde çubuğu (her renk `colorHex` ile kendi renginde
   dilim, altında emoji + %); "Ekim 2026 özetin 💅" kartı (`lines` alt alta, en altta `verdict`
   pembe balonda; Story'de paylaşılabilir); "🏷️ Satmayı düşün" listesi küçük fotoğraflı satırlar +
   altta "💰 tahminen ~2.600 TL" (tahmin olduğu belli olsun). Liste boşsa 👑 cümlesi.
+  Uygulamada: renk çubuğunun altında renk yuvarlağı + "12 giyim · %40" listesi; satmayı düşün
+  satırında sağda "~1.200 ₺ / tahmini"; aylık Story kartında harcanan TL **bilerek yok** (gizlilik).
 - **Welcome'da burç seçimi:** 12 burç 3×4 ızgara, her kutuda büyük emoji + ad; seçilende
   `primary` dolgu + beyaz yazı. Altta soluk "Şimdi değil".
 
@@ -559,7 +561,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     - `wallet.tsx` – Cüzdan ("para" ekranı): dolap değeri + Starbucks Endeksi cümlesi,
       pembe "GIRL MATH kazancın" kutusu, 2×2 kutu (ortalama maliyet, toplam giyim, amorti
       edilen, hiç giyilmeyen) + **"Bu ay dolaba giren"** (bu ay eklenen parçaların satın alma
-      fiyatları toplamı), en altta "Almalı mıyım?" kartı, başlığın yanında Story paylaş butonu.
+      fiyatları toplamı), en altta "Analizlerin" kartı (dolap boşken yok) + "Almalı mıyım?" kartı,
+      başlığın yanında Story paylaş butonu.
       Dolap boşsa ekleme butonu.
     - `explore.tsx` – "Test" sekmesi, sadece `<DevTestPanel />` gösterir (sadece geliştirmede)
   - `add-item.tsx` – kıyafet ekleme **ve düzenleme** formu (fotoğraf, ad, kategori, renk, fiyat,
@@ -583,7 +586,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `share.tsx` – Story paylaşımı: kartın önizlemesi + "Story'de paylaş" (fotoğrafını çeker,
     paylaşım penceresini açar). `params: { id }` → kıyafet kartı (detaydaki paylaş simgesi),
     parametresiz → dolap kartı (Cüzdan'daki paylaş butonu), `params: { kahoot: '1' }` → bu haftanın
-    Kahoot rozet kartı (Kahoot sonuç ekranından).
+    Kahoot rozet kartı (Kahoot sonuç ekranından), `params: { month: '1' }` → bu ayın özeti
+    (Analizlerin'deki aylık özetin paylaş simgesi).
   - `kahoot.tsx` – Dolap Kahoot'u (Ana sayfadaki Kahoot kartından): haftanın 5 sorusu sayfa açılınca
     sabitlenir; süre çubuğu + "Soru 2/5" + kalan saniye, soru kartı (🔍'de fotoğraf yakın ve bulanık,
     süreyle netleşir; 🔍'de şıklarda fotoğraf yok), hap şıklar (doğru yeşil, yanlış sallanır), açıklama
@@ -606,6 +610,10 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     giyildiyse "Bugün giydin ✓" + ↩ (`undoWearOutfit`). Giymeden önce "Bu kombinle nereye?".
   - `shame-wall.tsx` – Utanç Duvarı: toplam boşa giden + unutulan bütün parçalar (en çok
     zarar yazandan aza).
+  - `insights.tsx` – Analizlerin 📊 (Cüzdan'daki karttan): 🎨 renk analizi ("Bu ay / Tüm zamanlar"
+    hapları, renk renk yüzde çubuğu + liste, "en çok kâr ettiren renk" balonu, rengi girilmemiş
+    parça notu), 📅 aylık özet (`lines` + pembe dolgulu `verdict` balonu, sağ üstte Story paylaş),
+    🏷️ satmayı düşün (fotoğraflı satırlar, dokununca detay, tahmini toplam). Hesaplar `insights.ts`.
   - `settings.tsx` – Ayarlar (iPhone ayarları tarzı gruplar): BİLDİRİMLER (izin durumu + "Aç";
     izin daha önce reddedildiyse iPhone Ayarları'nı açar, deneme bildirimi), GIRL MATH
     (Burcum, Kullanım Sözleşmesi, sürüm), VERİLER ("Bütün verileri sil", iki kez sorar, `resetAll`),
@@ -644,7 +652,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `zodiac-grid.tsx` – 12 burç ızgarası + burç yardımcıları (`zodiacGlyph`, `zodiacRange`,
     `MOON_SYMBOLS`, `mercuryNote`). Burç seçimi ve Welcome kullanır.
   - `share-card.tsx` – Story kartları (`ItemShareCard`, `WardrobeShareCard`, `KahootShareCard`,
-    pembe geçişli 9:16)
+    `MonthlyShareCard`, pembe geçişli 9:16). Büyük rakam `BigAmount`; para olmayan sayıda
+    `currency={false}` (yoksa "750 ₺ puan" yazar).
   - `kahoot-card.tsx` – Ana sayfadaki Dolap Kahoot'u kartı: hafta sonu pembe çerçeveli "Oyna →",
     oynandıysa rozet + puan + seri (dokununca sonuç), hafta içi soluk "Cumartesi açılıyor ⏳",
     dolap yetersizse Onur'un `blockedMessage`'ı. `__DEV__`'de "🧪 Test: şimdi oyna".

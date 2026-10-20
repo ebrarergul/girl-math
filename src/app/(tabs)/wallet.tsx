@@ -153,6 +153,30 @@ export default function WalletScreen() {
             </>
           )}
 
+          {/* Analizler: renk analizi, aylık özet, satmayı düşün (dolap boşken analiz edilecek bir şey yok) */}
+          {!isEmpty && isLoaded && (
+            <Pressable
+              onPress={() => router.push('/insights')}
+              style={({ pressed }) => [styles.askCard, pressed && styles.askCardPressed]}>
+              <View style={styles.askIcon}>
+                <SymbolView
+                  name={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
+                  tintColor={colors.primary}
+                  size={22}
+                />
+              </View>
+              <View style={styles.askBody}>
+                <Text style={styles.askTitle}>Analizlerin</Text>
+                <Text style={styles.askText}>Renklerin, aylık özetin, satmayı düşün</Text>
+              </View>
+              <SymbolView
+                name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+                tintColor={colors.primary}
+                size={14}
+              />
+            </Pressable>
+          )}
+
           {/* "Almalı mıyım?" dolap boşken de görünür: ilk alışverişten önce de işe yarar */}
           {isLoaded && (
             <Pressable

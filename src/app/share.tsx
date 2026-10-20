@@ -7,6 +7,7 @@
  *   router.push({ pathname: '/share', params: { id: item.id } })  // kıyafet kartı
  *   router.push('/share')                                         // dolap kartı
  *   router.push({ pathname: '/share', params: { kahoot: '1' } })  // bu haftanın Kahoot rozeti
+ *   router.push({ pathname: '/share', params: { month: '1' } })   // bu ayın özeti (Analizlerin)
  */
 
 import * as Sharing from 'expo-sharing';
@@ -16,20 +17,31 @@ import { Alert, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 
-import { ItemShareCard, KahootShareCard, WardrobeShareCard } from '@/components/share-card';
+import {
+  ItemShareCard,
+  KahootShareCard,
+  MonthlyShareCard,
+  WardrobeShareCard,
+} from '@/components/share-card';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
+import { colorStats, monthlySummary } from '@/lib/insights';
 import { quizStreak, quizWeekKey } from '@/lib/quiz';
 import { getWardrobeStats } from '@/lib/stats';
 
 const colors = Colors.light;
 
 export default function ShareScreen() {
-  const { id, kahoot } = useLocalSearchParams<{ id?: string; kahoot?: string }>();
+  const { id, kahoot, month } = useLocalSearchParams<{
+    id?: string;
+    kahoot?: string;
+    month?: string;
+  }>();
   const { items, quizResults } = useApp();
   const item = id ? items.find((current) => current.id === id) : undefined;
   const quizResult =
     kahoot === '1' ? quizResults.find((result) => result.weekKey === quizWeekKey()) : undefined;
+  const monthColors = colorStats(items, 'month');
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   // Önizleme ekrana sığsın: hem genişliğe hem yüksekliğe göre sınırla
@@ -76,7 +88,13 @@ export default function ShareScreen() {
       <View style={styles.preview}>
         {/* collapsable={false}: Android'de kutu "görünmez" sayılıp fotoğrafı çekilemez olmasın */}
         <View ref={cardRef} collapsable={false} style={styles.cardShadow}>
-          {quizResult ? (
+          {month === '1' ? (
+            <MonthlyShareCard
+              summary={monthlySummary(items)}
+              colorText={monthColors.shares.length > 0 ? monthColors.text : null}
+              width={cardWidth}
+            />
+          ) : quizResult ? (
             <KahootShareCard
               result={quizResult}
               streak={quizStreak(quizResults)}
