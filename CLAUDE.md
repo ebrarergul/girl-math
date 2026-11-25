@@ -455,6 +455,8 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Etkinlik modu / Zaman Aşımı ekranları ✅ (20 Ekim)
   - Analiz ekranları ✅ (20 Ekim): renk analizi, aylık özet (+ Story kartı), satmayı düşün
   - Veri yedeği ekranları ✅ (20 Ekim, Ayarlar → VERİLER: dışa aktar / yükle + onay)
+  - Kombinlerim'e "+ Yeni kombin" ✅ (25 Kasım; önce Onur'a yazılmıştı, Onur meşgul olduğu için Ebrar
+    yaptı): sağ üstte "+" ve boş arşivde "Kombin kur" → `PiecePickerSheet` → "Bununla ne giyerim?"
   - Tasarım sadeleştirme ✅ (20-21 Ekim: Ana sayfa, Dolap, Cüzdan, detay, Analizler, burç; kurallar
     "Tasarım" bölümünde)
   - **Sırada:** kalan ekranlara tasarım turu (form, Kombinlerim, Bununla ne giyerim?, Ayarlar),
@@ -637,7 +639,9 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `outfits.tsx` – Kombinlerim (arşiv, Dolap'tan açılır): üstte "2 kombin · 1 favori", "Favoriler" +
     "Tüm kombinler", en altta soluk yeni kombin ipucu. Beyaz kart yok: 2×2 fotoğraf mozaiği tek blok
     (4'ten fazla parçada "+N"), altında zeminde ad + giyim sayısı, köşede favori yıldızı (favoride
-    `highlight` ★). Karta dokununca kayıtlı kombin sayfası. (Fikir: sağ üste "+ Yeni kombin" → parça seç.)
+    `highlight` ★). Karta dokununca kayıtlı kombin sayfası. Sağ üstte "+" (boş arşivde pembe "Kombin kur")
+    → "Hangi parçayla başlayalım?" (`PiecePickerSheet`) → seçilen parçayla `outfit/[id]`; dolap boşsa
+    ekleme formu. (Kombin kurmanın diğer yolları: detaydaki "Bununla ne giyerim?", Günün kombini, burç.)
   - `saved-outfit/[id].tsx` – kayıtlı kombin: kolaj, ad (✏️ ile değiştirilir, iPhone'da), "3 parça
     · 2 kere giydin · en son dün", parça listesi (dokununca kıyafet detayı), "Bu kombini sil",
     sağ üstte yıldız. Altta "Bu kombini giydim ✨" (`wearOutfit`, kutlama balonu); bugün
@@ -679,6 +683,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     Karartma rengi temada `overlay`.
   - `daily-outfit-card.tsx` – Ana sayfada "Günün kombini" (başlık kartın üstünde): en unutulan 3
     parçadan güne göre biri, etrafında `outfitFor` kombini; kolaj + cümle + "Kombini gör →".
+  - `piece-picker-sheet.tsx` – "Hangi parçayla başlayalım?" alttan açılan pencere (4 sütunlu küçük
+    fotoğraf ızgarası + ad; `PaletteSheet`/`PlaceSheet` kalıbı). Kombinlerim'deki "+" kullanır.
   - `today-row.tsx` – Ana sayfadaki "Senin için" kartı: `TodayGroup` (tek beyaz kart, satırlar arası
     ince çizgi) + `TodayRow` (simge dairesi, başlık + açıklama, sağda ok) + `IconCircle`. Etkinlik,
     burç ve Kahoot satırları bunu kullanır; yeni küçük Ana sayfa bilgisi de buraya satır olarak eklenir.

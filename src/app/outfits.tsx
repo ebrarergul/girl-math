@@ -8,16 +8,19 @@
  *   (4'ten fazlaysa son kutuda "+2"), altında zeminde kombinin adı ve kaç kere giyildiği.
  * - Sağ üstteki yıldız favorilere ekler/çıkarır (favoride neon pembe dolgulu ★).
  * Karta dokununca kombinin sayfası (saved-outfit/[id]) açılır.
- * Arşiv boşsa nasıl kombin kaydedileceği anlatılır.
+ * Sağ üstteki "+" (ve arşiv boşken "Kombin kur") "Hangi parçayla başlayalım?" penceresini
+ * (PiecePickerSheet) açar; seçilen parçayla "Bununla ne giyerim?" açılır. Dolap boşsa ekleme formu.
  */
 
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PiecePickerSheet } from '@/components/piece-picker-sheet';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { outfitItems, outfitName, sortOutfits } from '@/lib/outfits';
@@ -35,6 +38,21 @@ export default function OutfitsScreen() {
   const { items, outfits, toggleFavoriteOutfit } = useApp();
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = (screenWidth - Spacing.four * 2 - COLUMN_GAP) / 2;
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  // Yeni kombin: önce parça seçtir; dolap boşsa seçilecek parça yok, ekleme formuna git
+  function startNewOutfit() {
+    if (items.length === 0) {
+      router.push('/add-item');
+      return;
+    }
+    setPickerOpen(true);
+  }
+
+  function handlePickPiece(item: ClothingItem) {
+    setPickerOpen(false);
+    router.push({ pathname: '/outfit/[id]', params: { id: item.id } });
+  }
 
   const sorted = sortOutfits(outfits);
   const favorites = sorted.filter((outfit) => outfit.favorite);
@@ -76,6 +94,11 @@ export default function OutfitsScreen() {
           headerTitleStyle: { color: colors.text },
           headerStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
+          headerRight: () => (
+            <Pressable onPress={startNewOutfit} accessibilityLabel="Yeni kombin" hitSlop={8}>
+              <SymbolView name="plus" tintColor={colors.primary} size={20} weight="semibold" />
+            </Pressable>
+          ),
         }}
       />
 
@@ -92,10 +115,13 @@ export default function OutfitsScreen() {
             </View>
             <Text style={styles.emptyTitle}>Henüz kaydettiğin kombin yok</Text>
             <Text style={styles.emptyText}>
-              {
-                'Bir parçanın detayından "Bununla ne giyerim? ✨"e bas, beğendiğin kombini "Kombini kaydet 💾" ile buraya ekle.'
-              }
+              Bir parça seç, etrafında kombin kuralım. Beğendiğini kaydet, burada dursun.
             </Text>
+            <Pressable
+              onPress={startNewOutfit}
+              style={({ pressed }) => [styles.emptyButton, pressed && styles.emptyButtonPressed]}>
+              <Text style={styles.emptyButtonText}>Kombin kur</Text>
+            </Pressable>
           </View>
         ) : (
           <>
@@ -121,16 +147,16 @@ export default function OutfitsScreen() {
                 {renderGrid(others)}
               </View>
             )}
-
-            {/* Yeni kombin nasıl eklenir */}
-            <Text style={styles.tipText}>
-              {
-                'Yeni kombin için bir parçanın detayında "Bununla ne giyerim?"e bas, beğendiğini kaydet.'
-              }
-            </Text>
           </>
         )}
       </ScrollView>
+
+      <PiecePickerSheet
+        visible={pickerOpen}
+        items={items}
+        onSelect={handlePickPiece}
+        onClose={() => setPickerOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -236,13 +262,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: -Spacing.two,
   },
-  // En alttaki ipucu: kutu yok, soluk ortalı yazı
-  tipText: {
-    ...Typography.caption,
-    color: colors.textMuted,
-    textAlign: 'center',
-    paddingHorizontal: Spacing.four,
-  },
   sectionTitle: {
     ...Typography.heading,
     color: colors.text,
@@ -341,5 +360,21 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  emptyButton: {
+    marginTop: Spacing.three,
+    backgroundColor: colors.primary,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.five,
+    paddingVertical: Spacing.three,
+    ...Shadows.button,
+  },
+  emptyButtonPressed: {
+    backgroundColor: colors.primaryPressed,
+    transform: [{ scale: 0.95 }],
+  },
+  emptyButtonText: {
+    ...Typography.button,
+    color: colors.onPrimary,
   },
 });
