@@ -490,8 +490,11 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     yaptı): sağ üstte "+" ve boş arşivde "Kombin kur" → `PiecePickerSheet` → "Bununla ne giyerim?"
   - Tasarım sadeleştirme ✅ (20-21 Ekim: Ana sayfa, Dolap, Cüzdan, detay, Analizler, burç; kurallar
     "Tasarım" bölümünde)
-  - **Sırada:** kalan ekranlara tasarım turu (form, Kombinlerim, Bununla ne giyerim?, Ayarlar),
-    "Bugün ne giydin?" şeridini yeniden düşünmek.
+  - 25-26 Kasım ✅: taslak B tasarım turu (bütün ekranlar), SDK 58, tanıtım okları, canlı boş Ana sayfa,
+    uygulama simgesi, Kombinler sekmesi, fotoğraflı kombin, yeni Cüzdan ("Bedavaya en yakın"), toz pembe kartlar.
+  - **Sırada (26 Kasım sonu):** 1) Ana sayfadaki "Kombin | Parça" seçicisi Kombinler sekmesiyle fazla benzer
+    gelirse kaldırmak (Ebrar'ın kararına bırakıldı); 2) App Store hazırlığı (Bundle ID – Onur'la, Apple Developer
+    hesabı, gizlilik politikası, TestFlight; simge sadece orada görünür); 3) premium en sona.
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
