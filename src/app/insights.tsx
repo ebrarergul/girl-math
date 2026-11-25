@@ -9,6 +9,8 @@
  *
  * Tasarım: emoji sadece eğlenceli cümlelerde (ayın yorumu). Başlık ve listeler sade;
  * bu yüzden Onur'un hazır cümleleri (lines, text) yerine sayıları kendimiz diziyoruz.
+ * 26 Kasım (taslak B): bölüm başlıkları kartın ÜSTÜNDE (gri alt yazıyla), pembe etiketler ve pembe
+ * alıntı kutusu kalktı; sayfadaki tek pembe vurgu "Tahmini ikinci el değeri" toplamı.
  */
 
 import * as Haptics from 'expo-haptics';
@@ -60,23 +62,28 @@ export default function InsightsScreen() {
   );
 }
 
-// Bölüm başlığı: küçük pembe etiket + başlık (+ sağda isteğe bağlı buton)
-function SectionHeader({
-  label,
+// Bölüm: başlık kartın ÜSTÜNDE (+ gri alt yazı, sağda isteğe bağlı buton), altında beyaz kart
+function Section({
   title,
+  subtitle,
   action,
+  children,
 }: {
-  label: string;
   title: string;
+  subtitle?: string;
   action?: ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <View style={styles.headerRow}>
-      <View style={styles.headerText}>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.title}>{title}</Text>
+    <View style={styles.section}>
+      <View style={styles.headerRow}>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>{title}</Text>
+          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        </View>
+        {action}
       </View>
-      {action}
+      <View style={styles.card}>{children}</View>
     </View>
   );
 }
@@ -127,36 +134,31 @@ function MonthlySection({ items }: { items: ClothingItem[] }) {
   ].filter((row): row is { label: string; value: string } => Boolean(row));
 
   return (
-    <View style={styles.section}>
-      <SectionHeader
-        label={monthName.toLocaleUpperCase('tr')}
-        title="Aylık özetin"
-        action={
+    <Section
+      title="Aylık özetin"
+      subtitle={monthName}
+      action={
           <Pressable
             onPress={() => router.push({ pathname: '/share', params: { month: '1' } })}
             accessibilityLabel="Aylık özetini paylaş"
             style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}>
             <SymbolView
               name={{ ios: 'square.and.arrow.up', android: 'share', web: 'share' }}
-              tintColor={colors.primary}
+              tintColor={colors.text}
               size={16}
               weight="semibold"
             />
           </Pressable>
-        }
-      />
-
+      }>
       <View>
         {rows.map((row, index) => (
           <StatRow key={row.label} label={row.label} value={row.value} first={index === 0} />
         ))}
       </View>
 
-      {/* Ayın yorumu: buton gibi değil, alıntı gibi */}
-      <View style={styles.quote}>
-        <Text style={styles.quoteText}>{summary.verdict}</Text>
-      </View>
-    </View>
+      {/* Ayın yorumu: sade italik alıntı, üstünde ince çizgi */}
+      <Text style={[styles.quoteText, styles.divider]}>{summary.verdict}</Text>
+    </Section>
   );
 }
 
@@ -173,12 +175,15 @@ function ColorSection({ items }: { items: ClothingItem[] }) {
   };
 
   return (
-    <View style={styles.section}>
-      <SectionHeader
-        label="RENKLERİN"
-        title={top ? `En çok ${top.color.toLocaleLowerCase('tr')} giyiyorsun` : 'Henüz veri yok'}
-        action={top && <Text style={styles.bigPercent}>%{top.percent}</Text>}
-      />
+    <Section title="Renklerin">
+      {top && (
+        <View style={styles.topColor}>
+          <Text style={styles.topColorText}>
+            En çok {top.color.toLocaleLowerCase('tr')} giyiyorsun
+          </Text>
+          <Text style={styles.bigPercent}>%{top.percent}</Text>
+        </View>
+      )}
 
       {/* iPhone tarzı iki parçalı seçici */}
       <View style={styles.segment}>
@@ -248,7 +253,7 @@ function ColorSection({ items }: { items: ClothingItem[] }) {
           {stats.uncoloredCount} parçanın rengi girilmemiş; detaydaki Düzenle&apos;den ekleyebilirsin.
         </Text>
       )}
-    </View>
+    </Section>
   );
 }
 
@@ -258,8 +263,7 @@ function SellSection({ items }: { items: ClothingItem[] }) {
   const list = sellList(items);
 
   return (
-    <View style={styles.section}>
-      <SectionHeader label="SATMAYI DÜŞÜN" title="3 aydır askıda" />
+    <Section title="Satmayı düşün" subtitle="3 aydır giyilmeyenler">
 
       {list.candidates.length === 0 ? (
         <View style={styles.empty}>
@@ -305,10 +309,12 @@ function SellSection({ items }: { items: ClothingItem[] }) {
               ~{formatTL(list.totalEstimate)}
             </Text>
           </View>
-          <Text style={styles.muted}>Alış fiyatının yaklaşık %40&apos;ı, kesin değil.</Text>
+          <Text style={[styles.muted, styles.footnote]}>
+            Alış fiyatının yaklaşık %40&apos;ı, kesin değil.
+          </Text>
         </>
       )}
-    </View>
+    </Section>
   );
 }
 
@@ -321,12 +327,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.five,
-    gap: Spacing.three,
+    gap: Spacing.four,
   },
+  // Bölüm: başlık (kartın üstünde) + beyaz kart
   section: {
+    gap: Spacing.two,
+  },
+  card: {
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
-    padding: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
     gap: Spacing.three,
     ...Shadows.card,
   },
@@ -338,29 +349,39 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
-    gap: Spacing.one,
-  },
-  label: {
-    ...Typography.label,
-    color: colors.primary,
   },
   title: {
-    ...Typography.title,
-    fontSize: 22,
-    lineHeight: 28,
+    ...Typography.heading,
     color: colors.text,
+  },
+  subtitle: {
+    ...Typography.caption,
+    color: colors.textSecondary,
+  },
+  // Renkler kartının üst satırı: "En çok siyah giyiyorsun" + büyük koyu yüzde
+  topColor: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+  },
+  topColorText: {
+    ...Typography.bodyBold,
+    color: colors.text,
+    flex: 1,
   },
   bigPercent: {
     ...Typography.title,
-    color: colors.primary,
+    color: colors.text,
   },
   iconButton: {
     width: 36,
     height: 36,
     borderRadius: Radius.pill,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
+    ...Shadows.card,
   },
   iconButtonPressed: {
     transform: [{ scale: 0.92 }],
@@ -395,17 +416,15 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     flexShrink: 1,
   },
-  quote: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.three,
-  },
   quoteText: {
     ...Typography.body,
     fontStyle: 'italic',
-    color: colors.primaryPressed,
+    color: colors.textSecondary,
     textAlign: 'center',
+    paddingTop: Spacing.three,
+  },
+  footnote: {
+    marginTop: -Spacing.two,
   },
   segment: {
     flexDirection: 'row',
@@ -504,6 +523,6 @@ const styles = StyleSheet.create({
   },
   sellEstimate: {
     ...Typography.bodyBold,
-    color: colors.primary,
+    color: colors.text,
   },
 });

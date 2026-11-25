@@ -442,14 +442,16 @@ function DevQuiz() {
 
   return (
     <View style={styles.panel}>
-      <Text style={styles.title}>{"🎯 Dolap Kahoot'u"}</Text>
+      <Text style={styles.title}>🎯 Dolap Quiz</Text>
       <Text style={styles.muted}>
         {quiz.isOpen ? 'Bugün açık!' : `Normalde ${quiz.daysUntilOpen} gün sonra açılıyor (test için Cumartesi soruları)`}
         {' · '}Seri: {quizStreak(quizResults)} hafta 🔥 · En yüksek: {bestQuizScore(quizResults)}
       </Text>
       {quiz.blockedMessage && <Text style={styles.muted}>{quiz.blockedMessage}</Text>}
       {!quiz.blockedMessage && played && step === null && (
-        <Text style={styles.muted}>{"Bu haftanın Kahoot'unu oynadın ✅ Gelecek hafta yenileri gelir."}</Text>
+        <Text style={styles.muted}>
+          {"Bu haftanın Dolap Quiz'ini oynadın ✅ Gelecek hafta yenileri gelir."}
+        </Text>
       )}
       {!quiz.blockedMessage && !played && step === null && (
         <Pressable style={styles.primaryButton} onPress={start}>

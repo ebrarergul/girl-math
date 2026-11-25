@@ -69,7 +69,10 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   unutulmuş parça önerisi). 16 Ekim'de Onur + Ebrar kararıyla yerine **burç yorumu** geldi ✅
   (17 Ekim): gerçek gökyüzüne göre günlük/haftalık yorum, şanslı renk, dolaptan o renkte parça
   ve etrafında kombin. `tarot-card.tsx` silindi; gümüş "büyü" şeridi burç şeridine geçti.
-- **Dolap Kahoot'u (haftalık hafıza testi):** Hafta sonları süreli mini yarışma: "Bu ceketi en
+- **Dolap Kahoot'u → ekranda "Dolap Quiz" (haftalık hafıza testi):** 26 Kasım: "Kahoot" başka şirketin
+  tescilli markası (App Store reddedebilir), ekranda/bildirimde/Story'de adı **Dolap Quiz** (Keşfet kutusunda "Quiz").
+  Kod/dosya adları (`kahoot.tsx`, `/kahoot`, `KahootShareCard`, `quiz.ts`) aynı kaldı. Onur'a not: `notifications.ts`'teki
+  iki bildirim başlığında sadece kelime değişti (Ebrar, 26 Kasım). Hafta sonları süreli mini yarışma: "Bu ceketi en
   son ne zaman giydin?", "En çok hangi rengi giyerek kâr ettin?". Başarıya "Tasarruf
   Kraliçesi" gibi rozetler. ✅ Mantık (Onur, `quiz.ts`) + ekranlar (Ebrar, 20 Ekim): Ana sayfa
   kartı, `kahoot.tsx` yarışma + sonuç, Story rozet kartı.
@@ -88,7 +91,7 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   bilgisine dayanır.
 
 ## Kesinleşmiş kararlar
-- **Teknoloji:** Expo (React Native), SDK 57, expo-router (ekranlar `src/app` içinde),
+- **Teknoloji:** Expo (React Native), SDK 58 (25 Kasım'da 57'den yükseltildi), expo-router (ekranlar `src/app` içinde),
   TypeScript, React Compiler açık. Test: iPhone'da Expo Go (`npx expo start -c`).
 - **Üyelik/giriş yok.** Tüm veriler telefonda (lokalde) tutulur (AsyncStorage). Giriş
   ekranı yerine bir "Welcome" karşılama ekranı olacak. Sunucu ileride (senkron, paylaşım,
@@ -124,9 +127,12 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - Tüm renk, yazı stili, boşluk, köşe ve gölgeler `src/constants/theme.ts` içinde.
   **Ekranlarda renk kodu elle yazılmaz**, `Colors.light.primary`, `Typography.title`,
   `Radius.lg`, `Shadows.card` gibi tema değerleri kullanılır.
-- Dil: **"Hot Pink"** – canlı fuşya pembe (`primary` `#D61F69`) / pembemsi beyaz zemin
-  (`#FFF7FA`), beyaz kartlar, bol yuvarlak köşe, yumuşak gölge. TikTok'a uygun canlı ama
-  **iOS sadeliğinde**. (Eskiden bordo `#BE123C` idi; Ekim 2026'da daha canlı pembeye geçildi.)
+- Dil (25 Kasım 2026'dan beri, taslak **B: "krem + pembe vurgu"**): **sıcak krem zemin** (`background`
+  `#F5F1EB`), beyaz kartlar, sıcak antrasit yazı (`#1C1A19`), ikincil yazı `#6F6863`; canlı fuşya pembe
+  (`primary` `#D61F69`) **sadece vurgu**: ana buton, seçili durum, en önemli rakam/bağlantı. Açık pembe
+  dolgular artık çok soluk tozlu gül (`primarySoft` `#F4E8EB`, `accent` `#E7C6D2`). Sebep: Ebrar'a göre
+  eski pembemsi zemin + her yerde açık pembe "çok pembe, karışık, göz yoruyor"du; 3 taslak (A şu anki,
+  B krem, C beyaz+siyah) karşılaştırılıp B seçildi. Eskiden: "Hot Pink", zemin `#FFF7FA`, açık pembe `#FFE4EE`.
 - Neon pembe (`highlight` `#FF5C93`) sadece süs içindir (kalp, parıltı); **üstüne yazı konmaz**,
   beyaz yazı okunmuyor. Butonlarda `primary` kullanılır (beyaz yazı kontrastı 4.9).
 - Büyük başlıklar (`Typography.title`, `Typography.hero`) iPhone'un **New York** tırnaklı
@@ -142,11 +148,12 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - **Gümüş (krom, Y2K)** = "ödül ve büyü" rengi: `Gradients.chrome` (theme.ts). Büyük gümüş
   tek yer burç sayfasının kartı; Ana sayfada sadece burç satırındaki küçük gümüş madalyon (20 Ekim:
   bütün şerit gri olunca pembe zeminde donuk duruyordu). Her yeri gümüş yapılmaz, yoksa özelliğini kaybeder.
-- Sekmeler, Welcome ve Sözleşme'de zemin `ScreenBackground` (üstten süzülen açık pembe ışık);
-  detay ve form sayfaları sade (düz zemin).
-- Ana sayfada tek büyük odak noktası (pembe vitrin kartı) olur; diğerleri daha küçük kalır.
+- Bütün ekranlarda zemin düz krem (`ScreenBackground` artık sadece düz zemin; üstten süzülen pembe
+  ışık 25 Kasım'da kaldırıldı).
+- Ana sayfada tek büyük odak noktası olur ("Bugün ne giydin?" kartı; pembe vitrin kartı 25 Kasım'da kalktı); diğerleri daha küçük kalır.
 - **Sadeleştirme kuralları (20 Ekim, Ebrar'ın ekran görüntüleriyle):**
-  1. Sayfa başına **tek pembe dolgulu vurgu** (Ana sayfa: vitrin kartı, Cüzdan: Girl Math kazancı);
+  1. Sayfa başına **tek pembe vurgu** (25-26 Kasım'dan beri pembe dolgulu kutu yok: Ana sayfa ve Cüzdan'da
+     beyaz kart; Cüzdan'da sadece Girl Math kazancı rakamı pembe);
      diğer her şey beyaz kart. Pembe çerçeveli (`accent` kenarlı) kart yapılmaz; pembe kenar sadece
      **seçili** durumlar için (seçili renk/burç/yer/hap).
   2. **Emoji başlıkta, etikette, listede yok**; sadece eğlenceli cümlelerde (kıyas, ayın yorumu, bildirim).
@@ -347,7 +354,7 @@ Ekranda: `PlaceSheet` (`src/components/place-sheet.tsx`) – detayda "Giydim" ve
 ```tsx
 const { zodiac, setZodiac } = useApp();  // Kullanıcının burcu (seçilmediyse null), telefonda saklanır
 ZODIAC_SIGNS                             // 12 burç: { name, emoji, element, ruler, start, style, luckyColors }
-setZodiac('Akrep') / setZodiac(null)     // Welcome'da ve Ayarlar'da seçtirilir ("Şimdi değil" → null)
+setZodiac('Akrep') / setZodiac(null)     // Burç seçimi sayfasında (Keşfet / Ayarlar) seçtirilir ("Şimdi değil" → null)
 dailyHoroscope(zodiac, items)            // { title: '♏ Akrep · Bugün', personality, lines: [en fazla 3 cümle],
                                          //   luckyColor, suggestion: { item, text, outfit } | null }
 weeklyHoroscope(zodiac)                  // { title, range: '12 – 18 Ekim', love, money, wardrobe }
@@ -360,8 +367,8 @@ Merkür retrosu tarihleri `MERCURY_RETROGRADES` listesinde (2027 sonrası eklenm
 Burç seçilmediyse ekranda "Burcunu seç, yıldızlar dolabına baksın 🔮" gösterilir.
 Ekranlar (Ebrar): `zodiac-grid.tsx` (12 burç ızgarası; `zodiacGlyph` sembolü mor emoji kutusu
 yerine pembe yazı gibi çizer, `zodiacRange` "23 Eki – 21 Kas", `MOON_SYMBOLS`, `mercuryNote`),
-`horoscope-strip.tsx` (Ana sayfa gümüş şeridi), `horoscope.tsx` (burç sayfası), `zodiac.tsx`
-(burç seçimi), Welcome'ın 2. sayfası, Ayarlar → Burcum. Ekranda burç adına ek gelmez:
+`explore-tiles.tsx` (Ana sayfa Keşfet'teki "Burcun" kutusu), `horoscope.tsx` (burç sayfası), `zodiac.tsx`
+(burç seçimi), Ayarlar → Burcum. Ekranda burç adına ek gelmez:
 "Ay Akrep burcunda" (❌ "Ay Akrep'te").
 
 **Dolap Kahoot'u** (`@/lib/quiz` + `useApp()`) – sadece hafta sonu, 5 soru, soru başı 15 saniye
@@ -523,7 +530,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   adı, öneri parçasının küçük fotoğrafı + "Kombini gör →" (öneri ekranına gider).
   Bu hafta: 💘 / 💸 / 👗 üç satır, her biri ayrı küçük kart. Burç seçilmediyse kart soluk +
   "Burcunu seç, yıldızlar dolabına baksın 🔮" butonu.
-- **Dolap Kahoot'u ekranları (Ebrar) ✅ (20 Ekim; Ana sayfa kartı sonra sade satıra döndü, bkz. `kahoot-card.tsx`):** Ana sayfada hafta sonu küçük kart "🎯 Hafta sonu
+- **Dolap Kahoot'u ekranları (Ebrar) ✅ (20 Ekim; Ana sayfa kartı 25 Kasım'da Keşfet'te küçük kutuya döndü, bkz. `explore-tiles.tsx`):** Ana sayfada hafta sonu küçük kart "🎯 Hafta sonu
   Kahoot'u açıldı!" (hafta içi soluk: "Cumartesi açılıyor ⏳", oynandıysa rozet + seri 🔥).
   Yarışma: tam ekran, üstte 15 sn'lik küçülen `primary` süre çubuğu + "Soru 2/5", şıklar büyük
   hap butonlar (kıyafet şıklarında küçük fotoğraf), dokununca doğru = `success` yeşil + titreşim,
@@ -550,7 +557,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   altta "💰 tahminen ~2.600 TL" (tahmin olduğu belli olsun). Liste boşsa 👑 cümlesi.
   Uygulamada: renk çubuğunun altında renk yuvarlağı + "12 giyim · %40" listesi; satmayı düşün
   satırında sağda "~1.200 ₺ / tahmini"; aylık Story kartında harcanan TL **bilerek yok** (gizlilik).
-- **Welcome'da burç seçimi:** 12 burç 3×4 ızgara, her kutuda büyük emoji + ad; seçilende
+- **Welcome'da burç seçimi (26 Kasım'da Welcome'dan kaldırıldı, ızgara burç seçimi sayfasında):** 12 burç 3×4 ızgara, her kutuda büyük emoji + ad; seçilende
   `primary` dolgu + beyaz yazı. Altta soluk "Şimdi değil".
 
 ## Aynı anda çalışma kuralları (çakışmayı önlemek için)
@@ -570,14 +577,15 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   (sayfa destesi: en altta sekmeler, diğer sayfalar bunun üstüne açılır, sola kaydırınca kapanır).
   - `(tabs)/` – sekme ekranları. Parantezli klasör adresi etkilemez (Dolap yine `/wardrobe`).
     `(tabs)/_layout.tsx` bu ekranları `AppTabs` ile alt sekmelerde gösterir.
-    - `index.tsx` – Ana sayfa ("bugün" ekranı), yukarıdan aşağı: tarih + saate göre selamlama
-      ("Günaydın / Merhaba / İyi akşamlar aşko"); pembe **vitrin kartı** (her gün farklı bir
-      Girl Math gerçeği, dokununca sıradakine geçer – `buildFacts`; altta sayfa noktaları);
-      **"Bugün ne giydin?"** şeridi (dokun ✓ Giydim, tekrar dokun geri al; en fazla 8 parça
-      `quickWearItems` + "Tümü →", bkz. Bilinen durumlar); **"Günün kombini"**; **"Senin için"**
-      (tek kartta satırlar: etkinlik geri sayımı 7 gün kala, burç, Kahoot sadece hafta sonu);
-      **"Unutulan parça"** (başlığın sağında "Utanç Duvarı →"). "Dolabının yıldızı" 20 Ekim'de
-      kaldırıldı (Aylık özette "Ayın yıldızı" var). Sağ üstte ⚙️ Ayarlar. Dolap boşsa ekleme butonu.
+    - `index.tsx` – Ana sayfa ("bugün" ekranı; 25 Kasım yeni düzen, taslak B), yukarıdan aşağı: küçük gri
+      tarih ("Salı, 25 Kasım") + dergi yazısıyla "İyi akşamlar aşko" (emojisiz), sağ üstte ⚙️ Ayarlar;
+      **"Bugün ne giydin?"** beyaz kartı (sayfanın ana eylemi; dokun ✓ Giydim, tekrar dokun geri al;
+      en fazla 8 parça `quickWearItems` + "Tümü →", bkz. Bilinen durumlar; giyilen pembe çerçeve);
+      etkinlik satırı (sadece 7 gün kala, `nextEvent`); **Girl Math gerçeği** beyaz kartı (koyu büyük
+      rakam, dokununca sıradaki – `buildFacts`, altta noktalar); **"Günün kombini"**; **"Keşfet"**
+      (`ExploreTiles`: Burcun · Analiz · Alayım mı? · hafta sonu Kahoot). Kaldırılanlar: pembe vitrin
+      kartı, gümüş burç şeridi, "Senin için", "Unutulan parça" (Utanç Duvarı Cüzdan'da), "Dolabının
+      yıldızı". Dolap boşsa ekleme butonu.
     - `wardrobe.tsx` – Dolap: büyük başlık + beyaz yuvarlak ⊞ "Kombinlerim" + pembe "+" butonu (alt yazı
       başlık satırının altında, tam genişlikte), arama + sıralama butonu
       (En yeni / En pahalı / En az giyilen / Amortiye en yakın; varsayılan dışındaysa buton
@@ -586,8 +594,9 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
       balonu düşünülebilir). Karta kısa
       dokunuş detayı açar, **basılı tutmak hızlı Giydim** (`wearOnce`: sadece ekler; bugün zaten
       giyildiyse "bugün zaten giyildi ✓" balonu, geri almak balondaki "Geri al" ile).
-    - `wallet.tsx` – Cüzdan ("para" ekranı): dolap değeri + Starbucks Endeksi cümlesi,
-      pembe "GIRL MATH kazancın" kutusu (sayfanın tek pembe vurgusu), 2×2 kutu (ortalama maliyet,
+    - `wallet.tsx` – Cüzdan ("para" ekranı): tek beyaz kartta dolap değeri (koyu rakam) + Starbucks
+      Endeksi cümlesi + ince çizgi altında "GIRL MATH kazancın" (pembe rakam, sayfanın tek pembe vurgusu;
+      26 Kasım'a kadar ayrı pembe dolgulu kutuydu), 2×2 kutu (ortalama maliyet,
       toplam giyim, amorti edilen, hiç giyilmeyen), en altta tek kartta satırlar: "Analizlerin" ve
       "Utanç Duvarı" ("3 parça askıda · 4.200 ₺ boşa gidiyor" / "Duvar bomboş"; ikisi de dolap boşken
       yok) + "Almalı mıyım?"; başlığın yanında beyaz yuvarlak Story paylaş butonu.
@@ -604,7 +613,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     En altta "Etkinlik için aldım" (`EventPicker`): tür + tarih → `item.event`; anahtar kapalı
     kaydedilirse etkinlik silinir.
   - `should-i-buy.tsx` – "Almalı mıyım?": açılınca fiyat kutusu seçili, klavye açık (boş durum yok;
-    soluk örnek ve "dene" hapları denendi, beğenilmedi). Fiyat + ayda kaç kere → pembe ana kart
+    soluk örnek ve "dene" hapları denendi, beğenilmedi). Fiyat + ayda kaç kere → beyaz ana kart (büyük pembe rakam; 26 Kasım'a kadar pembe kart)
     ("AYDA 4 GİYİMLE / ~4 ay / giyim başı iced latte fiyatına iner" + karar cümlesi; çok ucuzsa
     "Zaten ucuz"), "Bu parayla" (3 küçük kutu: 13 iced latte…), "Yol haritası" (solda zaman çizgisi,
     her durak tek satır: Bu ay · Brunch · 625 ₺ giyim başı). Kalemler `TARGET_NAMES`; fiyatlar comparisons.ts'ten.
@@ -637,8 +646,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     birbirini çıkarır), "Öneriye dön ↺". Altta "Kombini kaydet 💾" (`saveOutfit`, iPhone'da
     isteğe bağlı ad sorar; kayıtlıysa "Arşivde ✓ · Kombine git →" kayıtlı kombini açar).
   - `outfits.tsx` – Kombinlerim (arşiv, Dolap'tan açılır): üstte "2 kombin · 1 favori", "Favoriler" +
-    "Tüm kombinler", en altta soluk yeni kombin ipucu. Beyaz kart yok: 2×2 fotoğraf mozaiği tek blok
-    (4'ten fazla parçada "+N"), altında zeminde ad + giyim sayısı, köşede favori yıldızı (favoride
+    "Tüm kombinler", en altta soluk yeni kombin ipucu. Beyaz kart yok: fotoğraf mozaiği tek blok (4 parça 2×2,
+    3 parça solda uzun + sağda iki, 2 parça yan yana; 4'ten fazlada "+N"; boş kare kalmaz), altında zeminde ad + giyim sayısı, köşede favori yıldızı (favoride
     `highlight` ★). Karta dokununca kayıtlı kombin sayfası. Sağ üstte "+" (boş arşivde pembe "Kombin kur")
     → "Hangi parçayla başlayalım?" (`PiecePickerSheet`) → seçilen parçayla `outfit/[id]`; dolap boşsa
     ekleme formu. (Kombin kurmanın diğer yolları: detaydaki "Bununla ne giyerim?", Günün kombini, burç.)
@@ -649,20 +658,23 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `shame-wall.tsx` – Utanç Duvarı: toplam boşa giden + unutulan bütün parçalar (en çok
     zarar yazandan aza). Her zaman açık girişi Cüzdan'daki satır; Ana sayfadaki "Utanç Duvarı →"
     sadece unutulan parça varken (hiç giyilmemiş ya da `FORGOTTEN_DAYS` = 7+ gün) görünür.
-  - `insights.tsx` – Analizlerin (Cüzdan'daki satırdan), sırayla: aylık özet ("EKİM 2026 / Aylık
-    özetin", etiket–değer satırları, ayın yorumu açık pembe italik alıntı, sağ üstte Story paylaş),
-    renkler ("En çok siyah giyiyorsun %65", iki parçalı "Bu ay / Tüm zamanlar" seçici, renk çubuğu,
-    iki sütun renk listesi, "en çok kâr ettiren" satırı), satmayı düşün (fotoğraflı satırlar,
-    dokununca detay, tahmini toplam). Emoji yok: Onur'un `lines`/`text` cümleleri yerine sayılar
+  - `insights.tsx` – Analizlerin (Cüzdan'daki satırdan). Her bölümün başlığı kartın üstünde (gri alt
+    yazıyla), sırayla: "Aylık özetin / Kasım 2026" (etiket–değer satırları, ayın yorumu gri italik,
+    başlığın yanında beyaz yuvarlak Story paylaş), "Renklerin" ("En çok siyah giyiyorsun" + koyu %,
+    iki parçalı "Bu ay / Tüm zamanlar" seçici, renk çubuğu, iki sütun renk listesi, "en çok kâr
+    ettiren"), "Satmayı düşün" (fotoğraflı satırlar, dokununca detay; sayfadaki tek pembe: tahmini toplam). Emoji yok: Onur'un `lines`/`text` cümleleri yerine sayılar
     ekranda diziliyor (sadece `verdict` cümlesi aynen). Hesaplar `insights.ts`.
-  - `settings.tsx` – Ayarlar (iPhone ayarları tarzı gruplar): BİLDİRİMLER (izin durumu + "Aç";
+  - `settings.tsx` – Ayarlar (iPhone ayarları tarzı gruplar; 26 Kasım'dan beri başlıklar sade "Bildirimler",
+    simgeler açık gül dairede ince pembe, gizlilik kutusuz not): BİLDİRİMLER (izin durumu + "Aç";
     izin daha önce reddedildiyse iPhone Ayarları'nı açar, deneme bildirimi), GIRL MATH
     (Burcum, Kullanım Sözleşmesi, sürüm), VERİLER ("Yedeği dışa aktar" / "Yedeği yükle" – `backup.ts`,
     yüklemeden önce özetle onay; "Bütün verileri sil", iki kez sorar, `resetAll`),
     Gizlilik notu ve imza.
-  - `horoscope.tsx` – Burç sayfası (Ana sayfa şeridinden): gümüş kart (sembol, tarih, element,
-    gezegen, Ay'ın burcu ve evresi, Merkür hapı), "Bugün" (kişilik, gökyüzü cümleleri, şanslı
-    renk, Yıldızların seçimi → "Kombini gör") / "Bu hafta" (💘 / 💸 / 👗); sağ üstte "Değiştir".
+  - `horoscope.tsx` – Burç sayfası (Ana sayfa → Keşfet → Burcun): ortalı gümüş kart (sembol, ad,
+    "tarih · element · gezegen", italik kişilik, Ay'ın burcu ve evresi, Merkür hapı), iki parçalı
+    "Bugün / Bu hafta" seçici; Bugün: gökyüzü cümleleri tek kartta + "Yıldızların seçimi" kartı
+    (şanslı renk satırı + önerilen parça → "Kombini gör"); Bu hafta: Aşk / Para / Dolap tek kartta.
+    Sağ üstte "Değiştir". (26 Kasım sadeleştirildi.)
   - `zodiac.tsx` – Burç seçimi (Ayarlar → Burcum, burç şeridi): ızgara + "Şimdi değil"/"Burcumu kaldır".
   - `agreement.tsx` – Sözleşmeyi Ayarlar'dan tekrar okuma sayfası (`AgreementScreen`'i gösterir,
     butona basınca geri döner).
@@ -670,8 +682,9 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     ayarlanır; bu yüzden yeni sayfa eklemek için ortak `_layout.tsx`'e dokunmak gerekmez.
 - `src/components/` – tekrar kullanılan bileşenler (şablondan gelenler de burada)
   - `agreement-screen.tsx` – Girl Math Kullanım Sözleşmesi ekranı
-  - `welcome-screen.tsx` – Welcome karşılama ekranı (sözleşmeden sonra bir kez): 1) 3 kart +
-    "Hadi başlayalım", 2) "Son bir şey: burcun ne?" (ZodiacGrid, "Dolabıma git 💖", "Şimdi değil")
+  - `welcome-screen.tsx` – Welcome karşılama ekranı (sözleşmeden sonra bir kez), tek sayfa: başlık +
+    tek kartta 3 adım + "Hadi başlayalım". (26 Kasım: 2. sayfadaki burç sorusu kaldırıldı; ilk açılış kısa
+    olsun. Burç Keşfet → Burcun ya da Ayarlar → Burcum'dan.)
   - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Cüzdan, Test (pembe, SF Symbols simgeleri).
     `app-tabs.web.tsx` aynı sekmelerin web sürümü.
   - `quick-wear.tsx` – ortak hızlı Giydim: `useQuickWear()` → `{ toggleWear, wearOnce, toastView }`.
@@ -685,9 +698,9 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     parçadan güne göre biri, etrafında `outfitFor` kombini; kolaj + cümle + "Kombini gör →".
   - `piece-picker-sheet.tsx` – "Hangi parçayla başlayalım?" alttan açılan pencere (4 sütunlu küçük
     fotoğraf ızgarası + ad; `PaletteSheet`/`PlaceSheet` kalıbı). Kombinlerim'deki "+" kullanır.
-  - `today-row.tsx` – Ana sayfadaki "Senin için" kartı: `TodayGroup` (tek beyaz kart, satırlar arası
-    ince çizgi) + `TodayRow` (simge dairesi, başlık + açıklama, sağda ok) + `IconCircle`. Etkinlik,
-    burç ve Kahoot satırları bunu kullanır; yeni küçük Ana sayfa bilgisi de buraya satır olarak eklenir.
+  - `today-row.tsx` – tek kartta satırlar: `TodayGroup` (beyaz kart, satırlar arası ince çizgi) +
+    `TodayRow` (simge dairesi, başlık + açıklama, sağda ok) + `IconCircle`. Şu an sadece Ana sayfadaki
+    etkinlik satırı kullanıyor (eski "Senin için" kartı 25 Kasım'da kalktı).
   - `outfit-collage.tsx` – kombin kolajı `OutfitCollage` (yamuk, üst üste binen 3:4 kartlar +
     parça adları, isteğe bağlı ilk parça etiketi) ve `ClothingPhoto` (3:4 fotoğraf, yoksa beyaz zeminde askı).
     "Bununla ne giyerim?" ve kayıtlı kombin sayfası kullanır.
@@ -695,20 +708,20 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     dokununca seçim kalkar, `note` ile alt yazı; `onPickCustom` verilirse sonda gökkuşağı "+" →
     alttan `PaletteSheet`, seçilen ton `customHex` olarak sıranın başında) ve tek renk yuvarlağı
     `ColorSwatch` (beyazın kenarı var, "Desenli" çok renkli, `hex` verilirse o ton). Form, detay ve kombin ekranı kullanır.
-  - `horoscope-strip.tsx` – "Senin için" kartındaki burç satırı (küçük gümüş madalyonda pembe burç
-    sembolü, şanslı renk, Ay evresi; dokununca burç sayfası, burç yoksa burç seçimi)
+  - `explore-tiles.tsx` – Ana sayfanın en altındaki "Keşfet" kutuları (yan yana beyaz kutu: simge
+    dairesi + ad + alt yazı): Burcun (burç sembolü/adı, seçilmediyse "Seç"), Analiz (ayın adı),
+    Almalı mıyım?, Kahoot (sadece hafta sonu ya da bu hafta oynandıysa; `__DEV__`'de hafta içi "Test").
+    25 Kasım'da eski `horoscope-strip.tsx` (gümüş burç şeridi) ve `kahoot-card.tsx` silindi, yerine bu geldi.
   - `zodiac-grid.tsx` – 12 burç ızgarası + burç yardımcıları (`zodiacGlyph`, `zodiacRange`,
-    `MOON_SYMBOLS`, `mercuryNote`). Burç seçimi ve Welcome kullanır.
+    `MOON_SYMBOLS`, `mercuryNote`). Burç seçimi sayfası kullanır.
   - `share-card.tsx` – Story kartları (`ItemShareCard`, `WardrobeShareCard`, `KahootShareCard`,
-    `MonthlyShareCard`, pembe geçişli 9:16). Büyük rakam `BigAmount`; para olmayan sayıda
+    `MonthlyShareCard`, 9:16; 26 Kasım'dan beri krem → pudra gül geçişli zemin, büyük rakamlar koyu;
+    aylık kart beyaz kartta satırlar + altta italik ayın yorumu). Büyük rakam `BigAmount`; para olmayan sayıda
     `currency={false}` (yoksa "750 ₺ puan" yazar).
-  - `kahoot-card.tsx` – "Senin için" kartındaki Kahoot satırı: hafta sonu "Dolap Kahoot'u açıldı" +
-    pembe "Oyna" hapı, oynandıysa kupa simgesi + rozet adı + puan/seri (dokununca sonuç). Hafta içi
-    ve dolap yetersizken **görünmez**; `__DEV__`'de soluk "Kahoot test" satırı.
   - `event-picker.tsx` – formdaki "Etkinlik için aldım" kutusu (anahtar, `EVENT_TYPES` hapları 3 eşit
     sütun, emojisiz – emojiler sadece detaydaki "💍 Düğün" satırında ve bildirimlerde,
     "Diğer"de ad, iPhone tarih seçicisi). `dateFromString` / `stringFromDate` ("2026-12-05" ↔ Date).
-  - `event-countdown-card.tsx` – "Senin için" kartındaki etkinlik satırı (7 gün kala; "Düğün" +
+  - `event-countdown-card.tsx` – Ana sayfadaki etkinlik satırı (`nextEvent(items)`: 7 gün içinde en yakın) (7 gün kala; "Düğün" +
     "3 gün kaldı · “Elbise”", etkinlik günü 🎁 ve yeşil "Bugün · … bedava"); dokununca detay.
   - `screen-background.tsx` – sekmeler, Welcome ve Sözleşme'nin "üstten pembe ışık" zemini
   - `stat-tile.tsx` – küçük istatistik kutusu (etiket, büyük değer, açıklama; `tone="primary"`
@@ -782,7 +795,17 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
 - **İleride düşünülebilir (Ebrar'ın fikri):** renk adı yerine fotoğraftaki gerçek tonlara göre kombin
   önerisi. Şimdilik yapılmadı çünkü motorun kuralları ve kullanıcıya gösterilen sebepler renk
   adlarına dayanıyor; tonlara geçmek motoru baştan yazmak demek.
-- Açılış ekranı (splash) rengi `app.json`'da `#FFF7FA`; Expo Go'da görünmez, gerçek uygulamada görünür.
+- **SDK yükseltmesi (25 Kasım 2026, 57 → 58):** iPhone'daki Expo Go App Store'dan kendiliğinden
+  SDK 58'e güncellenince proje açılmadı ("Project is incompatible with this version of Expo Go"); iPhone'a
+  eski Expo Go kurulamıyor, proje yükseltildi (`npx expo install expo@^58` + `--fix`, React Native 0.88,
+  React 19.3). Expo bir sonraki SDK'ya (59) geçince aynı şey tekrar olur: aynı adımlar izlenir.
+  - `npx expo install …` "ERESOLVE / react-native-windows" hatası verirse: tarih seçici paketinin
+    Windows eklentisi için isteğe bağlı kontrolü; bizimle ilgisi yok. Komutun sonuna `-- --legacy-peer-deps`
+    eklenir. Normal `npm install` (pull sonrası) hatasız çalışıyor.
+  - Kodda gereken küçük tip düzeltmeleri: `useRef<ComponentRef<typeof View>>` (share.tsx, Story
+    fotoğrafı), `useColorScheme()` artık `null` da dönebiliyor → `scheme === 'dark' ? 'dark' : 'light'`
+    (app-tabs, use-theme), app-tabs.web.tsx'te sekme ref'i türü elle çevrildi.
+- Açılış ekranı (splash) rengi `app.json`'da `#F5F1EB` (krem); Expo Go'da görünmez, gerçek uygulamada görünür.
 
 ## Eski proje
 Onur'un bilgisayarında Masaüstündeki `girl-math-app` klasörü önceki deneme. Orada çalışan

@@ -11,7 +11,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
-import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { EVENT_TYPES, type EventTypeName } from '@/lib/events';
 
 const colors = Colors.light;
@@ -128,13 +128,13 @@ export function EventPicker({
 }
 
 const styles = StyleSheet.create({
+  // Diğer beyaz kartlar gibi: kenar çizgisi yok, hafif gölge (26 Kasım, taslak B)
   box: {
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
     padding: Spacing.three,
     gap: Spacing.three,
+    ...Shadows.card,
   },
   switchRow: {
     flexDirection: 'row',

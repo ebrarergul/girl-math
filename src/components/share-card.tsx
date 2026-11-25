@@ -1,12 +1,13 @@
 /**
  * PAYLAŞILABİLİR KARTLAR (Instagram Story / TikTok)
  *
- * Story boyutunda (dikey 9:16) pembe geçişli kartlar. share.tsx bunların fotoğrafını çekip
+ * Story boyutunda (dikey 9:16) pembe geçişli kartlar (Gradients.story; yazılar koyu gül, rakamlar pembe). share.tsx bunların fotoğrafını çekip
  * iPhone'un paylaşım penceresini açar.
  * - ItemShareCard: tek kıyafet ("“Ceket” artık 67 ₺ /giyim")
  * - WardrobeShareCard: dolap özeti ("Dolabım = 51 iced latte 🧋", Girl Math kazancım)
  * - KahootShareCard: Dolap Kahoot'u rozeti (🏆 Merkez Bankası Başkanı, 4/5 doğru, puan, seri)
- * - MonthlyShareCard: bu ayın özeti (kaç kere Giydim, ayın yıldızı, en çok giyilen renk, yorum)
+ * - MonthlyShareCard: bu ayın özeti (beyaz kartta kaç kere giydim + ayın yıldızı, en çok giyilen
+ *   renk, alışveriş, amorti satırları; altta ayın yorumu italik alıntı)
  * Kartın genişliği dışarıdan verilir; yükseklik 16/9 oranında otomatik.
  */
 
@@ -17,7 +18,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { INFINITE_COST, formatTL, itemComparisonText } from '@/components/clothing-card';
-import { Colors, Fonts, Radius, Spacing, Typography } from '@/constants/theme';
+import { Colors, Fonts, Gradients, Radius, Spacing, Typography } from '@/constants/theme';
 import { costPerWear, isPaidOff, wearCount } from '@/lib/girl-math';
 import type { MonthlySummary } from '@/lib/insights';
 import { QUESTION_COUNT, quizBadge } from '@/lib/quiz';
@@ -28,15 +29,18 @@ import type { ClothingItem, QuizResult } from '@/lib/types';
 
 const colors = Colors.light;
 
-// Ortak çerçeve: pembe geçişli zemin, üstte ve altta marka imzası
+// Ortak çerçeve: şeker pembesi → gül pembesi geçişli zemin (Gradients.story), üstte ve altta
+// marka imzası. Yazılar siyah değil koyu gül (primaryPressed), büyük rakamlar pembe:
+// 26 Kasım'da "siyah çok ön planda, Story pembe olsun, girls girls" denince böyle oldu.
 function CardFrame({ width, children }: { width: number; children: ReactNode }) {
   return (
     <LinearGradient
-      colors={[colors.primarySoft, colors.accent, colors.highlight]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      colors={Gradients.story}
+      locations={[0, 0.5, 1]}
+      start={{ x: 0.2, y: 0 }}
+      end={{ x: 0.8, y: 1 }}
       style={[styles.frame, { width }]}>
-      <Text style={styles.brandTop}>GIRL MATH 🎀</Text>
+      <Text style={styles.brandTop}>GIRL MATH</Text>
       <View style={styles.body}>{children}</View>
       <Text style={styles.brandBottom}>girl math’e göre her şey mantıklı 💅</Text>
     </LinearGradient>
@@ -143,7 +147,7 @@ export function KahootShareCard({
   return (
     <CardFrame width={width}>
       <View style={styles.textBlock}>
-        <Text style={styles.statLabel}>{"BU HAFTANIN DOLAP KAHOOT'U"}</Text>
+        <Text style={styles.statLabel}>{"BU HAFTANIN DOLAP QUIZ'İ"}</Text>
         <Text style={styles.badgeEmoji}>{badge.emoji}</Text>
         <Text style={styles.badgeTitle}>{badge.title}</Text>
       </View>
@@ -161,14 +165,15 @@ export function KahootShareCard({
   );
 }
 
-// Aylık özet kartı. Harcanan TL bilerek yazılmaz (Story herkese açık), sadece parça sayısı
+// Aylık özet kartı. Harcanan TL bilerek yazılmaz (Story herkese açık), sadece parça sayısı.
+// Üstte ay, beyaz kartta büyük "kaç kere giydim" + etiket–değer satırları, altta ayın yorumu alıntı gibi.
 export function MonthlyShareCard({
   summary,
-  colorText,
+  topColor,
   width,
 }: {
   summary: MonthlySummary;
-  colorText: string | null; // "💖 En çok pembe giyiyorsun (%40)"; renkli giyim yoksa null
+  topColor: { color: string; percent: number } | null; // bu ay en çok giyilen renk; yoksa null
   width: number;
 }) {
   // "2026-10" → "Ekim 2026" (öğlen saati: gün dönümünde bir önceki aya kaymasın)
@@ -177,6 +182,16 @@ export function MonthlyShareCard({
     year: 'numeric',
   });
 
+  const rows = [
+    summary.star && { label: 'Ayın yıldızı', value: `“${summary.star.item.name}”` },
+    topColor && { label: 'En çok giydiğim renk', value: `${topColor.color} · %${topColor.percent}` },
+    {
+      label: 'Alışveriş',
+      value: summary.newItemCount > 0 ? `${summary.newItemCount} yeni parça` : 'Hiç yok',
+    },
+    summary.paidOffCount > 0 && { label: 'Amorti olan', value: `${summary.paidOffCount} parça` },
+  ].filter((row): row is { label: string; value: string } => Boolean(row));
+
   return (
     <CardFrame width={width}>
       <View style={styles.textBlock}>
@@ -184,25 +199,21 @@ export function MonthlyShareCard({
         <Text style={styles.badgeTitle}>{monthName}</Text>
       </View>
 
-      <View style={styles.statBox}>
-        <BigAmount value={summary.wears} currency={false} suffix="kere Giydim" />
-        {summary.star && (
-          <Text style={styles.note} numberOfLines={2}>
-            ⭐ Ayın yıldızı: “{summary.star.item.name}”
-          </Text>
-        )}
+      <View style={styles.summaryBox}>
+        <View style={styles.summaryTop}>
+          <BigAmount value={summary.wears} currency={false} suffix="kere giydim" />
+        </View>
+        {rows.map((row) => (
+          <View key={row.label} style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>{row.label}</Text>
+            <Text style={styles.summaryValue} numberOfLines={1}>
+              {row.value}
+            </Text>
+          </View>
+        ))}
       </View>
 
-      <View style={styles.textBlock}>
-        {colorText && <Text style={styles.note}>{colorText}</Text>}
-        <Text style={styles.note}>
-          {summary.newItemCount > 0
-            ? `🛍️ ${summary.newItemCount} yeni parça`
-            : '🛍️ Bu ay hiç alışveriş yok 🙌'}
-          {summary.paidOffCount > 0 ? ` · 💖 ${summary.paidOffCount} parça amorti` : ''}
-        </Text>
-        <Text style={styles.punchline}>{summary.verdict}</Text>
-      </View>
+      <Text style={styles.quote}>{summary.verdict}</Text>
     </CardFrame>
   );
 }
@@ -268,11 +279,11 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.hero,
-    color: colors.text,
+    color: colors.primaryPressed,
   },
   lead: {
     ...Typography.heading,
-    color: colors.text,
+    color: colors.primaryPressed,
   },
   bigAmount: {
     ...Typography.hero,
@@ -300,7 +311,7 @@ const styles = StyleSheet.create({
   },
   punchline: {
     ...Typography.heading,
-    color: colors.text,
+    color: colors.primaryPressed,
     textAlign: 'center',
   },
   note: {
@@ -321,11 +332,52 @@ const styles = StyleSheet.create({
   },
   badgeTitle: {
     ...Typography.title,
-    color: colors.text,
+    color: colors.primaryPressed,
     textAlign: 'center',
   },
   statLabel: {
     ...Typography.label,
+    color: colors.primary,
+  },
+  // Aylık özet: beyaz kart, üstte büyük sayı, altında ince çizgili satırlar
+  summaryBox: {
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.three,
+    paddingBottom: Spacing.one,
+  },
+  summaryTop: {
+    alignItems: 'center',
+    paddingVertical: Spacing.three,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two + Spacing.half,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.accent,
+  },
+  summaryLabel: {
+    ...Typography.caption,
     color: colors.textSecondary,
+  },
+  summaryValue: {
+    ...Typography.caption,
+    fontWeight: '700',
+    color: colors.primaryPressed,
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  // Ayın yorumu: dergi yazısıyla italik alıntı
+  quote: {
+    ...Typography.title,
+    fontSize: 20,
+    lineHeight: 27,
+    fontStyle: 'italic',
+    color: colors.primaryPressed,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.two,
   },
 });

@@ -3,7 +3,7 @@
  *
  * Kombinlerim (arşiv) sayfasındaki karta dokununca, kombinin kimliği (id) verilerek açılır.
  * Yukarıdan aşağı: kombin kolajı, adı (✏️ ile değiştirilir), "3 parça · 2 kere giydin · en son
- * 3 gün önce", parçaların listesi (dokununca kıyafet detayı), "Bu kombini sil".
+ * 3 gün önce", "Parçalar" başlığı + parça listesi (dokununca kıyafet detayı), "Bu kombini sil".
  * Sağ üstte favori yıldızı. Altta "Bu kombini giydim ✨": önce "Bu kombinle nereye?" penceresi,
  * sonra wearOutfit (bütün parçalara aynı yerle Giydim);
  * bugün zaten giyildiyse "Bugün giydin ✓" olur (yanında ↩ geri al), iki kere sayılmaz. Basınca kutlama balonu çıkar;
@@ -178,7 +178,7 @@ export default function SavedOutfitScreen() {
               accessibilityLabel={outfit.favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}>
               <SymbolView
                 name={outfit.favorite ? 'star.fill' : 'star'}
-                tintColor={outfit.favorite ? colors.highlight : colors.primary}
+                tintColor={outfit.favorite ? colors.highlight : colors.text}
                 size={22}
                 weight="semibold"
               />
@@ -194,7 +194,7 @@ export default function SavedOutfitScreen() {
           <Pressable onPress={handleRename} style={styles.titleRow} hitSlop={8}>
             <Text style={styles.title}>{name}</Text>
             {Platform.OS === 'ios' && (
-              <SymbolView name="pencil" tintColor={colors.primary} size={16} weight="semibold" />
+              <SymbolView name="pencil" tintColor={colors.textMuted} size={16} weight="semibold" />
             )}
           </Pressable>
           <Text style={styles.subtitle}>
@@ -208,37 +208,40 @@ export default function SavedOutfitScreen() {
           </Text>
         </View>
 
-        {/* Parçalar: dokununca kıyafet detayı açılır */}
-        <View style={styles.list}>
-          {pieces.map((piece, index) => (
-            <Pressable
-              key={piece.id}
-              onPress={() => router.push({ pathname: '/item/[id]', params: { id: piece.id } })}
-              style={({ pressed }) => [
-                styles.row,
-                index === pieces.length - 1 && styles.rowLast,
-                pressed && styles.rowPressed,
-              ]}>
-              <ClothingPhoto item={piece} style={styles.rowPhoto} />
-              <View style={styles.rowBody}>
-                <Text style={styles.rowName} numberOfLines={1}>
-                  {piece.name}
-                </Text>
-                <View style={styles.rowMeta}>
-                  {piece.color && <ColorSwatch color={piece.color} size={10} />}
-                  <Text style={styles.rowNote}>
-                    {piece.color ? `${piece.category} · ${piece.color}` : piece.category}
+        {/* Parçalar: başlık kartın üstünde, dokununca kıyafet detayı açılır */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Parçalar</Text>
+          <View style={styles.list}>
+            {pieces.map((piece, index) => (
+              <Pressable
+                key={piece.id}
+                onPress={() => router.push({ pathname: '/item/[id]', params: { id: piece.id } })}
+                style={({ pressed }) => [
+                  styles.row,
+                  index === pieces.length - 1 && styles.rowLast,
+                  pressed && styles.rowPressed,
+                ]}>
+                <ClothingPhoto item={piece} style={styles.rowPhoto} />
+                <View style={styles.rowBody}>
+                  <Text style={styles.rowName} numberOfLines={1}>
+                    {piece.name}
                   </Text>
+                  <View style={styles.rowMeta}>
+                    {piece.color && <ColorSwatch color={piece.color} size={10} />}
+                    <Text style={styles.rowNote}>
+                      {piece.color ? `${piece.category} · ${piece.color}` : piece.category}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <SymbolView
-                name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-                tintColor={colors.textMuted}
-                size={13}
-                weight="semibold"
-              />
-            </Pressable>
-          ))}
+                <SymbolView
+                  name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+                  tintColor={colors.textMuted}
+                  size={13}
+                  weight="semibold"
+                />
+              </Pressable>
+            ))}
+          </View>
         </View>
 
         <Pressable onPress={handleDelete} style={styles.deleteButton}>
@@ -331,6 +334,13 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: colors.textSecondary,
   },
+  section: {
+    gap: Spacing.two,
+  },
+  sectionTitle: {
+    ...Typography.heading,
+    color: colors.text,
+  },
   // Beyaz, yuvarlak köşeli parça listesi
   list: {
     backgroundColor: colors.card,
@@ -350,7 +360,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   rowPressed: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.backgroundElement,
   },
   rowPhoto: {
     width: 48,
@@ -420,7 +430,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   undoPressed: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.backgroundElement,
   },
   wearButton: {
     flex: 1,
@@ -431,11 +441,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...Shadows.button,
   },
-  // Bugün giyildiyse: beyaz zemin, pembe yazı (artık basılmaz)
+  // Bugün giyildiyse: beyaz zemin, ince gri kenar, koyu yazı (artık basılmaz; pembe kenar sadece seçili durumda)
   wearButtonDone: {
     backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowOpacity: 0,
   },
   wearButtonPressed: {
@@ -447,6 +457,6 @@ const styles = StyleSheet.create({
     color: colors.onPrimary,
   },
   wearTextDone: {
-    color: colors.primary,
+    color: colors.text,
   },
 });

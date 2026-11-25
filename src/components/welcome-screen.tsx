@@ -1,32 +1,29 @@
 /**
  * WELCOME (KARŞILAMA) EKRANI
  *
- * Sözleşme onaylandıktan sonra bir kez gösterilir. İki sayfa:
- * 1) Uygulamanın nasıl çalıştığını 3 kısa kartla anlatır; "Hadi başlayalım" 2. sayfaya geçer.
- * 2) "Son bir şey: burcun ne? 🔮" – 12 burçluk ızgara (ZodiacGrid). Seçince setZodiac ile
- *    kaydedilir; "Dolabıma git 💖" ya da "Şimdi değil" (burç seçilmez) onStart'ı çağırır.
- * Burç sonradan Ayarlar → Burcum'dan da seçilebilir.
+ * Sözleşme onaylandıktan sonra bir kez gösterilir. Tek sayfa: "GIRL MATH / Hoş geldin aşko!",
+ * tek beyaz kartta 3 adım (simge dairesi + başlık + açıklama, aralarında ince çizgi) ve
+ * "Hadi başlayalım" → onStart (sekmeler; dolap boşsa Ana sayfada ekleme butonu çıkar).
+ * 26 Kasım: ikinci sayfadaki burç sorusu kaldırıldı (ilk açılış kısa olsun, burç ana iş değil).
+ * Burç Ana sayfa → Keşfet → "Burcun" ya da Ayarlar → Burcum'dan seçilir.
  */
 
 import { SymbolView, type SFSymbol } from 'expo-symbols';
-import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenBackground } from '@/components/screen-background';
-import { ZodiacGrid } from '@/components/zodiac-grid';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
-import { useApp } from '@/context/app-context';
 
 const colors = Colors.light;
 
-// Nasıl çalışır kartları. Yeni kart eklemek için bu listeye bir satır eklemek yeterli.
-// symbol: kartın solundaki pembe iPhone simgesi (SF Symbols)
+// Nasıl çalışır adımları. Yeni adım eklemek için bu listeye bir satır eklemek yeterli.
+// symbol: satırın solundaki pembe iPhone simgesi (SF Symbols)
 const STEPS: { symbol: SFSymbol; title: string; text: string }[] = [
   { symbol: 'hanger', title: 'Dolabını ekle', text: 'Kıyafetlerini fotoğrafı ve fiyatıyla kaydet.' },
   { symbol: 'sparkles', title: '"Giydim"e bas', text: 'Her giydiğinde tek dokunuşla işaretle.' },
   {
-    symbol: 'cup.and.saucer.fill',
+    symbol: 'cup.and.saucer',
     title: 'Maliyet düşsün',
     text: 'Giydikçe ucuzlasın, sonunda resmen bedava olsun.',
   },
@@ -37,56 +34,11 @@ type Props = {
 };
 
 export function WelcomeScreen({ onStart }: Props) {
-  const { zodiac, setZodiac } = useApp();
-  const [step, setStep] = useState<'intro' | 'zodiac'>('intro');
-
-  if (step === 'zodiac') {
-    return (
-      <ScreenBackground>
-        <SafeAreaView style={styles.screen}>
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.header}>
-              <Text style={styles.emoji}>🔮</Text>
-              <Text style={styles.title}>Son bir şey: burcun ne?</Text>
-              <Text style={styles.subtitle}>
-                Her gün şanslı rengini ve dolabından yıldızların seçtiği parçayı söylerim.
-              </Text>
-            </View>
-            <ZodiacGrid value={zodiac} onSelect={setZodiac} />
-          </ScrollView>
-
-          <View style={styles.footer}>
-            <Pressable
-              onPress={onStart}
-              disabled={!zodiac}
-              style={({ pressed }) => [
-                styles.button,
-                !zodiac && styles.buttonDisabled,
-                pressed && styles.buttonPressed,
-              ]}>
-              <Text style={styles.buttonText}>Dolabıma git 💖</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                setZodiac(null);
-                onStart();
-              }}
-              hitSlop={8}
-              style={styles.skip}>
-              <Text style={styles.skipText}>Şimdi değil</Text>
-            </Pressable>
-          </View>
-        </SafeAreaView>
-      </ScreenBackground>
-    );
-  }
-
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.screen}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <Text style={styles.emoji}>🎀</Text>
             <Text style={styles.label}>GIRL MATH</Text>
             <Text style={styles.title}>Hoş geldin aşko!</Text>
             <Text style={styles.subtitle}>
@@ -94,24 +46,26 @@ export function WelcomeScreen({ onStart }: Props) {
             </Text>
           </View>
 
-          {STEPS.map((step, index) => (
-            <View key={index} style={styles.card}>
-              <View style={styles.iconCircle}>
-                <SymbolView name={step.symbol} tintColor={colors.primary} size={24} />
+          <View style={styles.card}>
+            {STEPS.map((item, index) => (
+              <View key={item.title} style={styles.row}>
+                <View style={styles.iconCircle}>
+                  <SymbolView name={item.symbol} tintColor={colors.primary} size={20} />
+                </View>
+                <View style={[styles.rowBody, index > 0 && styles.divider]}>
+                  <Text style={styles.rowTitle}>{item.title}</Text>
+                  <Text style={styles.rowText}>{item.text}</Text>
+                </View>
               </View>
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{step.title}</Text>
-                <Text style={styles.cardText}>{step.text}</Text>
-              </View>
-            </View>
-          ))}
+            ))}
+          </View>
         </ScrollView>
 
         <View style={styles.footer}>
           <Pressable
-            onPress={() => setStep('zodiac')}
+            onPress={onStart}
             style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
-            <Text style={styles.buttonText}>Hadi başlayalım 💖</Text>
+            <Text style={styles.buttonText}>Hadi başlayalım</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -124,19 +78,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.five,
-    paddingBottom: Spacing.three,
-    gap: Spacing.three,
+    paddingVertical: Spacing.five,
+    gap: Spacing.five,
   },
   header: {
     alignItems: 'center',
     gap: Spacing.two,
-    marginBottom: Spacing.three,
-  },
-  emoji: {
-    fontSize: 56,
-    lineHeight: 64,
   },
   label: {
     ...Typography.label,
@@ -152,33 +102,42 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
   },
+  // Tek beyaz kart, adımlar satır satır (iPhone Ayarları gibi; çizgi simgenin sağından başlar)
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
-    padding: Spacing.three,
-    gap: Spacing.three,
+    paddingLeft: Spacing.three,
     ...Shadows.card,
   },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
   iconCircle: {
-    width: 52,
-    height: 52,
+    width: 40,
+    height: 40,
     borderRadius: Radius.pill,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardBody: {
+  rowBody: {
     flex: 1,
     gap: Spacing.half,
+    paddingVertical: Spacing.three,
+    paddingRight: Spacing.three,
   },
-  cardTitle: {
-    ...Typography.heading,
+  divider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  rowTitle: {
+    ...Typography.bodyBold,
     color: colors.text,
   },
-  cardText: {
-    ...Typography.body,
+  rowText: {
+    ...Typography.caption,
     color: colors.textSecondary,
   },
   footer: {
@@ -192,17 +151,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.four,
     ...Shadows.button,
-  },
-  buttonDisabled: {
-    opacity: 0.4,
-  },
-  skip: {
-    alignSelf: 'center',
-    paddingTop: Spacing.three,
-  },
-  skipText: {
-    ...Typography.bodyBold,
-    color: colors.textMuted,
   },
   buttonPressed: {
     backgroundColor: colors.primaryPressed,

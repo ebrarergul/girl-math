@@ -8,12 +8,11 @@
  * "Aldım! Dolabıma ekle" ekleme formunu fiyatı dolu açar.
  * Sayfa açılınca fiyat kutusu seçili gelir, klavye açılır (hesap makinesi gibi); boş durum yok.
  * (Soluk örnek kartlar ve "dene" hapları denendi; biri "bozuk" gibi durdu, öteki kutuyu tekrarladı.)
- * Sonuç: pembe ana kart (iced latte fiyatına ne zaman iner + karar cümlesi), "Bu parayla" 3 küçük
+ * Sonuç: beyaz ana kart, büyük pembe rakam (iced latte fiyatına ne zaman iner + karar cümlesi), "Bu parayla" 3 küçük
  * kutu, "Yol haritası" (solda zaman çizgisi, her durak tek satır, sağda giyim başı maliyet).
  * Cüzdan ekranındaki "Almalı mıyım?" kartıyla açılır.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -135,12 +134,8 @@ export default function ShouldIBuyScreen() {
 
         {hasPrice && (
           <>
-            {/* Sayfanın tek pembe vurgusu: cevap tek bakışta (ne zaman iced latte fiyatına iner) */}
-            <LinearGradient
-              colors={[colors.primaryPressed, colors.primary]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.hero}>
+            {/* Ana kart (beyaz): cevap tek bakışta, büyük pembe rakam (ne zaman iced latte fiyatına iner) */}
+            <View style={styles.hero}>
               {verdict ? (
                 <>
                   <Text style={styles.heroLabel}>{`AYDA ${perMonth} GİYİMLE`}</Text>
@@ -156,7 +151,7 @@ export default function ShouldIBuyScreen() {
                   <Text style={styles.heroText}>Bir iced latteden bile ucuz, düşünme bile 💅</Text>
                 </>
               )}
-            </LinearGradient>
+            </View>
 
             {/* Bu parayla neler yapılırdı: yan yana küçük kutular */}
             {spend.length > 0 && (
@@ -282,35 +277,35 @@ const styles = StyleSheet.create({
   chipTextSelected: {
     color: colors.onPrimary,
   },
-  // Pembe ana kart (Ana sayfadaki vitrin kartıyla aynı dil)
+  // Ana kart: beyaz, büyük rakam pembe (26 Kasım'a kadar koyu pembe geçişli karttı; taslak B)
   hero: {
+    backgroundColor: colors.card,
     borderRadius: Radius.xl,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three + Spacing.one,
     gap: Spacing.one,
-    ...Shadows.button,
+    ...Shadows.card,
   },
   heroLabel: {
     ...Typography.label,
-    color: colors.primarySoft,
+    color: colors.textSecondary,
   },
   heroValue: {
     ...Typography.hero,
-    color: colors.onPrimary,
+    color: colors.primary,
   },
   heroText: {
     ...Typography.body,
-    color: colors.onPrimary,
+    color: colors.textSecondary,
   },
   heroDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.primarySoft,
-    opacity: 0.5,
+    backgroundColor: colors.border,
     marginVertical: Spacing.two,
   },
   heroVerdict: {
     ...Typography.bodyBold,
-    color: colors.onPrimary,
+    color: colors.text,
   },
   // Başlık kartın üstünde (Ana sayfadaki bölümler gibi)
   section: {

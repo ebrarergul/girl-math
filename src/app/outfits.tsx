@@ -177,16 +177,27 @@ function OutfitCard({
   onFavorite: () => void;
   onPress: () => void;
 }) {
-  // İlk 4 kutu; 4'ten fazla parça varsa son kutuda kalan sayı yazar
+  // İlk 4 kutu; 4'ten fazla parça varsa son kutuda kalan sayı yazar ('extra')
   const extra = pieces.length > 4 ? pieces.length - 3 : 0;
-  const shown = extra > 0 ? pieces.slice(0, 3) : pieces.slice(0, 4);
-  const cells: (ClothingItem | null)[] = [...shown];
-  while (cells.length < 4) {
-    cells.push(null);
-  }
+  const shown: (ClothingItem | 'extra')[] =
+    extra > 0 ? [...pieces.slice(0, 3), 'extra'] : pieces.slice(0, 4);
+  // Boş kutu kalmasın diye parça sayısına göre sütunlar (26 Kasım: 3 parçada beyaz boş kare vardı):
+  // 1 → tek büyük, 2 → yan yana iki uzun, 3 → solda uzun + sağda iki küçük, 4 → 2×2
+  const columns =
+    shown.length <= 1
+      ? [shown]
+      : shown.length === 2
+        ? [[shown[0]], [shown[1]]]
+        : shown.length === 3
+          ? [[shown[0]], [shown[1], shown[2]]]
+          : [
+              [shown[0], shown[2]],
+              [shown[1], shown[3]],
+            ];
   const worn = outfit.wornDates.length;
-  // Mozaikte kutular arası ince çizgi (CELL_GAP) kadar pay bırakılır
+  // Mozaikte kutular arası ince çizgi (CELL_GAP) kadar pay bırakılır; mozaik hep 2×2'lik 3:4 boyunda
   const cellWidth = (width - CELL_GAP) / 2;
+  const mosaicHeight = ((cellWidth * 4) / 3) * 2 + CELL_GAP;
 
   return (
     <Pressable
@@ -194,27 +205,32 @@ function OutfitCard({
       style={({ pressed }) => [styles.card, { width }, pressed && styles.cardPressed]}>
       {/* Gölge dışta, köşe kırpma içte (ikisi aynı kutuda olunca gölge kayboluyor) */}
       <View style={styles.mosaicShadow}>
-        <View style={styles.cellGrid}>
-          {cells.map((piece, index) => {
-            const isExtra = extra > 0 && index === 3;
-            const uri = piece ? photoUri(piece.photoFileName) : undefined;
-            return (
-              <View key={index} style={[styles.cell, { width: cellWidth }]}>
-                {isExtra ? (
-                  <Text style={styles.extraText}>+{extra}</Text>
-                ) : uri ? (
-                  <Image source={{ uri }} style={styles.cellImage} contentFit="cover" />
-                ) : piece ? (
-                  <SymbolView
-                    name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
-                    tintColor={colors.primary}
-                    size={18}
-                    weight="light"
-                  />
-                ) : null}
-              </View>
-            );
-          })}
+        <View style={[styles.cellGrid, { height: mosaicHeight }]}>
+          {columns.map((column, columnIndex) => (
+            <View
+              key={columnIndex}
+              style={[styles.column, { width: columns.length === 1 ? width : cellWidth }]}>
+              {column.map((piece, index) => {
+                const uri = piece !== 'extra' ? photoUri(piece.photoFileName) : undefined;
+                return (
+                  <View key={index} style={styles.cell}>
+                    {piece === 'extra' ? (
+                      <Text style={styles.extraText}>+{extra}</Text>
+                    ) : uri ? (
+                      <Image source={{ uri }} style={styles.cellImage} contentFit="cover" />
+                    ) : (
+                      <SymbolView
+                        name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
+                        tintColor={colors.primary}
+                        size={18}
+                        weight="light"
+                      />
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          ))}
         </View>
       </View>
 
@@ -286,15 +302,17 @@ const styles = StyleSheet.create({
   // 2×2 fotoğraf mozaiği (her kutu 3:4); aradaki ince çizgiler zemin rengi
   cellGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: CELL_GAP,
     borderRadius: Radius.md,
     overflow: 'hidden',
     backgroundColor: colors.background,
   },
   // Fotoğrafsız/boş kutu: beyaz zeminde pembe askı (Dolap'la aynı)
+  column: {
+    gap: CELL_GAP,
+  },
   cell: {
-    aspectRatio: 3 / 4,
+    flex: 1,
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',

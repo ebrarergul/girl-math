@@ -290,7 +290,7 @@ export async function scheduleQuizReminders(
   await Notifications.scheduleNotificationAsync({
     identifier: QUIZ_OPEN_ID,
     content: {
-      title: "🎯 Dolap Kahoot'u açıldı!",
+      title: '🎯 Dolap Quiz açıldı!', // 26 Kasım (Ebrar): "Kahoot" marka adı olduğu için Dolap Quiz oldu
       body: 'Dolabını ne kadar tanıyorsun kızım? 5 soru, 15 saniye ⏱️',
     },
     trigger: {
@@ -307,7 +307,7 @@ export async function scheduleQuizReminders(
   await Notifications.scheduleNotificationAsync({
     identifier: QUIZ_CLOSING_ID,
     content: {
-      title: '⏳ Kahoot bu gece kapanıyor',
+      title: '⏳ Dolap Quiz bu gece kapanıyor',
       body:
         streak > 0
           ? `🔥 ${streak} haftalık serini bozma! 5 soru, iki dakika bile sürmez.`

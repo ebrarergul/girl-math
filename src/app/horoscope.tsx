@@ -1,15 +1,16 @@
 /**
  * BURÇ YORUMU
  *
- * Ana sayfadaki burç şeridine dokununca açılır (Onur'un zodiac.ts'i: dailyHoroscope,
+ * Ana sayfadaki Keşfet → "Burcun" kutusuna dokununca açılır (Onur'un zodiac.ts'i: dailyHoroscope,
  * weeklyHoroscope, getSky). Yukarıdan aşağı:
- * - Gümüş (krom) kart: büyük burç sembolü, adı, tarih aralığı; Ay'ın burcu ve evresi (simgesiyle),
- *   Merkür retrosu varsa ya da yaklaşıyorsa küçük hap.
- * - "Bugün" / "Bu hafta" sekme hapları.
- * - Bugün: stil kişiliği (italik), gökyüzü cümleleri, 🍀 şanslı renk, dolaptan önerilen parça
- *   + "Kombini gör →" ("Bununla ne giyerim?" o parçayla açılır).
- * - Bu hafta: tarih aralığı, tek kartta AŞK / PARA / DOLAP bölümleri (Onur'un cümleleri zaten
+ * - Gümüş (krom) kart, ortalı: burç sembolü, adı, "tarih · element · gezegen", stil kişiliği
+ *   (italik), Ay'ın burcu ve evresi; Merkür retrosu varsa ya da yaklaşıyorsa küçük hap.
+ * - "Bugün" / "Bu hafta" iPhone tarzı iki parçalı seçici (Analizler'deki gibi).
+ * - Bugün: gökyüzü cümleleri tek kartta (aralarında ince çizgi); "Yıldızların seçimi" başlığı
+ *   altında tek kart: şanslı renk satırı + dolaptan önerilen parça ("Kombini gör →").
+ * - Bu hafta: tarih aralığı başlık, tek kartta Aşk / Para / Dolap (Onur'un cümleleri zaten
  *   emojiyle başladığı için başlıklarda emoji yok, yoksa iki kere yazılıyordu).
+ * (26 Kasım: "karışık" denince sadeleştirildi; pembe sekme hapları, ✦ işaretleri, 🍀 kalktı.)
  * Sağ üstte "Değiştir" burç seçimini açar. Burç seçilmemişse seçmeye çağıran bir mesaj çıkar.
  */
 
@@ -85,23 +86,25 @@ export default function HoroscopeScreen() {
       <Stack.Screen options={headerOptions} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Gümüş kart: burç + gökyüzü */}
+        {/* Gümüş kart: burç, kişilik, gökyüzü (ortalı, sade) */}
         <LinearGradient
           colors={Gradients.chrome}
           locations={[0, 0.35, 0.7, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}>
-          <View style={styles.heroTop}>
-            <Text style={styles.glyph}>{zodiacGlyph(sign.emoji)}</Text>
-            <View style={styles.heroText}>
-              <Text style={styles.signName}>{sign.name}</Text>
-              <Text style={styles.signMeta}>{zodiacRange(sign.name)}</Text>
-              <Text style={styles.signMeta}>{`${sign.element} · ${sign.ruler}`}</Text>
-            </View>
-          </View>
+          <Text style={styles.glyph}>{zodiacGlyph(sign.emoji)}</Text>
+          <Text style={styles.signName}>{sign.name}</Text>
+          <Text style={styles.signMeta}>
+            {`${zodiacRange(sign.name)} · ${sign.element} · ${sign.ruler}`}
+          </Text>
+          <Text style={styles.personality}>{daily.personality}</Text>
           <View style={styles.skyRow}>
-            <SymbolView name={MOON_SYMBOLS[sky.moonPhase]} tintColor={colors.text} size={18} />
+            <SymbolView
+              name={MOON_SYMBOLS[sky.moonPhase]}
+              tintColor={colors.textSecondary}
+              size={14}
+            />
             <Text style={styles.skyText}>{`Ay ${sky.moonSign} burcunda · ${sky.moonPhase}`}</Text>
           </View>
           {mercury && (
@@ -111,8 +114,8 @@ export default function HoroscopeScreen() {
           )}
         </LinearGradient>
 
-        {/* Sekmeler */}
-        <View style={styles.tabs}>
+        {/* iPhone tarzı iki parçalı seçici (Analizler'deki gibi) */}
+        <View style={styles.segment}>
           {(
             [
               ['today', 'Bugün'],
@@ -122,72 +125,75 @@ export default function HoroscopeScreen() {
             <Pressable
               key={key}
               onPress={() => switchTab(key)}
-              style={[styles.tab, tab === key && styles.tabSelected]}>
-              <Text style={[styles.tabText, tab === key && styles.tabTextSelected]}>{label}</Text>
+              style={[styles.segmentItem, tab === key && styles.segmentItemSelected]}>
+              <Text style={[styles.segmentText, tab === key && styles.segmentTextSelected]}>
+                {label}
+              </Text>
             </Pressable>
           ))}
         </View>
 
         {tab === 'today' ? (
           <>
-            <Text style={styles.personality}>{daily.personality}</Text>
-
+            {/* Gökyüzü cümleleri: tek kartta, aralarında ince çizgi */}
             <View style={styles.card}>
               {daily.lines.map((line, index) => (
-                <View key={index} style={styles.lineRow}>
-                  <SymbolView name="sparkle" tintColor={colors.primary} size={12} />
-                  <Text style={styles.lineText}>{line}</Text>
-                </View>
+                <Text key={index} style={[styles.lineText, index > 0 && styles.divider]}>
+                  {line}
+                </Text>
               ))}
             </View>
 
-            <View style={[styles.card, styles.luckyRow]}>
-              <Text style={styles.luckyLabel}>🍀 Bugünkü şanslı rengin</Text>
-              <View style={styles.luckyColor}>
-                <ColorSwatch color={daily.luckyColor} size={18} />
-                <Text style={styles.luckyName}>{daily.luckyColor}</Text>
-              </View>
-            </View>
-
-            {daily.suggestion && (
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: '/outfit/[id]',
-                    params: { id: daily.suggestion!.item.id },
-                  })
-                }
-                style={({ pressed }) => [
-                  styles.card,
-                  styles.suggestion,
-                  pressed && styles.pressed,
-                ]}>
-                <ClothingPhoto item={daily.suggestion.item} style={styles.suggestionPhoto} />
-                <View style={styles.suggestionBody}>
-                  <Text style={styles.suggestionLabel}>YILDIZLARIN SEÇİMİ</Text>
-                  <Text style={styles.suggestionName} numberOfLines={1}>
-                    {daily.suggestion.item.name}
-                  </Text>
-                  <Text style={styles.suggestionText}>{daily.suggestion.text}</Text>
-                  <Text style={styles.link}>Kombini gör →</Text>
+            {/* Şanslı renk + önerilen parça: tek kart, başlık üstünde */}
+            <Text style={styles.sectionTitle}>Yıldızların seçimi</Text>
+            <View style={styles.card}>
+              <View style={styles.luckyRow}>
+                <Text style={styles.luckyLabel}>Bugünkü şanslı rengin</Text>
+                <View style={styles.luckyColor}>
+                  <ColorSwatch color={daily.luckyColor} size={16} />
+                  <Text style={styles.luckyName}>{daily.luckyColor}</Text>
                 </View>
-              </Pressable>
-            )}
+              </View>
+
+              {daily.suggestion && (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/outfit/[id]',
+                      params: { id: daily.suggestion!.item.id },
+                    })
+                  }
+                  style={({ pressed }) => [
+                    styles.suggestion,
+                    styles.divider,
+                    pressed && styles.rowPressed,
+                  ]}>
+                  <ClothingPhoto item={daily.suggestion.item} style={styles.suggestionPhoto} />
+                  <View style={styles.suggestionBody}>
+                    <Text style={styles.suggestionName} numberOfLines={1}>
+                      {daily.suggestion.item.name}
+                    </Text>
+                    <Text style={styles.suggestionText}>{daily.suggestion.text}</Text>
+                    <Text style={styles.link}>Kombini gör →</Text>
+                  </View>
+                </Pressable>
+              )}
+            </View>
           </>
         ) : (
           <>
-            <Text style={styles.range}>{weekly.range}</Text>
+            <Text style={styles.sectionTitle}>{weekly.range}</Text>
             <View style={styles.card}>
               {(
                 [
-                  ['AŞK', weekly.love],
-                  ['PARA', weekly.money],
-                  ['DOLAP', weekly.wardrobe],
+                  ['Aşk', weekly.love],
+                  ['Para', weekly.money],
+                  ['Dolap', weekly.wardrobe],
                 ] as const
               ).map(([title, text], index) => (
-                <View key={title} style={[styles.weekPart, index > 0 && styles.weekDivider]}>
-                  <Text style={styles.weekLabel}>{title}</Text>
-                  <Text style={styles.lineText}>{text}</Text>
+                <View key={title} style={[styles.weekPart, index > 0 && styles.divider]}>
+                  <Text style={styles.weekTitle}>{title}</Text>
+                  <Text style={styles.weekText}>{text}</Text>
                 </View>
               ))}
             </View>
@@ -214,31 +220,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.primary,
   },
-  pressed: {
-    transform: [{ scale: 0.98 }],
+  rowPressed: {
+    opacity: 0.6,
   },
   // Gümüş kart
   hero: {
+    alignItems: 'center',
     borderRadius: Radius.xl,
-    padding: Spacing.four,
-    gap: Spacing.three,
+    paddingVertical: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.one,
     borderWidth: 1.5,
     borderColor: colors.card,
     ...Shadows.card,
   },
-  heroTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-  },
   glyph: {
-    fontSize: 56,
-    lineHeight: 64,
+    fontSize: 40,
+    lineHeight: 48,
     color: colors.primary,
-  },
-  heroText: {
-    flex: 1,
-    gap: Spacing.half,
   },
   signName: {
     ...Typography.hero,
@@ -247,82 +246,94 @@ const styles = StyleSheet.create({
   signMeta: {
     ...Typography.caption,
     color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  personality: {
+    ...Typography.body,
+    fontStyle: 'italic',
+    color: colors.text,
+    textAlign: 'center',
+    marginTop: Spacing.two,
   },
   skyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
+    gap: Spacing.one,
+    marginTop: Spacing.two,
   },
   skyText: {
-    ...Typography.bodyBold,
-    color: colors.text,
+    ...Typography.caption,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
   mercuryPill: {
-    alignSelf: 'flex-start',
     backgroundColor: colors.card,
     borderRadius: Radius.pill,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.one,
+    marginTop: Spacing.one,
   },
   mercuryText: {
     ...Typography.caption,
     color: colors.primary,
     fontWeight: '700',
   },
-  // Sekme hapları
-  tabs: {
+  // İki parçalı seçici
+  segment: {
     flexDirection: 'row',
-    gap: Spacing.two,
+    backgroundColor: colors.backgroundElement,
+    borderRadius: Radius.pill,
+    padding: Spacing.half,
   },
-  tab: {
-    paddingHorizontal: Spacing.four,
+  segmentItem: {
+    flex: 1,
+    alignItems: 'center',
     paddingVertical: Spacing.two,
     borderRadius: Radius.pill,
+  },
+  segmentItemSelected: {
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.accent,
+    ...Shadows.card,
   },
-  tabSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  tabText: {
+  segmentText: {
     ...Typography.bodyBold,
+    color: colors.textSecondary,
+  },
+  segmentTextSelected: {
     color: colors.text,
   },
-  tabTextSelected: {
-    color: colors.onPrimary,
-  },
-  personality: {
-    ...Typography.body,
-    fontStyle: 'italic',
-    color: colors.textSecondary,
+  sectionTitle: {
+    ...Typography.heading,
+    color: colors.text,
+    marginTop: Spacing.two,
+    marginBottom: -Spacing.one,
   },
   card: {
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
-    padding: Spacing.three,
-    gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.one,
     ...Shadows.card,
   },
-  lineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.two,
+  // Kart içindeki satırlar arası ince çizgi
+  divider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
   lineText: {
     ...Typography.body,
     color: colors.text,
-    flex: 1,
+    paddingVertical: Spacing.three,
   },
   luckyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: Spacing.three,
   },
   luckyLabel: {
-    ...Typography.bodyBold,
-    color: colors.text,
+    ...Typography.body,
+    color: colors.textSecondary,
   },
   luckyColor: {
     flexDirection: 'row',
@@ -331,56 +342,49 @@ const styles = StyleSheet.create({
   },
   luckyName: {
     ...Typography.bodyBold,
-    color: colors.primary,
+    color: colors.text,
   },
   suggestion: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
+    paddingVertical: Spacing.three,
   },
   suggestionPhoto: {
-    width: 72,
+    width: 64,
     borderRadius: Radius.sm,
   },
   suggestionBody: {
     flex: 1,
     gap: Spacing.half,
   },
-  suggestionLabel: {
-    ...Typography.label,
-    color: colors.primary,
-  },
   suggestionName: {
-    ...Typography.heading,
+    ...Typography.bodyBold,
     color: colors.text,
   },
   suggestionText: {
-    ...Typography.body,
+    ...Typography.caption,
     color: colors.textSecondary,
   },
   link: {
     ...Typography.caption,
     color: colors.primary,
     fontWeight: '700',
+    marginTop: Spacing.half,
   },
-  range: {
-    ...Typography.bodyBold,
-    color: colors.textSecondary,
-  },
-  // "Bu hafta" kartındaki her bölüm (AŞK / PARA / DOLAP), aralarında ince çizgi
+  // "Bu hafta" kartındaki her bölüm (Aşk / Para / Dolap)
   weekPart: {
-    gap: Spacing.one,
-    paddingVertical: Spacing.one,
-  },
-  weekDivider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
     paddingTop: Spacing.three,
-    marginTop: Spacing.one,
   },
-  weekLabel: {
-    ...Typography.label,
-    color: colors.primary,
+  weekTitle: {
+    ...Typography.bodyBold,
+    color: colors.text,
+  },
+  weekText: {
+    ...Typography.body,
+    color: colors.text,
+    paddingTop: Spacing.one,
+    paddingBottom: Spacing.three,
   },
   empty: {
     flex: 1,

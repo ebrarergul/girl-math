@@ -12,7 +12,7 @@
 
 import * as Sharing from 'expo-sharing';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { Alert, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
@@ -47,7 +47,7 @@ export default function ShareScreen() {
   // Önizleme ekrana sığsın: hem genişliğe hem yüksekliğe göre sınırla
   const cardWidth = Math.min(screenWidth - Spacing.five * 2, (screenHeight * 0.62 * 9) / 16);
 
-  const cardRef = useRef<View>(null);
+  const cardRef = useRef<ComponentRef<typeof View>>(null);
   const [isSharing, setIsSharing] = useState(false);
 
   async function handleShare() {
@@ -91,7 +91,7 @@ export default function ShareScreen() {
           {month === '1' ? (
             <MonthlyShareCard
               summary={monthlySummary(items)}
-              colorText={monthColors.shares.length > 0 ? monthColors.text : null}
+              topColor={monthColors.shares[0] ?? null}
               width={cardWidth}
             />
           ) : quizResult ? (

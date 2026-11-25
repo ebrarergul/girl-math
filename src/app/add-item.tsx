@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   },
   photoText: {
     ...Typography.bodyBold,
-    color: colors.primary,
+    color: colors.textSecondary,
   },
   changePhoto: {
     ...Typography.bodyBold,

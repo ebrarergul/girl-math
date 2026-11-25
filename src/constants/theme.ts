@@ -16,20 +16,22 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
-// Marka paleti: "Hot Pink" – canlı fuşya pembe + pembemsi beyaz zemin, iOS sadeliğinde
+// Marka paleti: sıcak krem zemin + beyaz kartlar + koyu yazı; fuşya pembe SADECE vurgu
+// (butonlar, seçili durumlar, en önemli rakam). 25 Kasım 2026: eskiden zemin pembemsi beyazdı ve
+// açık pembe her yerdeydi; "çok pembe, göz yoruyor" denince taslak B (krem + pembe vurgu) seçildi.
 const Palette = {
   hotPink: '#D61F69', // Ana marka rengi: butonlar, seçili kategori, vurgulu fiyat (beyaz yazı okunur)
   hotPinkDark: '#B0144F', // Basılı buton, koyu vurgu
   neonPink: '#FF5C93', // Sadece süs: kalp rozeti, parıltı, geçiş. Üstüne yazı konmaz (okunmaz)
-  blush: '#FFE4EE', // Açık pembe: rozetler, seçili arka plan
-  rose: '#FFC8DC', // Orta pembe: büyük görsel alanları, fotoğraf yer tutucusu
-  pinkWhite: '#FFF7FA', // Pembemsi beyaz zemin
+  roseMist: '#F4E8EB', // Çok soluk, tozlu gül: simge daireleri, alıntı kutuları, çubuk zemini
+  dustyRose: '#E7C6D2', // Tozlu gül: ince çizgiler, zaman çizgisi, kesikli kenarlar
+  cream: '#F5F1EB', // Sıcak krem zemin
   white: '#FFFFFF',
-  ink: '#18181B', // Ana yazı
-  slate: '#71717A', // İkincil yazı
-  mist: '#9CA3AF', // Soluk yazı, ipuçları, üstü çizili fiyat
-  sand: '#F3E8E2', // İnce kenarlıklar
-  linen: '#F7EEEB', // Hafif dolgu (input, pasif buton)
+  ink: '#1C1A19', // Ana yazı (sıcak antrasit)
+  taupe: '#6F6863', // İkincil yazı (krem zeminde de okunur: kontrast ~4.9)
+  mist: '#A39C95', // Soluk yazı, ipuçları, üstü çizili fiyat
+  sand: '#E8E1D9', // İnce kenarlıklar
+  linen: '#EFEAE3', // Hafif dolgu (input, pasif buton, seçici zemini)
   green: '#10B981', // "Amorti edildi" / başarı
   amber: '#F59E0B', // "Hedefe doğru" / uyarı
   red: '#EF4444', // Silme / hata
@@ -37,15 +39,19 @@ const Palette = {
   chromeLight: '#FAFAFB',
   chromeMid: '#E4E5EA',
   chromeDark: '#C3C6CE',
+  // Story kartlarının pembe zemini (26 Kasım: "Story kısmı pembe olsun, girls girls")
+  storyLight: '#FDEAF1',
+  storyMid: '#F9CFDF',
+  storyDeep: '#F3A9C4',
 } as const;
 
 const light = {
   // Expo şablonunun kullandığı anahtarlar (ThemedText, ThemedView, sekmeler)
   text: Palette.ink,
-  background: Palette.pinkWhite,
+  background: Palette.cream,
   backgroundElement: Palette.linen,
-  backgroundSelected: Palette.blush,
-  textSecondary: Palette.slate,
+  backgroundSelected: Palette.roseMist,
+  textSecondary: Palette.taupe,
 
   // Girl Math anahtarları
   textMuted: Palette.mist,
@@ -54,9 +60,9 @@ const light = {
   primary: Palette.hotPink,
   primaryPressed: Palette.hotPinkDark,
   onPrimary: Palette.white, // Pembe zemin üstündeki yazı/ikon rengi
-  primarySoft: Palette.blush,
+  primarySoft: Palette.roseMist,
   highlight: Palette.neonPink, // Süs rengi (kalp, parıltı); üstüne yazı konmaz
-  accent: Palette.rose,
+  accent: Palette.dustyRose,
   success: Palette.green,
   warning: Palette.amber,
   danger: Palette.red,
@@ -138,6 +144,9 @@ export const Radius = {
 export const Gradients = {
   // Metal parlaması gibi dalgalanan gümüş: Ana sayfadaki burç şeridi ve burç sayfasının kartı
   chrome: [Palette.chromeMid, Palette.chromeLight, Palette.chromeDark, Palette.chromeLight] as const,
+  // Story kartları: açık şeker pembesinden gül pembesine (uygulama içi sayfalar krem kalır,
+  // Story paylaşılan "girls girls" an olduğu için pembe)
+  story: [Palette.storyLight, Palette.storyMid, Palette.storyDeep] as const,
 };
 
 export const Shadows = {

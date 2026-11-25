@@ -1,7 +1,11 @@
 /**
- * DOLAP KAHOOT'U (yarışma sayfası)
+ * DOLAP QUIZ (yarışma sayfası; dosya/adres adı eskisinden kalma "kahoot")
  *
- * Ana sayfadaki Kahoot kartı açar. Onur'un weeklyQuiz'inden haftanın 5 sorusu (sayfa açılınca
+ * 26 Kasım: ekranda "Kahoot" yerine "Dolap Quiz" (Kahoot! başka şirketin markası, App Store
+ * reddedebilir). Aynı gün taslak B turu: şıkların pembe çerçevesi gri, yanlış şık kırmızı,
+ * açıklama balonu beyaz kart, süre çubuğunun zemini açık gri.
+ *
+ * Ana sayfa → Keşfet → "Quiz" kutusu açar. Onur'un weeklyQuiz'inden haftanın 5 sorusu (sayfa açılınca
  * sabitlenir), her soru 15 saniye:
  * - Üstte "Soru 2/5" + kalan saniye ve 15 saniyede küçülen pembe süre çubuğu
  * - Soru kartı: soru cümlesi; 🔍 "Bu parça kim?" sorusunda fotoğraf yakından ve bulanık başlar,
@@ -165,7 +169,7 @@ export default function KahootScreen() {
   const header = (
     <Stack.Screen
       options={{
-        title: "Dolap Kahoot'u",
+        title: 'Dolap Quiz',
         headerBackTitle: 'Geri',
         headerTintColor: colors.primary,
         headerTitleStyle: { color: colors.text },
@@ -232,7 +236,7 @@ export default function KahootScreen() {
         {header}
         <Text style={styles.bigEmoji}>⏳</Text>
         <Text style={styles.centerTitle}>
-          {quiz.blockedMessage ?? 'Kahoot Cumartesi açılıyor, sabırsızlanma aşko 💅'}
+          {quiz.blockedMessage ?? 'Dolap Quiz Cumartesi açılıyor, sabırsızlanma aşko 💅'}
         </Text>
       </View>
     );
@@ -308,7 +312,7 @@ export default function KahootScreen() {
         {answered && (
           <Animated.View
             entering={FadeIn.duration(250)}
-            style={[styles.feedback, correctAnswer && styles.feedbackCorrect]}>
+            style={styles.feedback}>
             {correctAnswer && <Text style={styles.points}>{`+${lastPoints} puan`}</Text>}
             <Text style={styles.feedbackText}>{feedback}</Text>
           </Animated.View>
@@ -423,7 +427,7 @@ const styles = StyleSheet.create({
   counter: {
     ...Typography.label,
     fontSize: 12,
-    color: colors.primary,
+    color: colors.textSecondary,
   },
   seconds: {
     ...Typography.bodyBold,
@@ -435,7 +439,7 @@ const styles = StyleSheet.create({
   track: {
     height: 8,
     borderRadius: Radius.pill,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.backgroundElement,
     overflow: 'hidden',
   },
   bar: {
@@ -462,7 +466,7 @@ const styles = StyleSheet.create({
     aspectRatio: 3 / 4,
     borderRadius: Radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.backgroundElement,
   },
   zoomImage: {
     width: '100%',
@@ -501,11 +505,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     borderRadius: Radius.pill,
     backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.accent,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...Shadows.card,
   },
   optionPressed: {
-    backgroundColor: colors.primarySoft,
     borderColor: colors.primary,
     transform: [{ scale: 0.98 }],
   },
@@ -514,8 +518,8 @@ const styles = StyleSheet.create({
     borderColor: colors.success,
   },
   optionWrong: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.danger,
+    borderColor: colors.danger,
   },
   optionDim: {
     opacity: 0.45,
@@ -539,17 +543,13 @@ const styles = StyleSheet.create({
     ...Typography.heading,
     color: colors.onPrimary,
   },
-  // Açıklama balonu: yanlışta açık pembe, doğruda beyaz + yeşil çerçeve
+  // Açıklama balonu: beyaz kart (doğruysa üstte yeşil "+120 puan")
   feedback: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.card,
     borderRadius: Radius.lg,
     padding: Spacing.three,
     gap: Spacing.one,
-  },
-  feedbackCorrect: {
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.success,
+    ...Shadows.card,
   },
   points: {
     ...Typography.heading,
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
   },
   resultLabel: {
     ...Typography.label,
-    color: colors.primary,
+    color: colors.textSecondary,
   },
   badgeTitle: {
     ...Typography.hero,

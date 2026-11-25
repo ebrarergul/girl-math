@@ -1,5 +1,5 @@
 /**
- * ETKİNLİK GERİ SAYIMI (Ana sayfa, "Senin için" kartında bir satır)
+ * ETKİNLİK GERİ SAYIMI (Ana sayfa, "Bugün ne giydin?" kartının altında tek satırlık kart)
  *
  * Zaman Aşımı = Bedava: etkinliğine 7 gün ya da daha az kalmış parçalardan en yakını.
  * Solda takvim simgesi, ortada etkinlik adı ("Düğün") ve altında
@@ -32,16 +32,22 @@ function daysLeft(item: ClothingItem): number | null {
   return null;
 }
 
-export function EventCountdownCard({ items }: { items: ClothingItem[] }) {
-  const router = useRouter();
-
-  const next = items
+// En yakın etkinlik (7 gün içinde): { item, days } ya da yoksa undefined. Ana sayfa da kullanır
+// (yakında etkinlik yoksa boş kart çizilmesin diye)
+export function nextEvent(items: ClothingItem[]): { item: ClothingItem; days: number } | undefined {
+  return items
     .map((item) => ({ item, days: daysLeft(item) }))
     .filter(
       (entry): entry is { item: ClothingItem; days: number } =>
         entry.days !== null && entry.days <= SHOW_DAYS_BEFORE,
     )
     .sort((a, b) => a.days - b.days)[0];
+}
+
+export function EventCountdownCard({ items }: { items: ClothingItem[] }) {
+  const router = useRouter();
+
+  const next = nextEvent(items);
   const event = next?.item.event;
   if (!next || !event) {
     return null;

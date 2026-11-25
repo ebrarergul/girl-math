@@ -1,8 +1,9 @@
 /**
  * CÜZDAN EKRANI
  *
- * Dolabın parasal özeti: dolap değeri ve Starbucks Endeksi karşılığı, şaka istatistik
- * "Girl Math kazancın" (sayfanın tek pembe vurgusu) ve 4 küçük istatistik kutusu. Tüm sayılar
+ * Dolabın parasal özeti: tek beyaz kartta dolap değeri (koyu büyük rakam) + Starbucks Endeksi,
+ * ince çizginin altında şaka istatistik "Girl Math kazancın" (pembe rakam, sayfanın tek pembe
+ * vurgusu; 26 Kasım'a kadar ayrı pembe dolgulu kutuydu) ve 4 küçük istatistik kutusu. Tüm sayılar
  * getWardrobeStats'tan gelir. Altta tek kartta Analizlerin + Utanç Duvarı + Almalı mıyım? satırları
  * (Utanç Duvarı'nın her zaman açık girişi burası; Ana sayfadaki bağlantı sadece unutulan parça varken çıkar).
  * Aylık harcama ("bu ay dolaba giren") Analizlerin → Aylık özet'te; burada tekrar edilmez.
@@ -95,18 +96,23 @@ export default function WalletScreen() {
                   {stats.totalValue.toLocaleString('tr-TR')}
                   <Text style={styles.heroCurrency}> ₺</Text>
                 </Text>
-                <View style={styles.divider} />
                 <Text style={styles.starbucks}>
                   Dolabın {starbucksIndexText(stats.totalValue)}
                 </Text>
+                <View style={styles.divider} />
+                {/* Girl Math kazancı aynı kartta: sayfanın tek pembe vurgusu bu rakam */}
+                <View style={styles.savingsRow}>
+                  <View style={styles.savingsText}>
+                    <Text style={styles.heroLabel}>GIRL MATH KAZANCIN</Text>
+                    <Text style={styles.savingsCaption}>
+                      Giydikçe kazandığın. Bankan bunu tanımıyor ama biz tanıyoruz 💅
+                    </Text>
+                  </View>
+                  <Text style={styles.savingsValue} numberOfLines={1}>
+                    {formatTL(stats.girlMathSavings)}
+                  </Text>
+                </View>
               </View>
-
-              <StatTile
-                label="GIRL MATH kazancın"
-                value={formatTL(stats.girlMathSavings)}
-                caption="Giydikçe kazandığın. Bankan bunu tanımıyor ama biz tanıyoruz 💅"
-                tone="primary"
-              />
 
               <View style={styles.row}>
                 <StatTile
@@ -267,7 +273,7 @@ const styles = StyleSheet.create({
     ...Typography.hero,
     fontSize: 44,
     lineHeight: 52,
-    color: colors.primary,
+    color: colors.text,
   },
   heroCurrency: {
     fontFamily: Fonts?.sans,
@@ -276,13 +282,33 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
   },
   divider: {
-    height: 1,
+    height: StyleSheet.hairlineWidth,
     backgroundColor: colors.border,
-    marginVertical: Spacing.two,
+    marginVertical: Spacing.three,
   },
   starbucks: {
-    ...Typography.bodyBold,
-    color: colors.text,
+    ...Typography.body,
+    color: colors.textSecondary,
+  },
+  savingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  savingsText: {
+    flex: 1,
+    gap: Spacing.one,
+  },
+  savingsCaption: {
+    ...Typography.caption,
+    color: colors.textMuted,
+  },
+  savingsValue: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    color: colors.primary,
   },
   row: {
     flexDirection: 'row',

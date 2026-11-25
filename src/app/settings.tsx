@@ -9,6 +9,8 @@
  *   dahil; yüklemeden önce özetle onay sorar) ve "Bütün verileri sil" (iki kez sorar; sadece dolap
  *   silinir, sözleşme kalır)
  * Ana sayfanın sağ üstündeki ⚙️ butonuyla açılır.
+ * 26 Kasım (taslak B): grup başlıkları sade ("Bildirimler"), simgeler açık gül dairede pembe çizgi
+ * (eskiden her satırda pembe dolgulu kare vardı), çizgiler simgenin sağından, gizlilik kutusu sade not.
  */
 
 import Constants from 'expo-constants';
@@ -162,16 +164,17 @@ export default function SettingsScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Section title="BİLDİRİMLER">
+        <Section title="Bildirimler">
           <Row
-            icon="bell.fill"
+            first
+            icon="bell"
             title="Bildirimler"
             detail={notificationsOn === null ? '…' : notificationsOn ? 'Açık' : undefined}
             action={notificationsOn === false ? 'Aç' : undefined}
             onPress={notificationsOn === false ? handleEnableNotifications : undefined}
           />
           <Row
-            icon="paperplane.fill"
+            icon="paperplane"
             title="Deneme bildirimi gönder"
             onPress={handleTestNotification}
             chevron
@@ -181,39 +184,41 @@ export default function SettingsScreen() {
           Ödül, takılma ve akşam 20:00 hatırlatması bildirimleri. Hepsi telefonunda oluşturulur.
         </Text>
 
-        <Section title="GIRL MATH">
+        <Section title="Girl Math">
           <Row
-            icon="moon.stars.fill"
+            first
+            icon="moon.stars"
             title="Burcum"
             detail={zodiac ? `${zodiacGlyph(zodiacSign(zodiac).emoji)} ${zodiac}` : 'Seçilmedi'}
             onPress={() => router.push('/zodiac')}
             chevron
           />
           <Row
-            icon="doc.text.fill"
+            icon="doc.text"
             title="Kullanım Sözleşmesi"
             onPress={() => router.push('/agreement')}
             chevron
           />
-          <Row icon="info.circle.fill" title="Sürüm" detail={version} />
+          <Row icon="info.circle" title="Sürüm" detail={version} />
         </Section>
 
-        <Section title="VERİLER">
+        <Section title="Veriler">
           <Row
-            icon="square.and.arrow.up.fill"
+            first
+            icon="square.and.arrow.up"
             title="Yedeği dışa aktar"
             detail={exporting ? 'Hazırlanıyor…' : items.length === 0 ? 'Dolap boş' : undefined}
             onPress={items.length > 0 && !exporting ? handleExport : undefined}
             chevron={items.length > 0 && !exporting}
           />
           <Row
-            icon="square.and.arrow.down.fill"
+            icon="square.and.arrow.down"
             title="Yedeği yükle"
             onPress={handleImport}
             chevron
           />
           <Row
-            icon="trash.fill"
+            icon="trash"
             title="Bütün verileri sil"
             destructive
             onPress={items.length > 0 ? handleResetAll : undefined}
@@ -221,12 +226,12 @@ export default function SettingsScreen() {
           />
         </Section>
         <Text style={styles.note}>
-          Uygulamayı silmeden ya da telefon değiştirmeden önce yedek al 💾 Yedek tek dosyadır
+          Uygulamayı silmeden ya da telefon değiştirmeden önce yedek al. Yedek tek dosyadır
           (fotoğraflar dahil); Dosyalar’a, iCloud’a ya da kendine WhatsApp’tan gönderebilirsin.
         </Text>
 
         <View style={styles.privacy}>
-          <SymbolView name="lock.fill" tintColor={colors.primary} size={18} />
+          <SymbolView name="lock" tintColor={colors.textSecondary} size={16} />
           <View style={styles.privacyBody}>
             <Text style={styles.privacyTitle}>Gizlilik</Text>
             <Text style={styles.privacyText}>
@@ -236,7 +241,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <Text style={styles.signature}>Ebrar & Onur tarafından sevgiyle yapıldı 🎀</Text>
+        <Text style={styles.signature}>Ebrar & Onur tarafından sevgiyle yapıldı</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -252,7 +257,8 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-// Gruptaki tek satır: solda pembe simge, ortada başlık, sağda bilgi / buton / ok
+// Gruptaki tek satır: solda açık gül dairede pembe simge, ortada başlık, sağda bilgi / buton / ok.
+// first: gruptaki ilk satır (üstünde çizgi yok); çizgi simgenin sağından başlar (iPhone Ayarları gibi)
 function Row({
   icon,
   title,
@@ -260,8 +266,10 @@ function Row({
   action,
   chevron = false,
   destructive = false,
+  first = false,
   onPress,
 }: {
+  first?: boolean;
   icon: SFSymbol;
   title: string;
   detail?: string;
@@ -276,18 +284,29 @@ function Row({
       disabled={!onPress}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}>
       <View style={[styles.rowIcon, destructive && styles.rowIconDestructive]}>
-        <SymbolView name={icon} tintColor={colors.onPrimary} size={15} />
+        <SymbolView
+          name={icon}
+          tintColor={destructive ? colors.danger : colors.primary}
+          size={16}
+        />
       </View>
-      <Text style={[styles.rowTitle, destructive && styles.rowTitleDestructive]}>{title}</Text>
-      {detail && <Text style={styles.rowDetail}>{detail}</Text>}
-      {action && (
-        <View style={styles.actionPill}>
-          <Text style={styles.actionText}>{action}</Text>
-        </View>
-      )}
-      {chevron && (
-        <SymbolView name="chevron.right" tintColor={colors.textMuted} size={13} weight="semibold" />
-      )}
+      <View style={[styles.rowBody, !first && styles.rowDivider]}>
+        <Text style={[styles.rowTitle, destructive && styles.rowTitleDestructive]}>{title}</Text>
+        {detail && <Text style={styles.rowDetail}>{detail}</Text>}
+        {action && (
+          <View style={styles.actionPill}>
+            <Text style={styles.actionText}>{action}</Text>
+          </View>
+        )}
+        {chevron && (
+          <SymbolView
+            name="chevron.right"
+            tintColor={colors.textMuted}
+            size={13}
+            weight="semibold"
+          />
+        )}
+      </View>
     </Pressable>
   );
 }
@@ -308,9 +327,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing.three,
   },
   sectionTitle: {
-    ...Typography.label,
-    color: colors.textSecondary,
-    marginLeft: Spacing.two,
+    ...Typography.heading,
+    color: colors.text,
   },
   group: {
     backgroundColor: colors.card,
@@ -322,24 +340,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    paddingLeft: Spacing.three,
   },
   rowPressed: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.backgroundElement,
+  },
+  rowBody: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    paddingRight: Spacing.three,
+  },
+  rowDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
   rowIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.sm - 4,
-    backgroundColor: colors.primary,
+    width: 32,
+    height: 32,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rowIconDestructive: {
-    backgroundColor: colors.danger,
+    backgroundColor: colors.backgroundElement,
   },
   rowTitleDestructive: {
     color: colors.danger,
@@ -370,12 +397,11 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginHorizontal: Spacing.two,
   },
+  // Gizlilik: kutu değil, kilit simgeli sade not
   privacy: {
     flexDirection: 'row',
     gap: Spacing.three,
-    backgroundColor: colors.primarySoft,
-    borderRadius: Radius.lg,
-    padding: Spacing.three,
+    paddingHorizontal: Spacing.two,
     marginTop: Spacing.four,
   },
   privacyBody: {
@@ -387,7 +413,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   privacyText: {
-    ...Typography.body,
+    ...Typography.caption,
     color: colors.textSecondary,
   },
   signature: {
