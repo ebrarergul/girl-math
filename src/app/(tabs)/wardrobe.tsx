@@ -24,6 +24,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClothingCard } from '@/components/clothing-card';
+import { CoachMark, useCoachMarks } from '@/components/coach-mark';
 import { useQuickWear } from '@/components/quick-wear';
 import { ScreenBackground } from '@/components/screen-background';
 import { BottomTabInset, Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
@@ -70,6 +71,8 @@ export default function WardrobeScreen() {
   const router = useRouter();
   const { items, isLoaded } = useApp();
   const { wearOnce, toastView } = useQuickWear();
+  // Tanıtım okları (birer kez): önce "basılı tut = hızlı Giydim", sonra Kombinlerim
+  const coach = useCoachMarks(['wardrobe-hold', 'wardrobe-outfits'], items.length > 0);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category | typeof ALL>(ALL);
   const [sort, setSort] = useState<SortKey>('newest');
@@ -107,6 +110,8 @@ export default function WardrobeScreen() {
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          // Ok balonu başlığın altındaki kartların üstüne taşabilsin diye başlık öne alınır
+          ListHeaderComponentStyle={coach.active ? styles.headerRaised : undefined}
           ListHeaderComponent={
             <View style={styles.header}>
               <View style={styles.titleRow}>
@@ -116,21 +121,32 @@ export default function WardrobeScreen() {
                 </View>
                 <View style={styles.headerButtons}>
                   {/* Kaydedilen kombinler (arşiv): beyaz yuvarlak simge, yanında pembe "+" */}
-                  <Pressable
-                    onPress={() => router.push('/outfits')}
-                    accessibilityLabel="Kombinlerim"
-                    hitSlop={4}
-                    style={({ pressed }) => [
-                      styles.outfitsButton,
-                      pressed && styles.outfitsButtonPressed,
-                    ]}>
-                    <SymbolView
-                      name={{ ios: 'square.grid.2x2', android: 'grid_view', web: 'grid_view' }}
-                      tintColor={colors.primary}
-                      size={20}
-                      weight="semibold"
-                    />
-                  </Pressable>
+                  <CoachMark
+                    visible={coach.active === 'wardrobe-outfits'}
+                    text="Kombinlerin burada, yeni kombin de kurabilirsin"
+                    placement="below"
+                    align="right"
+                    arrowOffset={24}
+                    onDismiss={() => coach.done('wardrobe-outfits')}>
+                    <Pressable
+                      onPress={() => {
+                        coach.done('wardrobe-outfits');
+                        router.push('/outfits');
+                      }}
+                      accessibilityLabel="Kombinlerim"
+                      hitSlop={4}
+                      style={({ pressed }) => [
+                        styles.outfitsButton,
+                        pressed && styles.outfitsButtonPressed,
+                      ]}>
+                      <SymbolView
+                        name={{ ios: 'square.grid.2x2', android: 'grid_view', web: 'grid_view' }}
+                        tintColor={colors.primary}
+                        size={20}
+                        weight="semibold"
+                      />
+                    </Pressable>
+                  </CoachMark>
                   <Pressable
                     onPress={() => router.push('/add-item')}
                     accessibilityLabel="Yeni parça ekle"
@@ -192,25 +208,34 @@ export default function WardrobeScreen() {
                 </Text>
               )}
 
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.chipScroll}
-                contentContainerStyle={styles.chips}>
-                {FILTERS.map((name) => {
-                  const selected = name === category;
-                  return (
-                    <Pressable
-                      key={name}
-                      onPress={() => setCategory(name)}
-                      style={[styles.chip, selected && styles.chipSelected]}>
-                      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                        {name}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
+              {/* "Basılı tut" ipucu kategori haplarının altında, ilk kartı gösterir */}
+              <CoachMark
+                visible={coach.active === 'wardrobe-hold'}
+                text="Bir parçayı basılı tut: hızlıca Giydim"
+                placement="below"
+                align="left"
+                arrowOffset={70}
+                onDismiss={() => coach.done('wardrobe-hold')}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.chipScroll}
+                  contentContainerStyle={styles.chips}>
+                  {FILTERS.map((name) => {
+                    const selected = name === category;
+                    return (
+                      <Pressable
+                        key={name}
+                        onPress={() => setCategory(name)}
+                        style={[styles.chip, selected && styles.chipSelected]}>
+                        <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                          {name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </CoachMark>
             </View>
           }
           ListEmptyComponent={
@@ -255,7 +280,10 @@ export default function WardrobeScreen() {
               <ClothingCard
                 item={item}
                 onPress={() => router.push({ pathname: '/item/[id]', params: { id: item.id } })}
-                onLongPress={() => wearOnce(item)}
+                onLongPress={() => {
+                  coach.done('wardrobe-hold');
+                  wearOnce(item);
+                }}
               />
             ) : (
               <View style={styles.spacer} />
@@ -293,6 +321,10 @@ const styles = StyleSheet.create({
   titleText: {
     flex: 1,
     gap: Spacing.one,
+  },
+  headerRaised: {
+    zIndex: 20,
+    elevation: 20,
   },
   headerButtons: {
     flexDirection: 'row',

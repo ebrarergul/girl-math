@@ -29,6 +29,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { INFINITE_COST, formatTL, itemComparisonText } from '@/components/clothing-card';
+import { CoachMark, useCoachMarks } from '@/components/coach-mark';
 import { ColorSwatch } from '@/components/color-picker';
 import { dateFromString } from '@/components/event-picker';
 import { PlaceSheet } from '@/components/place-sheet';
@@ -71,6 +72,9 @@ export default function ItemDetailScreen() {
 
   // "Giydim"e basınca önce "Nereye gidiyorsun?" penceresi açılır
   const [placeOpen, setPlaceOpen] = useState(false);
+
+  // Tanıtım okları (birer kez, sırayla): Giydim → Bununla ne giyerim?
+  const coach = useCoachMarks(['item-wear', 'item-outfit'], Boolean(item));
 
   // Kutlama balonu: id her seferinde değişir ki aynı mesaj üst üste gelse de animasyon baştan oynasın
   const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
@@ -322,26 +326,34 @@ export default function ItemDetailScreen() {
 
 
           {/* Kombin önerisi ekranı (Onur'un kombin motoru) */}
-          <Pressable
-            onPress={() => router.push({ pathname: '/outfit/[id]', params: { id: item.id } })}
-            style={({ pressed }) => [styles.outfitCard, pressed && styles.outfitCardPressed]}>
-            <View style={styles.outfitIcon}>
+          <CoachMark
+            visible={coach.active === 'item-outfit'}
+            text="Bu parçayla kombin önerisi al"
+            onDismiss={() => coach.done('item-outfit')}>
+            <Pressable
+              onPress={() => {
+                coach.done('item-outfit');
+                router.push({ pathname: '/outfit/[id]', params: { id: item.id } });
+              }}
+              style={({ pressed }) => [styles.outfitCard, pressed && styles.outfitCardPressed]}>
+              <View style={styles.outfitIcon}>
+                <SymbolView
+                  name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
+                  tintColor={colors.primary}
+                  size={18}
+                />
+              </View>
+              <View style={styles.outfitBody}>
+                <Text style={styles.outfitTitle}>Bununla ne giyerim?</Text>
+                <Text style={styles.outfitText}>Dolabından kombin önerisi</Text>
+              </View>
               <SymbolView
-                name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
-                tintColor={colors.primary}
-                size={18}
+                name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+                tintColor={colors.textMuted}
+                size={13}
               />
-            </View>
-            <View style={styles.outfitBody}>
-              <Text style={styles.outfitTitle}>Bununla ne giyerim?</Text>
-              <Text style={styles.outfitText}>Dolabından kombin önerisi</Text>
-            </View>
-            <SymbolView
-              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-              tintColor={colors.textMuted}
-              size={13}
-            />
-          </Pressable>
+            </Pressable>
+          </CoachMark>
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -410,11 +422,20 @@ export default function ItemDetailScreen() {
             />
           </Pressable>
         )}
-        <Pressable
-          onPress={() => setPlaceOpen(true)}
-          style={({ pressed }) => [styles.wearButton, pressed && styles.wearPressed]}>
-          <Text style={styles.wearText}>{eventDay ? 'Bugün bedavaya giy ✨' : 'Giydim ✨'}</Text>
-        </Pressable>
+        <CoachMark
+          visible={coach.active === 'item-wear'}
+          text="Bu parçayı giydiğin gün bas, maliyeti düşsün"
+          onDismiss={() => coach.done('item-wear')}
+          style={styles.wearWrap}>
+          <Pressable
+            onPress={() => {
+              coach.done('item-wear');
+              setPlaceOpen(true);
+            }}
+            style={({ pressed }) => [styles.wearButton, pressed && styles.wearPressed]}>
+            <Text style={styles.wearText}>{eventDay ? 'Bugün bedavaya giy ✨' : 'Giydim ✨'}</Text>
+          </Pressable>
+        </CoachMark>
       </View>
       <PlaceSheet
         visible={placeOpen}
@@ -776,8 +797,11 @@ const styles = StyleSheet.create({
   undoPressed: {
     backgroundColor: colors.primarySoft,
   },
-  wearButton: {
+  // Giydim butonunun sarmalayıcısı (ok balonu için): butonla aynı genişlikte
+  wearWrap: {
     flex: 1,
+  },
+  wearButton: {
     height: 56,
     borderRadius: Radius.pill,
     backgroundColor: colors.primary,

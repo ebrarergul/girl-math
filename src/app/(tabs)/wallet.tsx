@@ -12,9 +12,11 @@
 import { useRouter } from 'expo-router';
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { formatTL, shameWallItems } from '@/components/clothing-card';
+import { CoachMark, useCoachMarks } from '@/components/coach-mark';
 import { StatTile } from '@/components/stat-tile';
 import { ScreenBackground } from '@/components/screen-background';
 import {
@@ -27,6 +29,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
+import { useCountUp } from '@/hooks/use-count-up';
 import { starbucksIndexText } from '@/lib/starbucks-index';
 import { getWardrobeStats } from '@/lib/stats';
 
@@ -37,10 +40,16 @@ export default function WalletScreen() {
   const { items, isLoaded } = useApp();
   const stats = getWardrobeStats(items);
   const isEmpty = isLoaded && items.length === 0;
+  // Büyük rakamlar sayfa açılınca 0'dan sayarak yükselir
+  const shownValue = useCountUp(stats.totalValue);
+  const shownSavings = useCountUp(stats.girlMathSavings);
 
   // Utanç Duvarı satırı: kaç parça askıda ve toplam ne kadar zarar yazıyor (duvar sayfasıyla aynı hesap)
   const wall = shameWallItems(items);
   const wallLoss = wall.reduce((sum, entry) => sum + entry.loss, 0);
+
+  // Tanıtım okları (birer kez, sırayla): Almalı mıyım? → Analizlerin → Story paylaş
+  const coach = useCoachMarks(['wallet-buy', 'wallet-insights', 'wallet-share'], !isEmpty);
 
   return (
     <ScreenBackground>
@@ -53,17 +62,28 @@ export default function WalletScreen() {
             </View>
             {/* Dolap kartını Story olarak paylaş (dolap boşken paylaşacak bir şey yok) */}
             {!isEmpty && isLoaded && (
-              <Pressable
-                onPress={() => router.push('/share')}
-                accessibilityLabel="Dolabını paylaş"
-                style={({ pressed }) => [styles.shareButton, pressed && styles.shareButtonPressed]}>
-                <SymbolView
-                  name={{ ios: 'square.and.arrow.up', android: 'share', web: 'share' }}
-                  tintColor={colors.primary}
-                  size={20}
-                  weight="semibold"
-                />
-              </Pressable>
+              <CoachMark
+                visible={coach.active === 'wallet-share'}
+                text="Dolabını Story'de paylaş"
+                placement="below"
+                align="right"
+                arrowOffset={24}
+                onDismiss={() => coach.done('wallet-share')}>
+                <Pressable
+                  onPress={() => {
+                    coach.done('wallet-share');
+                    router.push('/share');
+                  }}
+                  accessibilityLabel="Dolabını paylaş"
+                  style={({ pressed }) => [styles.shareButton, pressed && styles.shareButtonPressed]}>
+                  <SymbolView
+                    name={{ ios: 'square.and.arrow.up', android: 'share', web: 'share' }}
+                    tintColor={colors.primary}
+                    size={20}
+                    weight="semibold"
+                  />
+                </Pressable>
+              </CoachMark>
             )}
           </View>
 
@@ -90,10 +110,10 @@ export default function WalletScreen() {
           ) : (
             <>
               {/* Dolap değeri: rakam dergi yazı tipinde, ₺ sade yazı tipinde */}
-              <View style={styles.hero}>
+              <Animated.View entering={FadeInDown.duration(450)} style={styles.hero}>
                 <Text style={styles.heroLabel}>DOLAP DEĞERİN</Text>
                 <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
-                  {stats.totalValue.toLocaleString('tr-TR')}
+                  {shownValue.toLocaleString('tr-TR')}
                   <Text style={styles.heroCurrency}> ₺</Text>
                 </Text>
                 <Text style={styles.starbucks}>
@@ -109,12 +129,13 @@ export default function WalletScreen() {
                     </Text>
                   </View>
                   <Text style={styles.savingsValue} numberOfLines={1}>
-                    {formatTL(stats.girlMathSavings)}
+                    {formatTL(shownSavings)}
                   </Text>
                 </View>
-              </View>
+              </Animated.View>
 
-              <View style={styles.row}>
+              {/* Kartlar sırayla, hafifçe aşağıdan kayarak belirir */}
+              <Animated.View entering={FadeInDown.duration(450).delay(80)} style={styles.row}>
                 <StatTile
                   label="Ortalama maliyet"
                   value={
@@ -127,8 +148,8 @@ export default function WalletScreen() {
                   value={String(stats.totalWears)}
                   caption={`bu ay ${stats.wearsThisMonth}`}
                 />
-              </View>
-              <View style={styles.row}>
+              </Animated.View>
+              <Animated.View entering={FadeInDown.duration(450).delay(160)} style={styles.row}>
                 <StatTile
                   label="Amorti edilen"
                   value={`${stats.paidOffCount} / ${stats.totalItems}`}
@@ -139,21 +160,31 @@ export default function WalletScreen() {
                   value={String(stats.neverWornCount)}
                   caption="parça sırasını bekliyor"
                 />
-              </View>
+              </Animated.View>
             </>
           )}
 
           {/* iPhone Ayarları gibi tek kartta satırlar: Analizlerin (dolap boşken yok) + Almalı mıyım?
               ("Almalı mıyım?" dolap boşken de görünür: ilk alışverişten önce de işe yarar) */}
           {isLoaded && (
-            <View style={styles.linkGroup}>
+            <Animated.View entering={FadeInDown.duration(450).delay(240)} style={styles.linkGroup}>
               {!isEmpty && (
-                <LinkRow
-                  icon="chart.bar"
-                  title="Analizlerin"
-                  text="Aylık özet, renklerin, satmayı düşün"
-                  onPress={() => router.push('/insights')}
-                />
+                <CoachMark
+                  visible={coach.active === 'wallet-insights'}
+                  text="Aylık özetin ve renklerin burada"
+                  align="left"
+                  arrowOffset={20}
+                  onDismiss={() => coach.done('wallet-insights')}>
+                  <LinkRow
+                    icon="chart.bar"
+                    title="Analizlerin"
+                    text="Aylık özet, renklerin, satmayı düşün"
+                    onPress={() => {
+                      coach.done('wallet-insights');
+                      router.push('/insights');
+                    }}
+                  />
+                </CoachMark>
               )}
               {!isEmpty && (
                 <LinkRow
@@ -168,14 +199,24 @@ export default function WalletScreen() {
                   divider
                 />
               )}
-              <LinkRow
-                icon="bag.badge.questionmark"
-                title="Almalı mıyım?"
-                text="Almadan önce Girl Math'e sor"
-                onPress={() => router.push('/should-i-buy')}
-                divider={!isEmpty}
-              />
-            </View>
+              <CoachMark
+                visible={coach.active === 'wallet-buy'}
+                text="Bir şey almadan önce buraya sor"
+                align="left"
+                arrowOffset={20}
+                onDismiss={() => coach.done('wallet-buy')}>
+                <LinkRow
+                  icon="bag.badge.questionmark"
+                  title="Almalı mıyım?"
+                  text="Almadan önce Girl Math'e sor"
+                  onPress={() => {
+                    coach.done('wallet-buy');
+                    router.push('/should-i-buy');
+                  }}
+                  divider={!isEmpty}
+                />
+              </CoachMark>
+            </Animated.View>
           )}
         </ScrollView>
       </SafeAreaView>

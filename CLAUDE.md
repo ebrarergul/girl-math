@@ -440,6 +440,19 @@ sellList(items)                     // "Satmayı düşün": 90+ gündür giyilme
 Uyum eşitse uzun süredir giyilmeyen parça öne çıkar (girl math). Rengi olmayan parça da önerilir
 (en sonda; ekranda "Rengi girilmemiş · Ekle 🎨" hapı olarak, dokununca düzenleme formu açılır).
 
+**Tanıtım okları** (`useApp()` + `@/components/coach-mark`, Ebrar ekledi 26 Kasım) – her önemli yere bir kez
+zıplayan pembe ok balonu; dokununca kaybolur, bir daha çıkmaz.
+```tsx
+const { seenTips, markTipSeen } = useApp();   // görülen ipuçlarının kimlikleri, telefonda `girlmath.seenTips`
+const coach = useCoachMarks(['wallet-buy', 'wallet-share'], enabled);  // sayfada sırayla, aynı anda tek ok
+<CoachMark visible={coach.active === 'wallet-buy'} text="…" placement="above|below" align="center|left|right"
+  onDismiss={() => coach.done('wallet-buy')}>{hedef}</CoachMark>   // hedefin onPress'inde de coach.done(...)
+```
+Şu anki oklar: Ana sayfa `home-wear` → `home-fact` → `home-explore`; Dolap `wardrobe-hold` → `wardrobe-outfits`;
+Cüzdan `wallet-buy` → `wallet-insights` → `wallet-share`; detay `item-wear` → `item-outfit`. Dolap boşken çıkmaz.
+`resetAll` ve yedek bunlara dokunmaz (Sözleşme gibi cihaz bilgisi). Kaydırılan listenin içinde balon kesilir: hedef
+listenin dışından sarılır (Dolap'ta başlık `ListHeaderComponentStyle` ile öne alınır). Tekrar görmek için Expo Go silinip yüklenir.
+
 **Veri tipi** (`@/lib/types`): `ClothingItem` → `id, name, category, price, photoFileName,
 wearDates, targetWears, createdAt, color?, colorHex?, wearPlaces?, event?`. Kategoriler `CATEGORIES` listesinde.
 
@@ -484,6 +497,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     Utanç Duvarı'yla aynı zarar hesabı: günlük ≥ 10 TL ise günlük, değilse biriken zarar)
   - `updateItem` – Onur bugün çalışmadığı için Ebrar ekledi (`app-context.tsx`, kural 2: yeni
     şey eklemek serbest). Onur kontrol eder; adını değiştirmek/silmek düzenleme ekranını bozar.
+  - `seenTips` / `markTipSeen` (tanıtım okları, `girlmath.seenTips`) – Ebrar ekledi 26 Kasım, Onur meşgulken (kural 2).
   - `resetAll` – aynı şekilde Ebrar ekledi (Ayarlar'daki "Bütün verileri sil" kullanır).
   - **Yeni kararlaştırılan özellikler (16 Ekim, Onur + Ebrar), bu sırayla:**
     1. Renk + kombin motoru ✅
@@ -583,9 +597,11 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
       en fazla 8 parça `quickWearItems` + "Tümü →", bkz. Bilinen durumlar; giyilen pembe çerçeve);
       etkinlik satırı (sadece 7 gün kala, `nextEvent`); **Girl Math gerçeği** beyaz kartı (koyu büyük
       rakam, dokununca sıradaki – `buildFacts`, altta noktalar); **"Günün kombini"**; **"Keşfet"**
-      (`ExploreTiles`: Burcun · Analiz · Alayım mı? · hafta sonu Kahoot). Kaldırılanlar: pembe vitrin
+      (`ExploreTiles`: Burcun · hafta sonu Dolap Quiz satırları; Analiz ve Almalı mıyım? sadece Cüzdan'da). Kaldırılanlar: pembe vitrin
       kartı, gümüş burç şeridi, "Senin için", "Unutulan parça" (Utanç Duvarı Cüzdan'da), "Dolabının
-      yıldızı". Dolap boşsa ekleme butonu.
+      yıldızı". Dolap boşsa `EmptyHome` (`empty-home.tsx`, 26 Kasım): "Girl Math nasıl çalışır?" kartı – pembe
+      geçişli canlı örnek (3.000 ₺'lik ceketin giyim başı maliyeti kendiliğinden erir, çubuk dolar, kıyas
+      değişir), zıplayan pembe "Buradan başla" balonu + "İlk parçanı ekle"; "İlk adımların" listesi.
     - `wardrobe.tsx` – Dolap: büyük başlık + beyaz yuvarlak ⊞ "Kombinlerim" + pembe "+" butonu (alt yazı
       başlık satırının altında, tam genişlikte), arama + sıralama butonu
       (En yeni / En pahalı / En az giyilen / Amortiye en yakın; varsayılan dışındaysa buton
@@ -696,6 +712,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     Karartma rengi temada `overlay`.
   - `daily-outfit-card.tsx` – Ana sayfada "Günün kombini" (başlık kartın üstünde): en unutulan 3
     parçadan güne göre biri, etrafında `outfitFor` kombini; kolaj + cümle + "Kombini gör →".
+  - `coach-mark.tsx` – tanıtım okları (`CoachMark`, `useCoachMarks`; bkz. "Hazır araçlar → Tanıtım okları").
+  - `empty-home.tsx` – dolap boşken Ana sayfa (canlı eriyen maliyet örneği, "Buradan başla" balonu, ilk adımlar).
   - `piece-picker-sheet.tsx` – "Hangi parçayla başlayalım?" alttan açılan pencere (4 sütunlu küçük
     fotoğraf ızgarası + ad; `PaletteSheet`/`PlaceSheet` kalıbı). Kombinlerim'deki "+" kullanır.
   - `today-row.tsx` – tek kartta satırlar: `TodayGroup` (beyaz kart, satırlar arası ince çizgi) +
@@ -708,15 +726,14 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     dokununca seçim kalkar, `note` ile alt yazı; `onPickCustom` verilirse sonda gökkuşağı "+" →
     alttan `PaletteSheet`, seçilen ton `customHex` olarak sıranın başında) ve tek renk yuvarlağı
     `ColorSwatch` (beyazın kenarı var, "Desenli" çok renkli, `hex` verilirse o ton). Form, detay ve kombin ekranı kullanır.
-  - `explore-tiles.tsx` – Ana sayfanın en altındaki "Keşfet" kutuları (yan yana beyaz kutu: simge
-    dairesi + ad + alt yazı): Burcun (burç sembolü/adı, seçilmediyse "Seç"), Analiz (ayın adı),
-    Almalı mıyım?, Kahoot (sadece hafta sonu ya da bu hafta oynandıysa; `__DEV__`'de hafta içi "Test").
-    25 Kasım'da eski `horoscope-strip.tsx` (gümüş burç şeridi) ve `kahoot-card.tsx` silindi, yerine bu geldi.
+  - `explore-tiles.tsx` – Ana sayfanın en altındaki "Keşfet": tek kartta satırlar (`TodayGroup`/`TodayRow`):
+    Burcun (seçilmediyse "Seç") ve Dolap Quiz (sadece hafta sonu ya da bu hafta oynandıysa; `__DEV__`'de hafta içi
+    "Test"). 26 Kasım: "Almalı mıyım?" ve "Analiz" kalktı, ikisi de sadece Cüzdan'da (iki yerde olmasın).
   - `zodiac-grid.tsx` – 12 burç ızgarası + burç yardımcıları (`zodiacGlyph`, `zodiacRange`,
     `MOON_SYMBOLS`, `mercuryNote`). Burç seçimi sayfası kullanır.
   - `share-card.tsx` – Story kartları (`ItemShareCard`, `WardrobeShareCard`, `KahootShareCard`,
     `MonthlyShareCard`, 9:16; 26 Kasım'dan beri krem → pudra gül geçişli zemin, büyük rakamlar koyu;
-    aylık kart beyaz kartta satırlar + altta italik ayın yorumu). Büyük rakam `BigAmount`; para olmayan sayıda
+    hepsi aynı düzen `StoryLayout`: etiket + başlık, beyaz kartta büyük pembe rakam + satırlar, altta italik alıntı). Büyük rakam `BigAmount`; para olmayan sayıda
     `currency={false}` (yoksa "750 ₺ puan" yazar).
   - `event-picker.tsx` – formdaki "Etkinlik için aldım" kutusu (anahtar, `EVENT_TYPES` hapları 3 eşit
     sütun, emojisiz – emojiler sadece detaydaki "💍 Düğün" satırında ve bildirimlerde,
@@ -752,7 +769,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   `src/lib/backup.ts` – veri yedeği (dışa aktar, kontrol et, geri yükle);
   `src/lib/insights.ts` – analizler (renk analizi, aylık özet, "satmayı düşün" listesi);
   `src/lib/photo-color.ts` – fotoğraftan renk tahmini (Ebrar)
-- `src/hooks/` – yardımcı hook'lar
+- `src/hooks/` – yardımcı hook'lar (`use-count-up.ts`: büyük rakamlar 0'dan sayarak yükselir – Cüzdan, Ana sayfa
+  gerçeği; 26 Kasım. Ana sayfa ve Cüzdan kartları açılışta `FadeInDown` ile sırayla belirir.)
 
 ## Bilinen durumlar
 - `src/hooks/use-color-scheme.web.ts` şimdilik her zaman `'light'` döner (sadece açık tema).

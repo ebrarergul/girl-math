@@ -35,6 +35,7 @@ const ITEMS_KEY = 'girlmath.items';
 const OUTFITS_KEY = 'girlmath.outfits';
 const ZODIAC_KEY = 'girlmath.zodiac';
 const QUIZ_KEY = 'girlmath.quiz';
+const TIPS_KEY = 'girlmath.seenTips'; // (Ebrar ekledi, 26 Kasım) görülen tanıtım okları
 
 // Kullanıcı hedef girmezse kullanılacak hedef giyilme sayısı (#30wears)
 export const DEFAULT_TARGET_WEARS = 30;
@@ -85,6 +86,11 @@ type AppContextValue = {
   // Veri yedeği: şu anki her şeyi yedektekiyle değiştirir. Başarısız olursa false döner ve
   // mevcut dolaba dokunmaz. Sözleşme / Welcome bilgisine dokunmaz.
   restoreAll: (backup: BackupFile) => boolean; // "Bu kombini giydim": bütün parçalara Giydim
+
+  // Tanıtım okları (Ebrar ekledi, 26 Kasım): her ipucu bir kez gösterilir, görülenler telefonda saklanır.
+  // resetAll ve yedek bunlara dokunmaz (Sözleşme/Welcome gibi cihaz bilgisi).
+  seenTips: string[];
+  markTipSeen: (id: string) => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -113,6 +119,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [outfits, setOutfits] = useState<SavedOutfit[]>([]);
   const [zodiac, setZodiacState] = useState<ZodiacName | null>(null);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
+  const [seenTips, setSeenTips] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // 1) Uygulama açılınca telefondaki kayıtları (kıyafetler + kombinler) oku
@@ -122,8 +129,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       AsyncStorage.getItem(OUTFITS_KEY),
       AsyncStorage.getItem(ZODIAC_KEY),
       AsyncStorage.getItem(QUIZ_KEY),
+      AsyncStorage.getItem(TIPS_KEY),
     ])
-      .then(([savedItems, savedOutfits, savedZodiac, savedQuiz]) => {
+      .then(([savedItems, savedOutfits, savedZodiac, savedQuiz, savedTips]) => {
         if (savedItems) {
           setItems(JSON.parse(savedItems));
         }
@@ -135,6 +143,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         if (savedQuiz) {
           setQuizResults(JSON.parse(savedQuiz));
+        }
+        if (savedTips) {
+          setSeenTips(JSON.parse(savedTips));
         }
       })
       .catch((error) => console.warn('Kayıtlar okunamadı:', error))
@@ -339,6 +350,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }
 
+  // ---------- Tanıtım okları (Ebrar ekledi) ----------
+
+  // İpucunu "görüldü" yapar ve telefona kaydeder; bir daha gösterilmez
+  function markTipSeen(id: string) {
+    setSeenTips((current) => {
+      if (current.includes(id)) {
+        return current;
+      }
+      const next = [...current, id];
+      AsyncStorage.setItem(TIPS_KEY, JSON.stringify(next)).catch((error) =>
+        console.warn('İpucu kaydedilemedi:', error),
+      );
+      return next;
+    });
+  }
+
   // ---------- Burç ----------
 
   // Burcu seçer ve telefona kaydeder; null verilirse seçim silinir
@@ -457,6 +484,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         quizResults,
         saveQuizResult,
         restoreAll,
+        seenTips,
+        markTipSeen,
       }}>
       {children}
     </AppContext.Provider>

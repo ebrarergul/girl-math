@@ -23,9 +23,12 @@ import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { DailyOutfitCard } from '@/components/daily-outfit-card';
+import { CoachMark, useCoachMarks } from '@/components/coach-mark';
+import { DailyOutfitCard, dailyOutfit } from '@/components/daily-outfit-card';
+import { EmptyHome } from '@/components/empty-home';
 import { EventCountdownCard, nextEvent } from '@/components/event-countdown-card';
 import { stringFromDate } from '@/components/event-picker';
 import { ExploreTiles } from '@/components/explore-tiles';
@@ -42,6 +45,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
+import { useCountUp } from '@/hooks/use-count-up';
 import { todayString } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
 import { starbucksIndexText } from '@/lib/starbucks-index';
@@ -167,6 +171,9 @@ export default function HomeScreen() {
   // Hızlı Giydim (ortak): dokun ✓, tekrar dokun geri al; balonda "Geri al"
   const { toggleWear, toastView } = useQuickWear();
 
+  // Tanıtım okları (birer kez, sırayla): Giydim şeridi → Girl Math gerçeği → Keşfet
+  const coach = useCoachMarks(['home-wear', 'home-fact', 'home-explore'], items.length > 0);
+
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.screen} edges={['top']}>
@@ -186,103 +193,120 @@ export default function HomeScreen() {
           </View>
 
           {isEmpty ? (
-            <View style={styles.empty}>
-              <View style={styles.emptyIcon}>
-                <SymbolView
-                  name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
-                  tintColor={colors.primary}
-                  size={34}
-                  weight="light"
-                />
-              </View>
-              <Text style={styles.emptyTitle}>{"Girl Math'e hoş geldin"}</Text>
-              <Text style={styles.emptyText}>
-                İlk parçanı ekle, her giydiğinde maliyetinin nasıl düştüğünü gör.
-              </Text>
-              <Pressable
-                onPress={() => router.push('/add-item')}
-                style={({ pressed }) => [styles.emptyButton, pressed && styles.buttonPressed]}>
-                <Text style={styles.emptyButtonText}>İlk parçanı ekle</Text>
-              </Pressable>
-            </View>
+            <EmptyHome onAdd={() => router.push('/add-item')} />
           ) : (
             <>
               {/* Ana eylem: bugün ne giydin? */}
               {items.length > 0 && (
-                <View style={styles.card}>
+                <Animated.View entering={FadeInDown.duration(450)} style={styles.card}>
                   <Text style={styles.cardTitle}>Bugün ne giydin?</Text>
                   <Text style={styles.cardHint}>Dokun, maliyeti düşsün</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.stripScroll}
-                    contentContainerStyle={styles.strip}>
-                    {quickWearItems(items, today).map((item) => (
-                      <QuickWearButton
-                        key={item.id}
-                        item={item}
-                        wornToday={item.wearDates.includes(today)}
-                        onPress={() => toggleWear(item)}
-                      />
-                    ))}
-                    {items.length > QUICK_WEAR_LIMIT && (
-                      <Pressable
-                        onPress={() => router.push('/wardrobe')}
-                        accessibilityLabel="Bütün dolabı aç"
-                        style={({ pressed }) => [styles.quick, pressed && styles.quickPressed]}>
-                        <View style={styles.quickPhoto}>
-                          <SymbolView
-                            name="square.grid.2x2"
-                            tintColor={colors.textSecondary}
-                            size={20}
-                            weight="light"
-                          />
-                        </View>
-                        <Text style={styles.quickName}>Tümü →</Text>
-                      </Pressable>
-                    )}
-                  </ScrollView>
-                </View>
+                  {/* Ok balonu şeridin üstünde (kaydırılan şeridin içinde kesilirdi) */}
+                  <CoachMark
+                    visible={coach.active === 'home-wear'}
+                    text="Bugün giydiysen fotoğrafına dokun"
+                    align="left"
+                    arrowOffset={44}
+                    onDismiss={() => coach.done('home-wear')}>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.stripScroll}
+                      contentContainerStyle={styles.strip}>
+                      {quickWearItems(items, today).map((item) => (
+                        <QuickWearButton
+                          key={item.id}
+                          item={item}
+                          wornToday={item.wearDates.includes(today)}
+                          onPress={() => {
+                            coach.done('home-wear');
+                            toggleWear(item);
+                          }}
+                        />
+                      ))}
+                      {items.length > QUICK_WEAR_LIMIT && (
+                        <Pressable
+                          onPress={() => router.push('/wardrobe')}
+                          accessibilityLabel="Bütün dolabı aç"
+                          style={({ pressed }) => [styles.quick, pressed && styles.quickPressed]}>
+                          <View style={styles.quickPhoto}>
+                            <SymbolView
+                              name="square.grid.2x2"
+                              tintColor={colors.textSecondary}
+                              size={20}
+                              weight="light"
+                            />
+                          </View>
+                          <Text style={styles.quickName}>Tümü →</Text>
+                        </Pressable>
+                      )}
+                    </ScrollView>
+                  </CoachMark>
+                </Animated.View>
               )}
 
               {/* Etkinlik yaklaştıysa (7 gün) tek satır */}
               {nextEvent(items) && (
-                <TodayGroup>
-                  <EventCountdownCard items={items} />
-                </TodayGroup>
+                <Animated.View entering={FadeInDown.duration(450).delay(60)}>
+                  <TodayGroup>
+                    <EventCountdownCard items={items} />
+                  </TodayGroup>
+                </Animated.View>
               )}
 
               {/* Girl Math gerçeği: dokununca sıradaki */}
               {isLoaded && (
-                <Pressable
-                  onPress={nextFact}
-                  accessibilityLabel="Sıradaki Girl Math gerçeği"
-                  style={({ pressed }) => [styles.card, styles.fact, pressed && styles.pressed]}>
-                  <Text style={styles.factLabel}>{fact.label}</Text>
-                  <Text style={styles.factValue} numberOfLines={1} adjustsFontSizeToFit>
-                    {fact.value.toLocaleString('tr-TR')}
-                    {fact.currency && <Text style={styles.factCurrency}> ₺</Text>}
-                    {fact.suffix && <Text style={styles.factSuffix}> {fact.suffix}</Text>}
-                  </Text>
-                  <Text style={styles.factText}>{fact.text}</Text>
-                  {/* Sayfa noktaları: kaçıncı gerçek (dokununca sıradakine geçtiği belli olsun) */}
-                  <View style={styles.dots}>
-                    {facts.map((current) => (
-                      <View
-                        key={current.label}
-                        style={[styles.dot, current === fact && styles.dotActive]}
-                      />
-                    ))}
-                  </View>
-                </Pressable>
+                <Animated.View entering={FadeInDown.duration(450).delay(120)}>
+                  <CoachMark
+                    visible={coach.active === 'home-fact'}
+                    text="Dokun, sıradaki Girl Math gerçeği gelsin"
+                    onDismiss={() => coach.done('home-fact')}>
+                    <Pressable
+                      onPress={() => {
+                        coach.done('home-fact');
+                        nextFact();
+                      }}
+                      accessibilityLabel="Sıradaki Girl Math gerçeği"
+                      style={({ pressed }) => [styles.card, styles.fact, pressed && styles.pressed]}>
+                      <Text style={styles.factLabel}>{fact.label}</Text>
+                      <Text style={styles.factValue} numberOfLines={1} adjustsFontSizeToFit>
+                        {/* key: her yeni gerçekte rakam yeniden 0'dan sayar */}
+                        <CountUpNumber key={fact.label} value={fact.value} />
+                        {fact.currency && <Text style={styles.factCurrency}> ₺</Text>}
+                        {fact.suffix && <Text style={styles.factSuffix}> {fact.suffix}</Text>}
+                      </Text>
+                      <Text style={styles.factText}>{fact.text}</Text>
+                      {/* Sayfa noktaları: kaçıncı gerçek (dokununca sıradakine geçtiği belli olsun) */}
+                      <View style={styles.dots}>
+                        {facts.map((current) => (
+                          <View
+                            key={current.label}
+                            style={[styles.dot, current === fact && styles.dotActive]}
+                          />
+                        ))}
+                      </View>
+                    </Pressable>
+                  </CoachMark>
+                </Animated.View>
               )}
 
-              <DailyOutfitCard items={items} />
+              {/* Kombin çıkmıyorsa (dolap çok küçük) boş kutu bırakıp fazladan boşluk yapmasın */}
+              {dailyOutfit(items) && (
+                <Animated.View entering={FadeInDown.duration(450).delay(180)}>
+                  <DailyOutfitCard items={items} />
+                </Animated.View>
+              )}
 
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Keşfet</Text>
-                <ExploreTiles />
-              </View>
+              <Animated.View entering={FadeInDown.duration(450).delay(240)}>
+                <CoachMark
+                  visible={coach.active === 'home-explore'}
+                  text="Burç yorumun ve hafta sonu Quiz burada"
+                  onDismiss={() => coach.done('home-explore')}
+                  style={styles.section}>
+                  <Text style={styles.sectionTitle}>Keşfet</Text>
+                  <ExploreTiles onOpen={() => coach.done('home-explore')} />
+                </CoachMark>
+              </Animated.View>
             </>
           )}
         </ScrollView>
@@ -291,6 +315,11 @@ export default function HomeScreen() {
       </SafeAreaView>
     </ScreenBackground>
   );
+}
+
+// Girl Math gerçeğindeki büyük rakam: 0'dan sayarak yükselir (Text içinde Text)
+function CountUpNumber({ value }: { value: number }) {
+  return <Text>{useCountUp(value).toLocaleString('tr-TR')}</Text>;
 }
 
 // "Bugün ne giydin?" şeridindeki küçük fotoğraf. Bugün giyildiyse pembe çerçeve + köşede ✓
@@ -508,46 +537,5 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...Typography.heading,
     color: colors.text,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.five,
-    gap: Spacing.two,
-  },
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: Radius.pill,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.two,
-  },
-  emptyTitle: {
-    ...Typography.heading,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  emptyText: {
-    ...Typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  emptyButton: {
-    marginTop: Spacing.three,
-    backgroundColor: colors.primary,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.five,
-    paddingVertical: Spacing.three,
-    ...Shadows.button,
-  },
-  buttonPressed: {
-    backgroundColor: colors.primaryPressed,
-    transform: [{ scale: 0.95 }],
-  },
-  emptyButtonText: {
-    ...Typography.button,
-    color: colors.onPrimary,
   },
 });
