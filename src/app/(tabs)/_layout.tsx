@@ -1,7 +1,7 @@
 /**
  * SEKMELER
  *
- * Bu klasördeki ekranlar (Ana sayfa, Dolap, Cüzdan, Test) alttaki sekmelerde gösterilir.
+ * Bu klasördeki ekranlar (Ana sayfa, Dolap, Kombinler, Cüzdan, Test) alttaki sekmelerde gösterilir.
  * Sekmelerin isim ve simgeleri src/components/app-tabs.tsx içinde.
  */
 

@@ -68,7 +68,13 @@ type AppContextValue = {
 
   // Kombin arşivi
   outfits: SavedOutfit[]; // Kaydedilen kombinler (en yeni en başta)
-  saveOutfit: (itemIds: string[], name?: string | null) => string; // Kombinin kimliğini döner
+  saveOutfit: (
+    itemIds: string[],
+    name?: string | null,
+    photoFileName?: string | null,
+    wearToday?: boolean, // (Ebrar ekledi) true: kaydederken bugün giyildi say (Ana sayfa "Fotoğrafla")
+  ) => string; // Kombinin kimliğini döner
+  setOutfitItems: (id: string, itemIds: string[]) => void; // (Ebrar ekledi) fotoğraflı kombinin parçalarını işaretle
   toggleFavoriteOutfit: (id: string) => void;
   renameOutfit: (id: string, name: string | null) => void;
   deleteOutfit: (id: string) => void;
@@ -283,7 +289,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setOutfits((current) =>
       current
         .map((outfit) => ({ ...outfit, itemIds: outfit.itemIds.filter((itemId) => itemId !== id) }))
-        .filter((outfit) => outfit.itemIds.length > 0)
+        // Fotoğraflı kombin parçasız kalsa da durur (fotoğrafın kendisi anı; Ebrar ekledi 26 Kasım)
+        .filter((outfit) => outfit.itemIds.length > 0 || Boolean(outfit.photoFileName))
     );
   }
 
@@ -311,6 +318,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     for (const item of items) {
       deletePhoto(item.photoFileName);
     }
+    for (const outfit of outfits) {
+      deletePhoto(outfit.photoFileName ?? null); // Fotoğraflı kombinler (Ebrar ekledi)
+    }
     setItems([]);
     setOutfits([]); // (Onur ekledi – kombin arşivi de silinsin)
     setZodiac(null); // (Onur ekledi – burç seçimi de silinsin)
@@ -328,10 +338,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return false;
     }
     // Yeni dolapta kullanılmayan eski fotoğrafları telefondan sil (boşuna yer kaplamasın)
-    const keep = new Set(content.items.map((item) => item.photoFileName).filter(Boolean));
-    for (const item of items) {
-      if (item.photoFileName && !keep.has(item.photoFileName)) {
-        deletePhoto(item.photoFileName);
+    const keep = new Set(
+      [
+        ...content.items.map((item) => item.photoFileName),
+        ...content.outfits.map((outfit) => outfit.photoFileName ?? null), // (Ebrar ekledi)
+      ].filter(Boolean),
+    );
+    for (const fileName of [
+      ...items.map((item) => item.photoFileName),
+      ...outfits.map((outfit) => outfit.photoFileName ?? null),
+    ]) {
+      if (fileName && !keep.has(fileName)) {
+        deletePhoto(fileName);
       }
     }
     setItems(content.items);
@@ -379,9 +397,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Kombini arşive kaydeder ve kimliğini döner. Aynı parçalardan oluşan kombin zaten
   // kayıtlıysa yenisini eklemez, var olanın kimliğini döner.
-  function saveOutfit(itemIds: string[], name: string | null = null): string {
+  // Fotoğraflı kombin (photoFileName verilirse; Ebrar ekledi 26 Kasım) her zaman yeni kayıttır: aynı parçalar
+  // farklı günlerde farklı fotoğraflarla kaydedilebilir.
+  // wearToday: kaydederken parçalara Giydim + kombinin bugünkü tarihi (tek adımda; ayrı wearOutfit çağrısı yeni
+  // kombini henüz listede bulamazdı). Bugün zaten giyilmiş parça ikinci kez sayılmaz. (Ebrar ekledi, 26 Kasım)
+  function saveOutfit(
+    itemIds: string[],
+    name: string | null = null,
+    photoFileName: string | null = null,
+    wearToday = false,
+  ): string {
     const key = [...itemIds].sort().join(',');
-    const existing = outfits.find((outfit) => [...outfit.itemIds].sort().join(',') === key);
+    const existing = photoFileName
+      ? undefined
+      : outfits.find((outfit) => !outfit.photoFileName && [...outfit.itemIds].sort().join(',') === key);
     if (existing) {
       return existing.id;
     }
@@ -390,11 +419,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       itemIds,
       name: name?.trim() || null,
       favorite: false,
-      wornDates: [],
+      wornDates: wearToday && itemIds.length > 0 ? [todayString()] : [],
       createdAt: todayString(),
+      ...(photoFileName ? { photoFileName } : {}),
     };
+    if (wearToday) {
+      const today = todayString();
+      for (const itemId of itemIds) {
+        const item = items.find((current) => current.id === itemId);
+        if (item && !item.wearDates.includes(today)) {
+          wearItem(itemId);
+        }
+      }
+    }
     setOutfits((current) => [outfit, ...current]);
     return outfit.id;
+  }
+
+  // Fotoğraflı kombinin parçalarını işaretler / değiştirir (Ebrar ekledi, 26 Kasım)
+  function setOutfitItems(id: string, itemIds: string[]) {
+    setOutfits((current) =>
+      current.map((outfit) => (outfit.id === id ? { ...outfit, itemIds } : outfit))
+    );
   }
 
   function toggleFavoriteOutfit(id: string) {
@@ -411,6 +457,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   function deleteOutfit(id: string) {
+    const outfit = outfits.find((current) => current.id === id);
+    deletePhoto(outfit?.photoFileName ?? null); // Fotoğraflı kombinin fotoğrafı da silinir (Ebrar ekledi)
     setOutfits((current) => current.filter((outfit) => outfit.id !== id));
   }
 
@@ -474,6 +522,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         resetAll,
         outfits,
         saveOutfit,
+        setOutfitItems,
         toggleFavoriteOutfit,
         renameOutfit,
         deleteOutfit,

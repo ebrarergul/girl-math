@@ -28,6 +28,9 @@ export default function AppTabs() {
           <TabTrigger name="wardrobe" href="/wardrobe" asChild>
             <TabButton>Dolap</TabButton>
           </TabTrigger>
+          <TabTrigger name="outfits" href="/outfits" asChild>
+            <TabButton>Kombinler</TabButton>
+          </TabTrigger>
           <TabTrigger name="wallet" href="/wallet" asChild>
             <TabButton>Cüzdan</TabButton>
           </TabTrigger>

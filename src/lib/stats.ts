@@ -22,6 +22,10 @@ export type WardrobeStats = {
   forgotten: { item: ClothingItem; days: number } | null; // En uzun süredir giyilmeyen parça. Dolap boşsa null
   wearsThisMonth: number; // Bu ay kaç kere "Giydim"e basıldı
   girlMathSavings: number; // Şaka istatistik: her parçada (fiyat − giyim başına maliyet) toplamı
+  // (Ebrar ekledi, 26 Kasım; Onur çalışmıyorken) Amorti ettiğin: her parçanın fiyatının, hedefe ne kadar
+  // yaklaştıysa o kadarı (giyim / hedef, en fazla %100). Ekranda "Girl Math kazancın"ın yerine bu gösterilir.
+  amortizedValue: number;
+  amortizedPercent: number; // amortizedValue / totalValue, 0-100 tam sayı (dolap boşsa 0)
 };
 
 export function getWardrobeStats(items: ClothingItem[]): WardrobeStats {
@@ -33,6 +37,7 @@ export function getWardrobeStats(items: ClothingItem[]): WardrobeStats {
   let neverWornCount = 0;
   let wearsThisMonth = 0;
   let girlMathSavings = 0;
+  let amortizedValue = 0;
   let mostWorn: ClothingItem | null = null;
   let forgotten: { item: ClothingItem; days: number } | null = null;
 
@@ -42,6 +47,7 @@ export function getWardrobeStats(items: ClothingItem[]): WardrobeStats {
     totalValue += item.price;
     totalWears += wears;
     girlMathSavings += item.price - costPerWear(item);
+    amortizedValue += item.price * Math.min(1, wearCount(item) / Math.max(1, item.targetWears));
     wearsThisMonth += item.wearDates.filter((date) => date.startsWith(thisMonth)).length;
 
     if (isPaidOff(item)) {
@@ -71,5 +77,7 @@ export function getWardrobeStats(items: ClothingItem[]): WardrobeStats {
     forgotten,
     wearsThisMonth,
     girlMathSavings,
+    amortizedValue: Math.round(amortizedValue),
+    amortizedPercent: totalValue > 0 ? Math.round((amortizedValue / totalValue) * 100) : 0,
   };
 }

@@ -295,7 +295,18 @@ export function outfitName(outfit: SavedOutfit, items: ClothingItem[]): string {
     return outfit.name;
   }
   const first = outfitItems(outfit, items)[0];
-  return first ? `“${first.name}” kombini` : 'Kombin';
+  if (first) {
+    return `“${first.name}” kombini`;
+  }
+  // Parçası işaretlenmemiş fotoğraflı kombin: kaydedildiği gün (Ebrar ekledi, 26 Kasım)
+  if (outfit.photoFileName) {
+    const date = new Date(`${outfit.createdAt}T12:00:00`).toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'long',
+    });
+    return `${date} kombini`;
+  }
+  return 'Kombin';
 }
 
 // Arşiv sırası: önce favoriler, sonra en yeni kaydedilen

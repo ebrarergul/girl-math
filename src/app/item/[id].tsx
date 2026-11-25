@@ -710,13 +710,13 @@ const styles = StyleSheet.create({
   track: {
     height: 10,
     borderRadius: Radius.pill,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.progressTrack,
     overflow: 'hidden',
   },
   trackFill: {
     height: '100%',
     borderRadius: Radius.pill,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.progress,
   },
   indexCard: {
     backgroundColor: colors.card,

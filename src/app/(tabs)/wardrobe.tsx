@@ -71,8 +71,8 @@ export default function WardrobeScreen() {
   const router = useRouter();
   const { items, isLoaded } = useApp();
   const { wearOnce, toastView } = useQuickWear();
-  // Tanıtım okları (birer kez): önce "basılı tut = hızlı Giydim", sonra Kombinlerim
-  const coach = useCoachMarks(['wardrobe-hold', 'wardrobe-outfits'], items.length > 0);
+  // Tanıtım oku (bir kez): "basılı tut = hızlı Giydim" (Kombinlerim 26 Kasım'da ayrı sekme oldu, ⊞ butonu kalktı)
+  const coach = useCoachMarks(['wardrobe-hold'], items.length > 0);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category | typeof ALL>(ALL);
   const [sort, setSort] = useState<SortKey>('newest');
@@ -120,33 +120,7 @@ export default function WardrobeScreen() {
                   <Text style={styles.title}>Dolabım</Text>
                 </View>
                 <View style={styles.headerButtons}>
-                  {/* Kaydedilen kombinler (arşiv): beyaz yuvarlak simge, yanında pembe "+" */}
-                  <CoachMark
-                    visible={coach.active === 'wardrobe-outfits'}
-                    text="Kombinlerin burada, yeni kombin de kurabilirsin"
-                    placement="below"
-                    align="right"
-                    arrowOffset={24}
-                    onDismiss={() => coach.done('wardrobe-outfits')}>
-                    <Pressable
-                      onPress={() => {
-                        coach.done('wardrobe-outfits');
-                        router.push('/outfits');
-                      }}
-                      accessibilityLabel="Kombinlerim"
-                      hitSlop={4}
-                      style={({ pressed }) => [
-                        styles.outfitsButton,
-                        pressed && styles.outfitsButtonPressed,
-                      ]}>
-                      <SymbolView
-                        name={{ ios: 'square.grid.2x2', android: 'grid_view', web: 'grid_view' }}
-                        tintColor={colors.primary}
-                        size={20}
-                        weight="semibold"
-                      />
-                    </Pressable>
-                  </CoachMark>
+                  {/* Pembe "+": yeni parça (Kombinlerim 26 Kasım'da ayrı sekme oldu) */}
                   <Pressable
                     onPress={() => router.push('/add-item')}
                     accessibilityLabel="Yeni parça ekle"
@@ -330,21 +304,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-  },
-  // Beyaz yuvarlak "Kombinlerim" (pembe "+" ana buton olarak öne çıksın diye sade). Yazılı hap
-  // olunca uzun alt yazıyla birlikte sığmıyor, "+" ekrandan taşıyordu.
-  outfitsButton: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.pill,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.card,
-  },
-  outfitsButtonPressed: {
-    backgroundColor: colors.primarySoft,
-    transform: [{ scale: 0.95 }],
   },
   addButton: {
     width: 44,

@@ -40,6 +40,8 @@ const Palette = {
   chromeMid: '#E4E5EA',
   chromeDark: '#C3C6CE',
   // Story kartlarının pembe zemini (26 Kasım: "Story kısmı pembe olsun, girls girls")
+  // İlerleme çubuklarının dolgusu: canlı fuşya yerine yumuşak gül (26 Kasım: "çubuklar çok pembe, göz yoruyor")
+  roseBar: '#E7A1BB',
   storyLight: '#FDEAF1',
   storyMid: '#F9CFDF',
   storyDeep: '#F3A9C4',
@@ -66,6 +68,12 @@ const light = {
   success: Palette.green,
   warning: Palette.amber,
   danger: Palette.red,
+  // Kıyafet fotoğraflarının üstüne çok hafif ton: beyaz zeminli ürün fotoğrafları krem zeminde "beyaz kart"
+  // gibi parlamasın, gri zeminlilerle aynı dursun (26 Kasım, Dolap)
+  photoTint: 'rgba(28, 26, 25, 0.04)',
+  progress: Palette.roseBar, // Bütün ilerleme çubuklarının dolgusu (Cüzdan, detay Hedef, Quiz süresi…)
+  progressTrack: Palette.linen, // Çubuğun boş kısmı
+  glass: 'rgba(255, 255, 255, 0.7)', // Pembe zeminli kartlarda yarı saydam beyaz (seçici zemini)
   overlay: 'rgba(24, 16, 20, 0.4)', // Alttan açılan pencerenin arkasındaki yarı saydam karartma
 };
 
@@ -147,6 +155,8 @@ export const Gradients = {
   // Story kartları: açık şeker pembesinden gül pembesine (uygulama içi sayfalar krem kalır,
   // Story paylaşılan "girls girls" an olduğu için pembe)
   story: [Palette.storyLight, Palette.storyMid, Palette.storyDeep] as const,
+  // Ana sayfa "Bugün ne giydin?" kartı: sol üstten toz pembe yansıma, beyaza açılır (26 Kasım)
+  blush: [Palette.storyLight, Palette.white] as const,
 };
 
 export const Shadows = {
@@ -166,5 +176,8 @@ export const Shadows = {
   },
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+// Sekme ekranlarının altında bırakılan boşluk (son satır sekme çubuğunun altında kalmasın).
+// 26 Kasım: iOS 26'nın yüzen sekme çubuğu + ekranın alt çizgisi ~90 nokta; 50 iken Dolap'ın son kartı
+// çubuğun altında kalıyordu.
+export const BottomTabInset = Platform.select({ ios: 90, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;

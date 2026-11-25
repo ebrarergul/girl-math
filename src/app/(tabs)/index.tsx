@@ -26,13 +26,15 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BlushCard } from '@/components/blush-card';
+import { FORGOTTEN_DAYS, formatTL } from '@/components/clothing-card';
 import { CoachMark, useCoachMarks } from '@/components/coach-mark';
 import { DailyOutfitCard, dailyOutfit } from '@/components/daily-outfit-card';
 import { EmptyHome } from '@/components/empty-home';
 import { EventCountdownCard, nextEvent } from '@/components/event-countdown-card';
 import { stringFromDate } from '@/components/event-picker';
 import { ExploreTiles } from '@/components/explore-tiles';
-import { useQuickWear } from '@/components/quick-wear';
+import { isOutfitWornToday, useQuickWear } from '@/components/quick-wear';
 import { ScreenBackground } from '@/components/screen-background';
 import { TodayGroup } from '@/components/today-row';
 import {
@@ -46,11 +48,11 @@ import {
 } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { useCountUp } from '@/hooks/use-count-up';
-import { todayString } from '@/lib/girl-math';
+import { costPerWear, todayString, wearCount } from '@/lib/girl-math';
+import { outfitItems, outfitName, sortOutfits } from '@/lib/outfits';
 import { photoUri } from '@/lib/photos';
-import { starbucksIndexText } from '@/lib/starbucks-index';
 import { getWardrobeStats, type WardrobeStats } from '@/lib/stats';
-import type { ClothingItem } from '@/lib/types';
+import type { ClothingItem, SavedOutfit } from '@/lib/types';
 
 const colors = Colors.light;
 
@@ -71,6 +73,7 @@ function todayLabel(): string {
 }
 
 // "Bugün ne giydin?" şeridinde en fazla kaç parça (fazlası için sondaki "Tümü →" Dolap'ı açar)
+const QUICK_OUTFIT_LIMIT = 6;
 const QUICK_WEAR_LIMIT = 8;
 // Sık giyilenler bu kadar güne bakılarak bulunur
 const QUICK_WEAR_DAYS = 30;
@@ -105,47 +108,29 @@ function dayOfYear(): number {
 // Kartta gösterilen bir "Girl Math gerçeği"
 type Fact = { label: string; value: number; currency: boolean; suffix?: string; text: string };
 
+// Ana sayfadaki Girl Math kartı: sadece Cüzdan'da OLMAYAN gerçekler (26 Kasım, "aynı bilgi iki yerde
+// olmasın": bu ay giyim, dolap değeri, ortalama maliyet, amorti ve resmen bedava Cüzdan'da var)
+// - Dolabının yıldızı: en çok giyilen parça
+// - En uzun süredir askıda: FORGOTTEN_DAYS (7) gün ve üstü giyilmeyen parça
 function buildFacts(stats: WardrobeStats): Fact[] {
-  const facts: Fact[] = [
-    {
-      label: 'Bu ay',
-      value: stats.wearsThisMonth,
+  const facts: Fact[] = [];
+  if (stats.mostWorn) {
+    const star = stats.mostWorn;
+    facts.push({
+      label: 'Dolabının yıldızı',
+      value: wearCount(star),
       currency: false,
       suffix: 'kere giydin',
-      text:
-        stats.wearsThisMonth > 0
-          ? 'Her "Giydim" maliyeti biraz daha eritiyor. Devam aşko!'
-          : 'Bu ay ilk "Giydim" seni bekliyor. Yukarıdan bir parçaya dokun!',
-    },
-    {
-      label: 'Girl Math kazancın',
-      value: stats.girlMathSavings,
-      currency: true,
-      text: 'Giydikçe kazandığın. Bankan bunu tanımıyor ama biz tanıyoruz 💅',
-    },
-    {
-      label: 'Dolabın',
-      value: stats.totalValue,
-      currency: true,
-      // Etiket zaten "Dolabın": cümle "= 156 iced latte…" yerine "156 iced latte…" diye başlar
-      text: starbucksIndexText(stats.totalValue).replace(/^=\s*/, ''),
-    },
-  ];
-  if (stats.averageCostPerWear !== null) {
-    facts.push({
-      label: 'Ortalama giyim maliyetin',
-      value: stats.averageCostPerWear,
-      currency: true,
-      text: 'Dolabındaki bir parçayı bir kere giymek sana ortalama bu kadara geliyor.',
+      text: `“${star.name}” en çok giydiğin parça. Giyim başı maliyeti artık ${formatTL(costPerWear(star))} 💅`,
     });
   }
-  if (stats.paidOffCount > 0) {
+  if (stats.forgotten && stats.forgotten.days >= FORGOTTEN_DAYS) {
     facts.push({
-      label: 'Resmen bedava',
-      value: stats.paidOffCount,
+      label: 'En uzun süredir askıda',
+      value: stats.forgotten.days,
       currency: false,
-      suffix: 'parça',
-      text: 'Bu parçalar kendini amorti etti. Ekonomi dehasısın!',
+      suffix: 'gün',
+      text: `“${stats.forgotten.item.name}” seni bekliyor. Bu hafta bir şans ver 👀`,
     });
   }
   return facts;
@@ -153,7 +138,12 @@ function buildFacts(stats: WardrobeStats): Fact[] {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { items, isLoaded } = useApp();
+  const { items, outfits, isLoaded } = useApp();
+  // "Kombinlerin" sırası: favoriler önce, en fazla 6 (tek dokunuşla bütün kombini giy)
+  // (parçası işaretlenmemiş fotoğraflı kombin çıkmaz: giyince sayılacak parça yok)
+  const quickOutfits = sortOutfits(outfits)
+    .filter((outfit) => outfitItems(outfit, items).length > 0)
+    .slice(0, QUICK_OUTFIT_LIMIT);
   const stats = getWardrobeStats(items);
   const isEmpty = isLoaded && items.length === 0;
   const today = todayString();
@@ -161,7 +151,7 @@ export default function HomeScreen() {
   // Gerçek kartı: her gün farklı gerçekle başlar, dokundukça sıradakine geçer
   const facts = buildFacts(stats);
   const [factOffset, setFactOffset] = useState(0);
-  const fact = facts[(dayOfYear() + factOffset) % facts.length];
+  const fact = facts.length > 0 ? facts[(dayOfYear() + factOffset) % facts.length] : null;
 
   function nextFact() {
     Haptics.selectionAsync();
@@ -169,10 +159,18 @@ export default function HomeScreen() {
   }
 
   // Hızlı Giydim (ortak): dokun ✓, tekrar dokun geri al; balonda "Geri al"
-  const { toggleWear, toastView } = useQuickWear();
+  const { toggleWear, toggleOutfit, toastView } = useQuickWear();
+
+  // Kartta aynı anda tek sıra: kayıtlı kombin varsa "Kombin" ile açılır, "Parça"ya geçilebilir
+  const [wearMode, setWearMode] = useState<'outfits' | 'items'>('outfits');
+  const showOutfits = quickOutfits.length > 0 && wearMode === 'outfits';
 
   // Tanıtım okları (birer kez, sırayla): Giydim şeridi → Girl Math gerçeği → Keşfet
-  const coach = useCoachMarks(['home-wear', 'home-fact', 'home-explore'], items.length > 0);
+  // "home-fact" sadece birden fazla gerçek varken (dokununca sıradakine geçtiği için)
+  const coach = useCoachMarks(
+    ['home-wear', ...(facts.length > 1 ? ['home-fact'] : []), 'home-explore'],
+    items.length > 0,
+  );
 
   return (
     <ScreenBackground>
@@ -198,50 +196,109 @@ export default function HomeScreen() {
             <>
               {/* Ana eylem: bugün ne giydin? */}
               {items.length > 0 && (
-                <Animated.View entering={FadeInDown.duration(450)} style={styles.card}>
-                  <Text style={styles.cardTitle}>Bugün ne giydin?</Text>
-                  <Text style={styles.cardHint}>Dokun, maliyeti düşsün</Text>
-                  {/* Ok balonu şeridin üstünde (kaydırılan şeridin içinde kesilirdi) */}
-                  <CoachMark
-                    visible={coach.active === 'home-wear'}
-                    text="Bugün giydiysen fotoğrafına dokun"
-                    align="left"
-                    arrowOffset={44}
-                    onDismiss={() => coach.done('home-wear')}>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      style={styles.stripScroll}
-                      contentContainerStyle={styles.strip}>
-                      {quickWearItems(items, today).map((item) => (
-                        <QuickWearButton
-                          key={item.id}
-                          item={item}
-                          wornToday={item.wearDates.includes(today)}
-                          onPress={() => {
-                            coach.done('home-wear');
-                            toggleWear(item);
-                          }}
-                        />
-                      ))}
-                      {items.length > QUICK_WEAR_LIMIT && (
-                        <Pressable
-                          onPress={() => router.push('/wardrobe')}
-                          accessibilityLabel="Bütün dolabı aç"
-                          style={({ pressed }) => [styles.quick, pressed && styles.quickPressed]}>
-                          <View style={styles.quickPhoto}>
-                            <SymbolView
-                              name="square.grid.2x2"
-                              tintColor={colors.textSecondary}
-                              size={20}
-                              weight="light"
-                            />
-                          </View>
-                          <Text style={styles.quickName}>Tümü →</Text>
-                        </Pressable>
+                <Animated.View entering={FadeInDown.duration(450)}>
+                  {/* Toz pembe yansıma: sol üstten pembe, beyaza açılır */}
+                  <BlushCard>
+                    <View style={styles.wearHeader}>
+                      <View style={styles.wearHeaderText}>
+                        <Text style={styles.cardTitle}>Bugün ne giydin?</Text>
+                        <Text style={styles.cardHint}>
+                          {showOutfits ? 'Dokun, bütün kombin sayılsın' : 'Dokun, maliyeti düşsün'}
+                        </Text>
+                      </View>
+                      {/* Kombin | Parça seçici (sadece kayıtlı kombin varsa) */}
+                      {quickOutfits.length > 0 && (
+                        <View style={styles.modeSwitch}>
+                          {(
+                            [
+                              ['outfits', 'Kombin'],
+                              ['items', 'Parça'],
+                            ] as const
+                          ).map(([mode, label]) => (
+                            <Pressable
+                              key={mode}
+                              onPress={() => {
+                                if (mode !== wearMode) {
+                                  Haptics.selectionAsync();
+                                  setWearMode(mode);
+                                }
+                              }}
+                              style={[styles.modeItem, wearMode === mode && styles.modeItemOn]}>
+                              <Text style={[styles.modeText, wearMode === mode && styles.modeTextOn]}>
+                                {label}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </View>
                       )}
-                    </ScrollView>
-                  </CoachMark>
+                    </View>
+
+                    {/* Ok balonu şeridin üstünde (kaydırılan şeridin içinde kesilirdi) */}
+                    <CoachMark
+                      visible={coach.active === 'home-wear'}
+                      text={
+                        showOutfits
+                          ? 'Bugün giydiğin kombine dokun, bütün parçalar sayılsın'
+                          : 'Bugün giydiysen fotoğrafına dokun'
+                      }
+                      align="left"
+                      arrowOffset={showOutfits ? 52 : 36}
+                      onDismiss={() => coach.done('home-wear')}>
+                      {showOutfits ? (
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          style={styles.stripScroll}
+                          contentContainerStyle={styles.strip}>
+                          {quickOutfits.map((outfit) => (
+                            <OutfitQuickButton
+                              key={outfit.id}
+                              outfit={outfit}
+                              items={items}
+                              onPress={() => {
+                                coach.done('home-wear');
+                                toggleOutfit(outfit);
+                              }}
+                            />
+                          ))}
+                        </ScrollView>
+                      ) : (
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                          style={styles.stripScroll}
+                          contentContainerStyle={styles.strip}>
+                          {quickWearItems(items, today).map((item) => (
+                            <QuickWearButton
+                              key={item.id}
+                              item={item}
+                              wornToday={item.wearDates.includes(today)}
+                              onPress={() => {
+                                coach.done('home-wear');
+                                toggleWear(item);
+                              }}
+                            />
+                          ))}
+                          {items.length > QUICK_WEAR_LIMIT && (
+                            <Pressable
+                              onPress={() => router.push('/wardrobe')}
+                              accessibilityLabel="Bütün dolabı aç"
+                              style={({ pressed }) => [styles.quick, pressed && styles.quickPressed]}>
+                              <View style={styles.quickPhoto}>
+                                <SymbolView
+                                  name="square.grid.2x2"
+                                  tintColor={colors.textSecondary}
+                                  size={20}
+                                  weight="light"
+                                />
+                              </View>
+                              <Text style={styles.quickName}>Tümü →</Text>
+                            </Pressable>
+                          )}
+                        </ScrollView>
+                      )}
+                    </CoachMark>
+                  </BlushCard>
                 </Animated.View>
               )}
 
@@ -255,19 +312,24 @@ export default function HomeScreen() {
               )}
 
               {/* Girl Math gerçeği: dokununca sıradaki */}
-              {isLoaded && (
+              {isLoaded && fact && (
                 <Animated.View entering={FadeInDown.duration(450).delay(120)}>
                   <CoachMark
                     visible={coach.active === 'home-fact'}
                     text="Dokun, sıradaki Girl Math gerçeği gelsin"
                     onDismiss={() => coach.done('home-fact')}>
-                    <Pressable
-                      onPress={() => {
-                        coach.done('home-fact');
-                        nextFact();
-                      }}
+                    <BlushCard
+                      // Tek gerçek varsa dokunulmaz (sıradaki yok)
+                      onPress={
+                        facts.length > 1
+                          ? () => {
+                              coach.done('home-fact');
+                              nextFact();
+                            }
+                          : undefined
+                      }
                       accessibilityLabel="Sıradaki Girl Math gerçeği"
-                      style={({ pressed }) => [styles.card, styles.fact, pressed && styles.pressed]}>
+                      style={styles.fact}>
                       <Text style={styles.factLabel}>{fact.label}</Text>
                       <Text style={styles.factValue} numberOfLines={1} adjustsFontSizeToFit>
                         {/* key: her yeni gerçekte rakam yeniden 0'dan sayar */}
@@ -277,15 +339,17 @@ export default function HomeScreen() {
                       </Text>
                       <Text style={styles.factText}>{fact.text}</Text>
                       {/* Sayfa noktaları: kaçıncı gerçek (dokununca sıradakine geçtiği belli olsun) */}
-                      <View style={styles.dots}>
-                        {facts.map((current) => (
-                          <View
-                            key={current.label}
-                            style={[styles.dot, current === fact && styles.dotActive]}
-                          />
-                        ))}
-                      </View>
-                    </Pressable>
+                      {facts.length > 1 && (
+                        <View style={styles.dots}>
+                          {facts.map((current) => (
+                            <View
+                              key={current.label}
+                              style={[styles.dot, current === fact && styles.dotActive]}
+                            />
+                          ))}
+                        </View>
+                      )}
+                    </BlushCard>
                   </CoachMark>
                 </Animated.View>
               )}
@@ -320,6 +384,66 @@ export default function HomeScreen() {
 // Girl Math gerçeğindeki büyük rakam: 0'dan sayarak yükselir (Text içinde Text)
 function CountUpNumber({ value }: { value: number }) {
   return <Text>{useCountUp(value).toLocaleString('tr-TR')}</Text>;
+}
+
+// "Kombinlerin" sırasındaki kombin: 2×2 küçük fotoğraf mozaiği + ad. Bugün giyildiyse pembe çerçeve + ✓
+function OutfitQuickButton({
+  outfit,
+  items,
+  onPress,
+}: {
+  outfit: SavedOutfit;
+  items: ClothingItem[];
+  onPress: () => void;
+}) {
+  const pieces = outfitItems(outfit, items).slice(0, 4);
+  const worn = isOutfitWornToday(outfit, items);
+  const name = outfitName(outfit, items);
+  const outfitPhoto = photoUri(outfit.photoFileName ?? null); // Fotoğraflı kombin: mozaik yerine fotoğraf
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={`${name}: bu kombini giydim`}
+      style={({ pressed }) => [styles.outfitQuick, pressed && styles.quickPressed]}>
+      <View style={[styles.outfitMosaic, worn && styles.quickPhotoWorn]}>
+        {outfitPhoto && <Image source={{ uri: outfitPhoto }} style={styles.thumbImage} contentFit="cover" />}
+        {!outfitPhoto && pieces.map((piece, index) => {
+          const uri = photoUri(piece.photoFileName);
+          return (
+            <View
+              key={piece.id}
+              style={[
+                styles.outfitCell,
+                pieces.length <= 2 && styles.outfitCellTall,
+                // 3 parçada boş kare kalmasın: üçüncü alt satırı boydan boya kaplar
+                pieces.length === 3 && index === 2 && styles.outfitCellWide,
+                pieces.length === 1 && styles.outfitCellWide,
+              ]}>
+              {uri ? (
+                <Image source={{ uri }} style={styles.thumbImage} contentFit="cover" />
+              ) : (
+                <SymbolView
+                  name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
+                  tintColor={colors.primary}
+                  size={14}
+                  weight="light"
+                />
+              )}
+            </View>
+          );
+        })}
+        {worn && (
+          <View style={styles.quickCheck}>
+            <SymbolView name="checkmark" tintColor={colors.onPrimary} size={11} weight="bold" />
+          </View>
+        )}
+      </View>
+      <Text style={[styles.quickName, worn && styles.quickNameWorn]} numberOfLines={1}>
+        {name}
+      </Text>
+    </Pressable>
+  );
 }
 
 // "Bugün ne giydin?" şeridindeki küçük fotoğraf. Bugün giyildiyse pembe çerçeve + köşede ✓
@@ -392,9 +516,10 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: colors.textSecondary,
   },
+  // "İyi akşamlar aşko": pembe (26 Kasım, Ebrar)
   title: {
     ...Typography.title,
-    color: colors.text,
+    color: colors.primary,
   },
   settingsButton: {
     width: 40,
@@ -425,6 +550,69 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textSecondary,
     marginTop: Spacing.half,
+  },
+  wearHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.two,
+  },
+  wearHeaderText: {
+    flex: 1,
+  },
+  // Kombin | Parça seçici: yarı saydam beyaz zemin, seçili taraf beyaz + gölge
+  modeSwitch: {
+    flexDirection: 'row',
+    backgroundColor: colors.glass,
+    borderRadius: Radius.pill,
+    padding: Spacing.half,
+  },
+  modeItem: {
+    paddingHorizontal: Spacing.two + Spacing.half,
+    paddingVertical: Spacing.one,
+    borderRadius: Radius.pill,
+  },
+  modeItemOn: {
+    backgroundColor: colors.card,
+    ...Shadows.card,
+  },
+  modeText: {
+    ...Typography.caption,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  modeTextOn: {
+    color: colors.primary,
+  },
+  outfitQuick: {
+    width: 104,
+    gap: Spacing.one,
+  },
+  // 2×2 mozaik (2 parçada yan yana iki uzun kutu)
+  outfitMosaic: {
+    width: 104,
+    height: 96,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 2,
+    borderRadius: Radius.md,
+    overflow: 'hidden',
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.card,
+  },
+  outfitCell: {
+    width: 49,
+    height: 45,
+    backgroundColor: colors.backgroundElement,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  outfitCellTall: {
+    height: 92,
+  },
+  outfitCellWide: {
+    width: 100,
   },
   // Şerit kartın iki kenarına kadar uzansın diye kartın iç boşluğu kadar dışarı taşırılır
   stripScroll: {

@@ -133,6 +133,9 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   dolgular artık çok soluk tozlu gül (`primarySoft` `#F4E8EB`, `accent` `#E7C6D2`). Sebep: Ebrar'a göre
   eski pembemsi zemin + her yerde açık pembe "çok pembe, karışık, göz yoruyor"du; 3 taslak (A şu anki,
   B krem, C beyaz+siyah) karşılaştırılıp B seçildi. Eskiden: "Hot Pink", zemin `#FFF7FA`, açık pembe `#FFE4EE`.
+- **İlerleme çubukları** (Cüzdan, Bedavaya en yakın, detay Hedef, Quiz süresi, boş Ana sayfa örneği) hep
+  `colors.progress` (yumuşak gül `#E7A1BB`) dolgu + `colors.progressTrack` zemin; canlı fuşya değil (26 Kasım,
+  "göz yoruyor"). Rakamlar (18/30, %13) fuşya kalabilir.
 - Neon pembe (`highlight` `#FF5C93`) sadece süs içindir (kalp, parıltı); **üstüne yazı konmaz**,
   beyaz yazı okunmuyor. Butonlarda `primary` kullanılır (beyaz yazı kontrastı 4.9).
 - Büyük başlıklar (`Typography.title`, `Typography.hero`) iPhone'un **New York** tırnaklı
@@ -263,6 +266,9 @@ stats.mostWorn            // En çok giyilen kıyafet; yoksa null
 stats.forgotten           // { item, days }: en uzun süredir giyilmeyen; dolap boşsa null
 stats.wearsThisMonth      // Bu ayki giyilme sayısı
 stats.girlMathSavings     // Şaka istatistik "Girl Math kazancın": Σ(fiyat − giyim başına maliyet)
+                          //   (26 Kasım'dan beri ekranda gösterilmiyor: anlaşılmıyordu, yerine amortizedValue)
+stats.amortizedValue      // Amorti ettiğin (Ebrar ekledi 26 Kasım): Σ fiyat × min(1, giyim / hedef), tam TL
+stats.amortizedPercent    // amortizedValue / totalValue, 0-100 (Cüzdan'daki pembe çubuk)
 ```
 Dolap boşken de çalışır (0 / null döner), ekran null durumlarını kontrol etmeli.
 
@@ -328,7 +334,12 @@ sortOutfits(outfits)                // Arşiv sırası: favoriler üstte, sonra 
 outfitItems(outfit, items)          // Kombinin kıyafetleri (silinenler atlanır)
 outfitName(outfit, items)           // Görünen ad: verilen ad ya da “Beyaz tişört” kombini
 ```
-Kayıt: `SavedOutfit` (`types.ts`) → `id, itemIds, name, favorite, wornDates, createdAt`, telefonda
+**Fotoğraflı kombin** (Ebrar ekledi 26 Kasım, Onur çalışmıyorken): `saveOutfit(itemIds, null, fotoğrafDosyaAdı)` –
+ayna/OOTD fotoğrafı (`pickAndSavePhoto`, 3:4); parçalar isteğe bağlı (boş liste olabilir), her zaman yeni kayıt (aynı
+parçalar kontrolü yapılmaz). `setOutfitItems(id, itemIds)` parçaları sonradan işaretler. Parçasız fotoğraflı kombin,
+kıyafet silinince de silinmez; `deleteOutfit`/`resetAll` fotoğrafını da siler; yedeğe kombin fotoğrafları da girer.
+`outfitName` parçasızsa "26 Kasım kombini".
+Kayıt: `SavedOutfit` (`types.ts`) → `id, itemIds, name, favorite, wornDates, createdAt, photoFileName?`, telefonda
 `girlmath.outfits`. Kıyafet silinince kombinlerden çıkar; parçasız kalan kombin silinir.
 `resetAll` kombinleri de siler. Bir parçanın bugünkü tek Giydim'i `undoWear` ile geri alınınca o
 parçayı içeren kombinlerin bugünkü tarihi de silinir (Ebrar ekledi; yoksa kombin sayfası parça
@@ -448,7 +459,7 @@ const coach = useCoachMarks(['wallet-buy', 'wallet-share'], enabled);  // sayfad
 <CoachMark visible={coach.active === 'wallet-buy'} text="…" placement="above|below" align="center|left|right"
   onDismiss={() => coach.done('wallet-buy')}>{hedef}</CoachMark>   // hedefin onPress'inde de coach.done(...)
 ```
-Şu anki oklar: Ana sayfa `home-wear` → `home-fact` → `home-explore`; Dolap `wardrobe-hold` → `wardrobe-outfits`;
+Şu anki oklar: Ana sayfa `home-wear` (kombin/parça sırası) → `home-fact` → `home-explore`; Dolap `wardrobe-hold`; Kombinler `outfits-add`;
 Cüzdan `wallet-buy` → `wallet-insights` → `wallet-share`; detay `item-wear` → `item-outfit`. Dolap boşken çıkmaz.
 `resetAll` ve yedek bunlara dokunmaz (Sözleşme gibi cihaz bilgisi). Kaydırılan listenin içinde balon kesilir: hedef
 listenin dışından sarılır (Dolap'ta başlık `ListHeaderComponentStyle` ile öne alınır). Tekrar görmek için Expo Go silinip yüklenir.
@@ -466,10 +477,10 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Ana sayfa ve Cüzdan ✅
   - Kıyafet düzenleme ✅ (`updateItem`'ı da Ebrar ekledi, Onur'un haberi var), Dolap sıralama
     butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, burç yorumu ✅, Dolap Kahoot'u ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅, Ayarlar ekranı ✅
-  - Sonra: uygulama simgesi (taslaklar beğenilmedi, ertelendi)
+  - Uygulama simgesi ✅ (26 Kasım, `scripts/make-icon.py`)
   - Renk seçici ✅ (+ fotoğraftan renk tahmini ✅), detayda RENK satırı ✅, **"Bununla ne
     giyerim? ✨"** ekranı ✅ (kolaj, seçenekle değiştirme, "Kombini kaydet 💾")
-  - Kombin arşivi ✅ (Dolap'ta "Kombinlerim" → arşiv → kayıtlı kombin sayfası), Ana sayfada
+  - Kombin arşivi ✅ (26 Kasım'dan beri ayrı "Kombinler" sekmesi → kayıtlı kombin sayfası), Ana sayfada
     "Günün kombini" ✅, "Nereye giderken giydin?" + tekrar uyarısı ✅
   - 16 Ekim'de kararlaştırılan 4 özelliğin ekranları bitti ✅ (17 Ekim).
   - Etkinlik modu / Zaman Aşımı ekranları ✅ (20 Ekim)
@@ -480,7 +491,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Tasarım sadeleştirme ✅ (20-21 Ekim: Ana sayfa, Dolap, Cüzdan, detay, Analizler, burç; kurallar
     "Tasarım" bölümünde)
   - **Sırada:** kalan ekranlara tasarım turu (form, Kombinlerim, Bununla ne giyerim?, Ayarlar),
-    "Bugün ne giydin?" şeridini yeniden düşünmek, uygulama simgesi.
+    "Bugün ne giydin?" şeridini yeniden düşünmek.
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -497,6 +508,9 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     Utanç Duvarı'yla aynı zarar hesabı: günlük ≥ 10 TL ise günlük, değilse biriken zarar)
   - `updateItem` – Onur bugün çalışmadığı için Ebrar ekledi (`app-context.tsx`, kural 2: yeni
     şey eklemek serbest). Onur kontrol eder; adını değiştirmek/silmek düzenleme ekranını bozar.
+  - `amortizedValue` / `amortizedPercent` (`stats.ts`, "Amorti ettiğin") – Ebrar ekledi 26 Kasım, Onur çalışmıyorken.
+  - Fotoğraflı kombin: `SavedOutfit.photoFileName`, `saveOutfit` 3. parametresi, `setOutfitItems`; `deleteItem`
+    parçasız fotoğraflı kombini silmez; `backup.ts` kombin fotoğraflarını da yedekler – Ebrar ekledi 26 Kasım.
   - `seenTips` / `markTipSeen` (tanıtım okları, `girlmath.seenTips`) – Ebrar ekledi 26 Kasım, Onur meşgulken (kural 2).
   - `resetAll` – aynı şekilde Ebrar ekledi (Ayarlar'daki "Bütün verileri sil" kullanır).
   - **Yeni kararlaştırılan özellikler (16 Ekim, Onur + Ebrar), bu sırayla:**
@@ -592,17 +606,21 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `(tabs)/` – sekme ekranları. Parantezli klasör adresi etkilemez (Dolap yine `/wardrobe`).
     `(tabs)/_layout.tsx` bu ekranları `AppTabs` ile alt sekmelerde gösterir.
     - `index.tsx` – Ana sayfa ("bugün" ekranı; 25 Kasım yeni düzen, taslak B), yukarıdan aşağı: küçük gri
-      tarih ("Salı, 25 Kasım") + dergi yazısıyla "İyi akşamlar aşko" (emojisiz), sağ üstte ⚙️ Ayarlar;
-      **"Bugün ne giydin?"** beyaz kartı (sayfanın ana eylemi; dokun ✓ Giydim, tekrar dokun geri al;
+      tarih ("Salı, 25 Kasım") + dergi yazısıyla pembe "İyi akşamlar aşko" (emojisiz), sağ üstte ⚙️ Ayarlar;
+      **"Bugün ne giydin?"** kartı (sayfanın ana eylemi; sol üstten toz pembe yansıma `Gradients.blush`; kayıtlı
+      kombin varsa sağ üstte **"Kombin | Parça"** seçici, aynı anda tek sıra: Kombin = favoriler önce en fazla 6,
+      2×2 mozaik, dokun = bütün kombin Giydim (`toggleOutfit`, yer sormaz), Parça = eski şerit (26 Kasım: şeritteki "Fotoğrafla" ve
+      "+ Kombinler" kutuları kalktı, Kombinler sekmesi var); dokun ✓ Giydim, tekrar dokun geri al;
       en fazla 8 parça `quickWearItems` + "Tümü →", bkz. Bilinen durumlar; giyilen pembe çerçeve);
-      etkinlik satırı (sadece 7 gün kala, `nextEvent`); **Girl Math gerçeği** beyaz kartı (koyu büyük
-      rakam, dokununca sıradaki – `buildFacts`, altta noktalar); **"Günün kombini"**; **"Keşfet"**
+      etkinlik satırı (sadece 7 gün kala, `nextEvent`); **Girl Math gerçeği** kartı (26 Kasım'dan beri sadece
+      Cüzdan'da OLMAYANLAR: Dolabının yıldızı, En uzun süredir askıda (7+ gün); ikisi varsa dokununca sıradaki,
+      altta noktalar; hiçbiri yoksa kart yok – `buildFacts`); **"Günün kombini"**; **"Keşfet"**
       (`ExploreTiles`: Burcun · hafta sonu Dolap Quiz satırları; Analiz ve Almalı mıyım? sadece Cüzdan'da). Kaldırılanlar: pembe vitrin
       kartı, gümüş burç şeridi, "Senin için", "Unutulan parça" (Utanç Duvarı Cüzdan'da), "Dolabının
       yıldızı". Dolap boşsa `EmptyHome` (`empty-home.tsx`, 26 Kasım): "Girl Math nasıl çalışır?" kartı – pembe
       geçişli canlı örnek (3.000 ₺'lik ceketin giyim başı maliyeti kendiliğinden erir, çubuk dolar, kıyas
       değişir), zıplayan pembe "Buradan başla" balonu + "İlk parçanı ekle"; "İlk adımların" listesi.
-    - `wardrobe.tsx` – Dolap: büyük başlık + beyaz yuvarlak ⊞ "Kombinlerim" + pembe "+" butonu (alt yazı
+    - `wardrobe.tsx` – Dolap: büyük başlık + pembe "+" butonu (⊞ Kombinlerim 26 Kasım'da kalktı, ayrı sekme oldu) (alt yazı
       başlık satırının altında, tam genişlikte), arama + sıralama butonu
       (En yeni / En pahalı / En az giyilen / Amortiye en yakın; varsayılan dışındaysa buton
       pembe), kategori hapları, 2 sütunlu `ClothingCard`'lar (mağaza vitrini), boş dolap mesajı.
@@ -610,14 +628,13 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
       balonu düşünülebilir). Karta kısa
       dokunuş detayı açar, **basılı tutmak hızlı Giydim** (`wearOnce`: sadece ekler; bugün zaten
       giyildiyse "bugün zaten giyildi ✓" balonu, geri almak balondaki "Geri al" ile).
-    - `wallet.tsx` – Cüzdan ("para" ekranı): tek beyaz kartta dolap değeri (koyu rakam) + Starbucks
-      Endeksi cümlesi + ince çizgi altında "GIRL MATH kazancın" (pembe rakam, sayfanın tek pembe vurgusu;
-      26 Kasım'a kadar ayrı pembe dolgulu kutuydu), 2×2 kutu (ortalama maliyet,
-      toplam giyim, amorti edilen, hiç giyilmeyen), en altta tek kartta satırlar: "Analizlerin" ve
-      "Utanç Duvarı" ("3 parça askıda · 4.200 ₺ boşa gidiyor" / "Duvar bomboş"; ikisi de dolap boşken
-      yok) + "Almalı mıyım?"; başlığın yanında beyaz yuvarlak Story paylaş butonu.
-      ("Bu ay dolaba giren" 20 Ekim'de kalktı → Analizlerin → Aylık özet.)
-      Dolap boşsa ekleme butonu.
+    - `wallet.tsx` – Cüzdan ("para" ekranı; 26 Kasım'da "çok sayı var, anlaşılıyor mu?" üzerine tek hikâye):
+      toz pembe kartta dolap değeri (koyu rakam) + Starbucks cümlesi, ince çizgi altında "GİYEREK GERİ KAZANDIĞIN"
+      (pembe rakam + %, dolan çubuk; `amortizedValue`) ve "N parça resmen bedava · N parça hiç giyilmedi";
+      **"Bedavaya en yakın"**: hedefe en yakın 3 parça (fotoğraf, "18/30", küçük çubuk, "12 giyim daha, resmen
+      bedava"; dokununca detay). 4 küçük kutu kalktı (ortalama maliyet / toplam giyim soyuttu). En altta tek
+      kartta satırlar: "Analizlerin", "Utanç Duvarı" ("3 parça askıda · 4.200 ₺ boşa gidiyor" / "Duvar bomboş"),
+      "Almalı mıyım?"; başlığın yanında beyaz yuvarlak Story paylaş butonu. Dolap boşsa ekleme butonu.
     - `explore.tsx` – "Test" sekmesi, sadece `<DevTestPanel />` gösterir (sadece geliştirmede)
   - `add-item.tsx` – kıyafet ekleme **ve düzenleme** formu (fotoğraf, ad, kategori, renk, fiyat,
     hedef). Kategori hapları 4 eşit sütunlu ızgara. Fotoğraf seçilince renk `guessPhotoColor` ile
@@ -661,13 +678,18 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     rengi yoksa pembe "Rengi yok · Ekle"). Seçeneğe dokununca kombine girer/çıkar (elbise ↔ üst/alt
     birbirini çıkarır), "Öneriye dön ↺". Altta "Kombini kaydet 💾" (`saveOutfit`, iPhone'da
     isteğe bağlı ad sorar; kayıtlıysa "Arşivde ✓ · Kombine git →" kayıtlı kombini açar).
-  - `outfits.tsx` – Kombinlerim (arşiv, Dolap'tan açılır): üstte "2 kombin · 1 favori", "Favoriler" +
+  - `outfits.tsx` – artık `(tabs)/outfits.tsx`: **"Kombinler" sekmesi** (26 Kasım; adres yine `/outfits`; Dolap'la aynı
+    başlık: GIRL MATH / Kombinlerim / "3 kombin · 1 favori" + pembe "+", ok `outfits-add`). Kombinlerim (arşiv; 26 Kasım: "+" → "Fotoğraftan ekle" (fotoğraf →
+    "Bu kombinde neler var?" `PieceTagSheet` çoklu seçim, "Şimdilik geç" serbest; parça seçildiyse
+    "Bugün mü giydin?" → evet: `saveOutfit(…, true)` kaydet + bugün giyildi) ya da "Parçalardan kur";
+    fotoğraflı kombinin kartında mozaik yerine fotoğrafı, parçasızsa "Parçalar işaretlenmedi"): üstte "2 kombin · 1 favori", "Favoriler" +
     "Tüm kombinler", en altta soluk yeni kombin ipucu. Beyaz kart yok: fotoğraf mozaiği tek blok (4 parça 2×2,
     3 parça solda uzun + sağda iki, 2 parça yan yana; 4'ten fazlada "+N"; boş kare kalmaz), altında zeminde ad + giyim sayısı, köşede favori yıldızı (favoride
     `highlight` ★). Karta dokununca kayıtlı kombin sayfası. Sağ üstte "+" (boş arşivde pembe "Kombin kur")
     → "Hangi parçayla başlayalım?" (`PiecePickerSheet`) → seçilen parçayla `outfit/[id]`; dolap boşsa
     ekleme formu. (Kombin kurmanın diğer yolları: detaydaki "Bununla ne giyerim?", Günün kombini, burç.)
-  - `saved-outfit/[id].tsx` – kayıtlı kombin: kolaj, ad (✏️ ile değiştirilir, iPhone'da), "3 parça
+  - `saved-outfit/[id].tsx` – kayıtlı kombin (fotoğraflıysa kolaj yerine fotoğraf, "Parçalar" yanında "Düzenle";
+    parçasızsa açıklama + ana buton "Parçaları işaretle"): kolaj, ad (✏️ ile değiştirilir, iPhone'da), "3 parça
     · 2 kere giydin · en son dün", parça listesi (dokununca kıyafet detayı), "Bu kombini sil",
     sağ üstte yıldız. Altta "Bu kombini giydim ✨" (`wearOutfit`, kutlama balonu); bugün
     giyildiyse "Bugün giydin ✓" + ↩ (`undoWearOutfit`). Giymeden önce "Bu kombinle nereye?".
@@ -701,7 +723,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - `welcome-screen.tsx` – Welcome karşılama ekranı (sözleşmeden sonra bir kez), tek sayfa: başlık +
     tek kartta 3 adım + "Hadi başlayalım". (26 Kasım: 2. sayfadaki burç sorusu kaldırıldı; ilk açılış kısa
     olsun. Burç Keşfet → Burcun ya da Ayarlar → Burcum'dan.)
-  - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Cüzdan, Test (pembe, SF Symbols simgeleri).
+  - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Kombinler (26 Kasım), Cüzdan, Test (pembe, SF Symbols simgeleri).
     `app-tabs.web.tsx` aynı sekmelerin web sürümü.
   - `quick-wear.tsx` – ortak hızlı Giydim: `useQuickWear()` → `{ toggleWear, wearOnce, toastView }`.
     `toggleWear` ışık düğmesi (giyilmediyse Giydim + titreşim + "Geri al"lı balon, bugün
@@ -712,10 +734,14 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     Karartma rengi temada `overlay`.
   - `daily-outfit-card.tsx` – Ana sayfada "Günün kombini" (başlık kartın üstünde): en unutulan 3
     parçadan güne göre biri, etrafında `outfitFor` kombini; kolaj + cümle + "Kombini gör →".
+  - `blush-card.tsx` – toz pembe yansımalı kart `BlushCard` (sol üstten pembe, beyaza açılır; `onPress` verilirse
+    dokunulabilir). Sadece büyük kartlarda: Ana sayfa (Bugün ne giydin?, Girl Math gerçeği, Günün kombini), Cüzdan
+    (dolap değeri), Analizlerin (üç bölüm kartı). Küçük kutular beyaz kalır, yoksa yansıma özelliğini kaybeder (26 Kasım).
   - `coach-mark.tsx` – tanıtım okları (`CoachMark`, `useCoachMarks`; bkz. "Hazır araçlar → Tanıtım okları").
   - `empty-home.tsx` – dolap boşken Ana sayfa (canlı eriyen maliyet örneği, "Buradan başla" balonu, ilk adımlar).
   - `piece-picker-sheet.tsx` – "Hangi parçayla başlayalım?" alttan açılan pencere (4 sütunlu küçük
-    fotoğraf ızgarası + ad; `PaletteSheet`/`PlaceSheet` kalıbı). Kombinlerim'deki "+" kullanır.
+    fotoğraf ızgarası + ad; `PaletteSheet`/`PlaceSheet` kalıbı). Kombinlerim'deki "+" kullanır. Aynı dosyada
+    `PieceTagSheet`: "Bu kombinde neler var?" çoklu seçim (pembe çerçeve + ✓, "Şimdilik geç" / "Kaydet · 3 parça").
   - `today-row.tsx` – tek kartta satırlar: `TodayGroup` (beyaz kart, satırlar arası ince çizgi) +
     `TodayRow` (simge dairesi, başlık + açıklama, sağda ok) + `IconCircle`. Şu an sadece Ana sayfadaki
     etkinlik satırı kullanıyor (eski "Senin için" kartı 25 Kasım'da kalktı).
@@ -742,7 +768,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     "3 gün kaldı · “Elbise”", etkinlik günü 🎁 ve yeşil "Bugün · … bedava"); dokununca detay.
   - `screen-background.tsx` – sekmeler, Welcome ve Sözleşme'nin "üstten pembe ışık" zemini
   - `stat-tile.tsx` – küçük istatistik kutusu (etiket, büyük değer, açıklama; `tone="primary"`
-    pembe dolgulu). Ana sayfa ve Cüzdan kullanır. Etiketi Türkçe kuralla büyük harfe çevirir.
+    pembe dolgulu). 26 Kasım'dan beri hiçbir ekran kullanmıyor (Cüzdan'daki 4 kutu kalktı); ileride lazım olursa diye duruyor. Etiketi Türkçe kuralla büyük harfe çevirir.
   - `clothing-card.tsx` – Dolap'taki kıyafet kartı, mağaza vitrini (beyaz kart yok): 3:4 fotoğraf
     (yoksa beyaz zeminde askı) + "3/30" rozeti + amorti ♥; altında ad ve koyu "/giyim" maliyet,
     düştüyse yanında (sığmazsa altında) üstü çizili fiyat. "1. giyimde →" ipucu sadece detayda. Ayrıca `formatTL(3000)` →
@@ -783,7 +809,10 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
 - **app.json (App Store için, Ekim 2026):** uygulama adı "Girl Math"; fotoğraf izin metni
   (expo-image-picker eklentisinde `photosPermission`, kamera/mikrofon izni kapalı); sadece
   iPhone (`supportsTablet: false`); `ITSAppUsesNonExemptEncryption: false` (şifreleme sorusu
-  için). iOS simgesi `assets/expo.icon` klasöründen okunur (hâlâ Expo'nun varsayılanı).
+  için). **Uygulama simgesi** (26 Kasım, Ebrar seçti): krem zeminde New York italik pembe "g", kulağı kalple
+  biter; altında iPhone "Girl Math" yazar. Dosyalar `assets/images` (icon, splash-icon, android-*, favicon),
+  `scripts/make-icon.py` ile üretilir (sadece Mac). Yedek fikir: pudra pembe zeminli "g" (taslak 5).
+  Simge Expo Go'da görünmez, sadece gerçek uygulamada (TestFlight/App Store).
 - **Bundle ID** (App Store'daki kalıcı kimlik, örn. `com.xxx.girlmath`) henüz yok. Bir kez
   seçilince değiştirilemediği için Ebrar ve Onur birlikte karar verecek.
 - Expo Go'da bildirim izni penceresinde "Girl Math" değil "Expo Go" yazar; normal. Gerçek
@@ -802,6 +831,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   çalışır, app.json değişmedi). Pull sonrası `npm install`.
   20 Ekim: `@react-native-community/datetimepicker` (etkinlik tarihi; Expo Go'da çalışır, app.json'a
   kendi satırını ekledi). Pull sonrası `npm install`.
+- **26 Kasım kararı:** "Bugün ne giydin?" kartına kayıtlı kombinler eklendi (tek dokunuşla bütün kombin); parça
+  şeridi altında kaldı. Aşağıdaki not geçmiş için duruyor.
 - **Yeniden düşünülecek (20 Ekim, Ebrar):** Ana sayfadaki "Bugün ne giydin?" şeridi. Eskiden
   bütün dolap vardı (50+ parçada kaydır kaydır işaretle, kimse uğraşmaz). **Geçici çözüm:** en
   fazla 8 parça (`quickWearItems`, `index.tsx`): son 30 günde en sık giyilenler (bugünkü giyim
@@ -823,6 +854,10 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   - Kodda gereken küçük tip düzeltmeleri: `useRef<ComponentRef<typeof View>>` (share.tsx, Story
     fotoğrafı), `useColorScheme()` artık `null` da dönebiliyor → `scheme === 'dark' ? 'dark' : 'light'`
     (app-tabs, use-theme), app-tabs.web.tsx'te sekme ref'i türü elle çevrildi.
+- **Sekme ekranlarının alt boşluğu** `BottomTabInset` (theme.ts): iOS'ta 90 (26 Kasım'a kadar 50'ydi, iOS 26'nın
+  yüzen sekme çubuğu son satırı örtüyordu). Yeni sekme ekranında içerik altına `BottomTabInset + Spacing.four` konur.
+- Dolap kartındaki fotoğrafların üstünde çok hafif ton var (`photoTint`, %4): beyaz zeminli ürün fotoğrafları krem
+  zeminde "beyaz kart" gibi parlamasın, gri zeminlilerle aynı dursun.
 - Açılış ekranı (splash) rengi `app.json`'da `#F5F1EB` (krem); Expo Go'da görünmez, gerçek uygulamada görünür.
 
 ## Eski proje
@@ -842,8 +877,7 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
    - Story paylaşım kartı, titreşim, pembe geçişli zemin, Utanç Duvarı, Dolap Tarotu (sonra burç yorumuyla değişti),
      hızlı Giydim, ∞ maliyet gösterimi, "Bu ay dolaba giren", Ana sayfa yenilemesi ✅
    - Ayarlar ekranı ✅, app.json izin metinleri ✅
-   - Sırada: **uygulama simgesi ve açılış logosu** (hâlâ Expo'nun varsayılanı; pembe zemin +
-     ince askı + "Girl Math" yazılı taslaklar denendi, beğenilmedi, sonraya kaldı), karanlık mod,
+   - Uygulama simgesi ve açılış logosu ✅ (26 Kasım: italik pembe "g" + kalp). Sırada: karanlık mod,
      Bundle ID (Onur'la birlikte). Premium/ücretsiz sınır ekranı **en sona** (önce uygulamayı
      yaymak ve sevdirmek hedef).
    - Renk + kombin, kombin arşivi, Günün kombini, "Nereye?", burç yorumu ✅ (17 Ekim)

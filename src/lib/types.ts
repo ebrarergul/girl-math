@@ -51,6 +51,9 @@ export type SavedOutfit = {
   favorite: boolean; // Yıldızlı mı? Favoriler arşivde en üstte
   wornDates: string[]; // "Bu kombini giydim"e her basıldığında o günün tarihi
   createdAt: string; // Kaydedildiği gün, örn: "2026-10-16"
+  // (Ebrar ekledi, 26 Kasım) Fotoğraflı kombin: ayna/OOTD fotoğrafının dosya adı. Parçalar (itemIds) isteğe
+  // bağlı işaretlenir; hiç işaretlenmemiş fotoğraflı kombin de arşivde kalır. Eski kayıtlarda alan yok.
+  photoFileName?: string | null;
 };
 
 // Bir haftanın Dolap Kahoot'u sonucu (haftada bir kez oynanır)

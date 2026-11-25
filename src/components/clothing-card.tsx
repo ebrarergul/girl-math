@@ -124,7 +124,11 @@ export function ClothingCard({ item, onPress, onLongPress }: Props) {
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
       <View style={styles.photoBox}>
         {uri ? (
-          <Image source={{ uri }} style={styles.photo} contentFit="cover" transition={150} />
+          <>
+            <Image source={{ uri }} style={styles.photo} contentFit="cover" transition={150} />
+            {/* Hafif ton: beyaz zeminli fotoğraf "beyaz kart" gibi parlamasın, hepsi aynı dursun */}
+            <View style={styles.photoTint} pointerEvents="none" />
+          </>
         ) : (
           <SymbolView
             name={{ ios: 'hanger', android: 'checkroom', web: 'checkroom' }}
@@ -187,6 +191,10 @@ const styles = StyleSheet.create({
   photo: {
     width: '100%',
     height: '100%',
+  },
+  photoTint: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.photoTint,
   },
   wearBadge: {
     position: 'absolute',

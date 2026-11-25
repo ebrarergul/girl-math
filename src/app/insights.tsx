@@ -9,7 +9,7 @@
  *
  * Tasarım: emoji sadece eğlenceli cümlelerde (ayın yorumu). Başlık ve listeler sade;
  * bu yüzden Onur'un hazır cümleleri (lines, text) yerine sayıları kendimiz diziyoruz.
- * 26 Kasım (taslak B): bölüm başlıkları kartın ÜSTÜNDE (gri alt yazıyla), pembe etiketler ve pembe
+ * 26 Kasım (taslak B): kartlar toz pembe yansımalı (BlushCard); bölüm başlıkları kartın ÜSTÜNDE (gri alt yazıyla), pembe etiketler ve pembe
  * alıntı kutusu kalktı; sayfadaki tek pembe vurgu "Tahmini ikinci el değeri" toplamı.
  */
 
@@ -20,6 +20,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BlushCard } from '@/components/blush-card';
 import { formatTL } from '@/components/clothing-card';
 import { ColorSwatch } from '@/components/color-picker';
 import { ClothingPhoto } from '@/components/outfit-collage';
@@ -83,7 +84,7 @@ function Section({
         </View>
         {action}
       </View>
-      <View style={styles.card}>{children}</View>
+      <BlushCard style={styles.card}>{children}</BlushCard>
     </View>
   );
 }
@@ -333,13 +334,11 @@ const styles = StyleSheet.create({
   section: {
     gap: Spacing.two,
   },
+  // Toz pembe yansımalı kart (BlushCard'ın iç kısmı; 26 Kasım "kutular çok soluk" üzerine)
   card: {
-    backgroundColor: colors.card,
-    borderRadius: Radius.lg,
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.three,
     gap: Spacing.three,
-    ...Shadows.card,
   },
   headerRow: {
     flexDirection: 'row',

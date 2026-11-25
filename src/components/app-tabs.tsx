@@ -24,6 +24,15 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Icon sf="hanger" md="checkroom" />
       </NativeTabs.Trigger>
 
+      {/* Kombinler (26 Kasım): eskiden Dolap'taki ⊞ butonunun arkasındaydı */}
+      <NativeTabs.Trigger name="outfits">
+        <NativeTabs.Trigger.Label>Kombinler</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }}
+          md="grid_view"
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="wallet">
         <NativeTabs.Trigger.Label>Cüzdan</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

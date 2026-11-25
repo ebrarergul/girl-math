@@ -42,20 +42,21 @@ export type BackupFile = BackupContent & {
   photos: Record<string, string>; // Fotoğraf dosya adı → fotoğrafın kendisi (base64 yazı olarak)
 };
 
-// Kıyafet fotoğraflarını okuyup yedeğe koyar. Telefonda bulunamayan fotoğraf atlanır.
-async function readPhotos(items: ClothingItem[]): Promise<Record<string, string>> {
+// Kıyafet (ve fotoğraflı kombin) fotoğraflarını okuyup yedeğe koyar. Telefonda bulunamayan fotoğraf atlanır.
+// (Ebrar, 26 Kasım: kombin fotoğrafları da eklendi; dosya adları aynı klasörde, ayrı alan gerekmedi)
+async function readPhotos(fileNames: (string | null | undefined)[]): Promise<Record<string, string>> {
   const photos: Record<string, string> = {};
-  for (const item of items) {
-    if (!item.photoFileName || photos[item.photoFileName]) {
+  for (const fileName of fileNames) {
+    if (!fileName || photos[fileName]) {
       continue;
     }
     try {
-      const file = new File(Paths.document, item.photoFileName);
+      const file = new File(Paths.document, fileName);
       if (file.exists) {
-        photos[item.photoFileName] = await file.base64();
+        photos[fileName] = await file.base64();
       }
     } catch (error) {
-      console.warn('Fotoğraf yedeğe eklenemedi:', item.photoFileName, error);
+      console.warn('Fotoğraf yedeğe eklenemedi:', fileName, error);
     }
   }
   return photos;
@@ -71,7 +72,10 @@ export async function buildBackup(content: BackupContent): Promise<BackupFile> {
     outfits: content.outfits,
     zodiac: content.zodiac,
     quizResults: content.quizResults,
-    photos: await readPhotos(content.items),
+    photos: await readPhotos([
+      ...content.items.map((item) => item.photoFileName),
+      ...content.outfits.map((outfit) => outfit.photoFileName),
+    ]),
   };
 }
 

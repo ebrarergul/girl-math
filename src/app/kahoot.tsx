@@ -439,13 +439,13 @@ const styles = StyleSheet.create({
   track: {
     height: 8,
     borderRadius: Radius.pill,
-    backgroundColor: colors.backgroundElement,
+    backgroundColor: colors.progressTrack,
     overflow: 'hidden',
   },
   bar: {
     height: '100%',
     borderRadius: Radius.pill,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.progress,
   },
   content: {
     paddingHorizontal: Spacing.four,

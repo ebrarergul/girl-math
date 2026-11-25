@@ -10,8 +10,9 @@
  */
 
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { BlushCard } from '@/components/blush-card';
 import { ClothingPhoto } from '@/components/outfit-collage';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { daysSinceLastWear, todayString } from '@/lib/girl-math';
@@ -62,37 +63,37 @@ export function DailyOutfitCard({ items }: { items: ClothingItem[] }) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Günün kombini</Text>
-    <Pressable
-      onPress={() => router.push({ pathname: '/outfit/[id]', params: { id: base.id } })}
-      accessibilityLabel="Günün kombinini gör"
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
-      <View style={styles.row}>
-        {/* Küçük kolaj: yamuk, üst üste binen kartlar */}
-        <View style={styles.thumbs}>
-          {thumbs.map((item, index) => (
-            <View
-              key={item.id}
-              style={[
-                styles.thumb,
-                {
-                  marginLeft: index === 0 ? 0 : -THUMB_WIDTH * 0.35,
-                  transform: [{ rotate: TILTS[index % TILTS.length] }],
-                  zIndex: thumbs.length - index,
-                },
-              ]}>
-              <ClothingPhoto item={item} style={styles.thumbPhoto} />
-            </View>
-          ))}
-        </View>
+      {/* Toz pembe yansımalı kart (Ana sayfanın büyük kartları gibi) */}
+      <BlushCard
+        onPress={() => router.push({ pathname: '/outfit/[id]', params: { id: base.id } })}
+        accessibilityLabel="Günün kombinini gör">
+        <View style={styles.row}>
+          {/* Küçük kolaj: yamuk, üst üste binen kartlar */}
+          <View style={styles.thumbs}>
+            {thumbs.map((item, index) => (
+              <View
+                key={item.id}
+                style={[
+                  styles.thumb,
+                  {
+                    marginLeft: index === 0 ? 0 : -THUMB_WIDTH * 0.35,
+                    transform: [{ rotate: TILTS[index % TILTS.length] }],
+                    zIndex: thumbs.length - index,
+                  },
+                ]}>
+                <ClothingPhoto item={item} style={styles.thumbPhoto} />
+              </View>
+            ))}
+          </View>
 
-        <View style={styles.body}>
-          <Text style={styles.text} numberOfLines={3}>
-            {outfit.text}
-          </Text>
-          <Text style={styles.link}>Kombini gör →</Text>
+          <View style={styles.body}>
+            <Text style={styles.text} numberOfLines={3}>
+              {outfit.text}
+            </Text>
+            <Text style={styles.link}>Kombini gör →</Text>
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </BlushCard>
     </View>
   );
 }
@@ -105,15 +106,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...Typography.heading,
     color: colors.text,
-  },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: Radius.lg,
-    padding: Spacing.three,
-    ...Shadows.card,
-  },
-  cardPressed: {
-    transform: [{ scale: 0.98 }],
   },
   row: {
     flexDirection: 'row',

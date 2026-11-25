@@ -5,7 +5,7 @@
  * share.tsx bunların fotoğrafını çekip iPhone'un paylaşım penceresini açar.
  * Hepsi aynı düzende (StoryLayout): etiket + başlık, beyaz kartta büyük pembe rakam + satırlar, italik alıntı.
  * - ItemShareCard: "GİYİM BAŞI MALİYETİM / “Ceket”", küçük fotoğraf + 67 ₺ /giyim, alış fiyatı, giyim, kıyas
- * - WardrobeShareCard: "DOLABIM / 9 parça", Girl Math kazancı, dolap değeri, toplam giyim, "Dolabım = 51 iced latte"
+ * - WardrobeShareCard: "DOLABIM / 9 parça", amorti ettiğim (%), dolap değeri, toplam giyim, "Dolabım = 51 iced latte"
  * - KahootShareCard: Dolap Quiz rozeti (🏆 Merkez Bankası Başkanı), puan, doğru, seri
  * - MonthlyShareCard: "AYLIK ÖZETİM / Kasım 2026", kaç kere giydim, ayın yıldızı, renk, alışveriş, ayın yorumu
  * Kartın genişliği dışarıdan verilir; yükseklik 16/9 oranında otomatik.
@@ -173,8 +173,8 @@ export function WardrobeShareCard({ stats, width }: { stats: WardrobeStats; widt
       <StoryLayout
         label="DOLABIM"
         title={`${stats.totalItems} parça`}
-        top={<BigAmount value={stats.girlMathSavings} />}
-        caption="Girl Math kazancım"
+        top={<BigAmount value={stats.amortizedValue} />}
+        caption={`amorti ettiğim · %${stats.amortizedPercent}`}
         rows={compact([
           { label: 'Dolap değeri', value: formatTL(stats.totalValue) },
           { label: 'Toplam giyim', value: `${stats.totalWears} kere` },

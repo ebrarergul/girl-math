@@ -8,23 +8,29 @@
  * sonra wearOutfit (bütün parçalara aynı yerle Giydim);
  * bugün zaten giyildiyse "Bugün giydin ✓" olur (yanında ↩ geri al), iki kere sayılmaz. Basınca kutlama balonu çıkar;
  * bugün ayrıca giyilmiş parça tekrar sayılmaz ve balonda söylenir.
+ * Fotoğraflı kombin (26 Kasım): kolaj yerine ayna/OOTD fotoğrafı (3:4); "Parçalar" başlığının yanında
+ * "Düzenle" (PieceTagSheet ile parçaları işaretle/değiştir). Hiç parça işaretlenmemişse liste yerine açıklama
+ * ve alttaki ana buton "Parçaları işaretle" olur (giyince maliyet düşsün diye).
  */
 
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
+import { Image } from 'expo-image';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ColorSwatch } from '@/components/color-picker';
 import { ClothingPhoto, OutfitCollage } from '@/components/outfit-collage';
+import { PieceTagSheet } from '@/components/piece-picker-sheet';
 import { PlaceSheet } from '@/components/place-sheet';
 import { Colors, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import { useApp } from '@/context/app-context';
 import { todayString } from '@/lib/girl-math';
 import { outfitItems, outfitName } from '@/lib/outfits';
+import { photoUri } from '@/lib/photos';
 import type { PlaceName } from '@/lib/places';
 
 const colors = Colors.light;
@@ -52,6 +58,7 @@ export default function SavedOutfitScreen() {
     deleteOutfit,
     wearOutfit,
     undoWearOutfit,
+    setOutfitItems,
   } = useApp();
 
   const outfit = outfits.find((current) => current.id === id);
@@ -60,6 +67,8 @@ export default function SavedOutfitScreen() {
   const [toast, setToast] = useState<string | null>(null);
   // "Bu kombini giydim"e basınca önce "Nereye gidiyorsun?" penceresi
   const [placeOpen, setPlaceOpen] = useState(false);
+  // Fotoğraflı kombinde parçaları işaretleme penceresi
+  const [tagOpen, setTagOpen] = useState(false);
   useEffect(() => {
     if (!toast) {
       return;
@@ -90,6 +99,8 @@ export default function SavedOutfitScreen() {
 
   const pieces = outfitItems(outfit, items);
   const name = outfitName(outfit, items);
+  const outfitPhoto = photoUri(outfit.photoFileName ?? null);
+  const untagged = pieces.length === 0; // Fotoğraflı ama parçası işaretlenmemiş
   // "Bugün giyildi" sadece parçalardan en az biri gerçekten bugün giyildiyse geçerli. (Eski
   // kayıtlarda parçaların Giydim'i geri alındığı halde kombinde bugünün tarihi kalmış olabilir.)
   const today = todayString();
@@ -188,7 +199,11 @@ export default function SavedOutfitScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <OutfitCollage pieces={pieces} />
+        {outfitPhoto ? (
+          <Image source={{ uri: outfitPhoto }} style={styles.photo} contentFit="cover" />
+        ) : (
+          <OutfitCollage pieces={pieces} />
+        )}
 
         <View style={styles.titleBlock}>
           <Pressable onPress={handleRename} style={styles.titleRow} hitSlop={8}>
@@ -199,7 +214,7 @@ export default function SavedOutfitScreen() {
           </Pressable>
           <Text style={styles.subtitle}>
             {[
-              `${pieces.length} parça`,
+              untagged ? 'Parçalar işaretlenmedi' : `${pieces.length} parça`,
               worn > 0 ? `${worn} kere giydin` : 'henüz giyilmedi',
               lastWorn,
             ]
@@ -210,38 +225,53 @@ export default function SavedOutfitScreen() {
 
         {/* Parçalar: başlık kartın üstünde, dokununca kıyafet detayı açılır */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Parçalar</Text>
-          <View style={styles.list}>
-            {pieces.map((piece, index) => (
-              <Pressable
-                key={piece.id}
-                onPress={() => router.push({ pathname: '/item/[id]', params: { id: piece.id } })}
-                style={({ pressed }) => [
-                  styles.row,
-                  index === pieces.length - 1 && styles.rowLast,
-                  pressed && styles.rowPressed,
-                ]}>
-                <ClothingPhoto item={piece} style={styles.rowPhoto} />
-                <View style={styles.rowBody}>
-                  <Text style={styles.rowName} numberOfLines={1}>
-                    {piece.name}
-                  </Text>
-                  <View style={styles.rowMeta}>
-                    {piece.color && <ColorSwatch color={piece.color} size={10} />}
-                    <Text style={styles.rowNote}>
-                      {piece.color ? `${piece.category} · ${piece.color}` : piece.category}
-                    </Text>
-                  </View>
-                </View>
-                <SymbolView
-                  name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-                  tintColor={colors.textMuted}
-                  size={13}
-                  weight="semibold"
-                />
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Parçalar</Text>
+            {/* Fotoğraflı kombinde parçalar sonradan işaretlenir / değiştirilir */}
+            {outfitPhoto && !untagged && (
+              <Pressable onPress={() => setTagOpen(true)} hitSlop={8}>
+                <Text style={styles.editLink}>Düzenle</Text>
               </Pressable>
-            ))}
+            )}
           </View>
+          {untagged && (
+            <Text style={styles.untaggedText}>
+              Bu fotoğrafta hangi parçaların olduğunu işaretlersen, kombini giydiğinde hepsinin maliyeti düşer.
+            </Text>
+          )}
+          {!untagged && (
+            <View style={styles.list}>
+              {pieces.map((piece, index) => (
+                <Pressable
+                  key={piece.id}
+                  onPress={() => router.push({ pathname: '/item/[id]', params: { id: piece.id } })}
+                  style={({ pressed }) => [
+                    styles.row,
+                    index === pieces.length - 1 && styles.rowLast,
+                    pressed && styles.rowPressed,
+                  ]}>
+                  <ClothingPhoto item={piece} style={styles.rowPhoto} />
+                  <View style={styles.rowBody}>
+                    <Text style={styles.rowName} numberOfLines={1}>
+                      {piece.name}
+                    </Text>
+                    <View style={styles.rowMeta}>
+                      {piece.color && <ColorSwatch color={piece.color} size={10} />}
+                      <Text style={styles.rowNote}>
+                        {piece.color ? `${piece.category} · ${piece.color}` : piece.category}
+                      </Text>
+                    </View>
+                  </View>
+                  <SymbolView
+                    name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+                    tintColor={colors.textMuted}
+                    size={13}
+                    weight="semibold"
+                  />
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
 
         <Pressable onPress={handleDelete} style={styles.deleteButton}>
@@ -274,19 +304,42 @@ export default function SavedOutfitScreen() {
             />
           </Pressable>
         )}
-        <Pressable
-          onPress={() => setPlaceOpen(true)}
-          disabled={wornToday}
-          style={({ pressed }) => [
-            styles.wearButton,
-            wornToday && styles.wearButtonDone,
-            pressed && styles.wearButtonPressed,
-          ]}>
-          <Text style={[styles.wearText, wornToday && styles.wearTextDone]}>
-            {wornToday ? 'Bugün giydin ✓' : 'Bu kombini giydim ✨'}
-          </Text>
-        </Pressable>
+        {untagged ? (
+          <Pressable
+            onPress={() => setTagOpen(true)}
+            style={({ pressed }) => [styles.wearButton, pressed && styles.wearButtonPressed]}>
+            <Text style={styles.wearText}>Parçaları işaretle</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={() => setPlaceOpen(true)}
+            disabled={wornToday}
+            style={({ pressed }) => [
+              styles.wearButton,
+              wornToday && styles.wearButtonDone,
+              pressed && styles.wearButtonPressed,
+            ]}>
+            <Text style={[styles.wearText, wornToday && styles.wearTextDone]}>
+              {wornToday ? 'Bugün giydin ✓' : 'Bu kombini giydim ✨'}
+            </Text>
+          </Pressable>
+        )}
       </View>
+      <PieceTagSheet
+        visible={tagOpen}
+        items={items}
+        selectedIds={outfit.itemIds}
+        skipLabel="Vazgeç"
+        onDone={(itemIds) => {
+          setTagOpen(false);
+          // "Vazgeç" boş liste döner: işaretlemeyi değiştirme
+          if (itemIds.length > 0) {
+            setOutfitItems(outfit.id, itemIds);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }
+        }}
+        onClose={() => setTagOpen(false)}
+      />
       {/* Kombinde tekrar uyarısı yok (parça parça değil, kombin olarak giyiliyor) */}
       <PlaceSheet
         visible={placeOpen}
@@ -336,6 +389,27 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: Spacing.two,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  editLink: {
+    ...Typography.bodyBold,
+    color: colors.primary,
+  },
+  untaggedText: {
+    ...Typography.body,
+    color: colors.textSecondary,
+  },
+  // Fotoğraflı kombinin fotoğrafı (kolajın yerine)
+  photo: {
+    width: '78%',
+    alignSelf: 'center',
+    aspectRatio: 3 / 4,
+    borderRadius: Radius.xl,
+    backgroundColor: colors.backgroundElement,
   },
   sectionTitle: {
     ...Typography.heading,

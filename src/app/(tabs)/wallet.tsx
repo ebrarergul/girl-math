@@ -1,10 +1,14 @@
 /**
  * CÜZDAN EKRANI
  *
- * Dolabın parasal özeti: tek beyaz kartta dolap değeri (koyu büyük rakam) + Starbucks Endeksi,
- * ince çizginin altında şaka istatistik "Girl Math kazancın" (pembe rakam, sayfanın tek pembe
- * vurgusu; 26 Kasım'a kadar ayrı pembe dolgulu kutuydu) ve 4 küçük istatistik kutusu. Tüm sayılar
- * getWardrobeStats'tan gelir. Altta tek kartta Analizlerin + Utanç Duvarı + Almalı mıyım? satırları
+ * Dolabın parasal özeti, tek hikâye olarak (26 Kasım, "bir sürü sayı var, anlaşılıyor mu?" üzerine):
+ * - Toz pembe kart: dolap değeri (koyu büyük rakam) + Starbucks Endeksi; ince çizginin altında "Giyerek geri
+ *   kazandığın" (pembe rakam + %, dolan pembe çubuk; stats.amortizedValue) ve tek satır "N parça resmen bedava ·
+ *   N parça hiç giyilmedi".
+ * - "Bedavaya en yakın": hedefe en yakın 3 parça, fotoğraf + kendi küçük çubuğu + "12 giyim daha, resmen
+ *   bedava". Büyük çubuğun nasıl hesaplandığını somut olarak anlatır; dokununca parçanın detayı.
+ * - Kalkanlar: 4 küçük kutu (ortalama maliyet, toplam giyim soyuttu; amorti/hiç giyilmeyen karta taşındı).
+ * Tüm sayılar getWardrobeStats'tan gelir. Altta tek kartta Analizlerin + Utanç Duvarı + Almalı mıyım? satırları
  * (Utanç Duvarı'nın her zaman açık girişi burası; Ana sayfadaki bağlantı sadece unutulan parça varken çıkar).
  * Aylık harcama ("bu ay dolaba giren") Analizlerin → Aylık özet'te; burada tekrar edilmez.
  */
@@ -15,9 +19,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BlushCard } from '@/components/blush-card';
 import { formatTL, shameWallItems } from '@/components/clothing-card';
 import { CoachMark, useCoachMarks } from '@/components/coach-mark';
-import { StatTile } from '@/components/stat-tile';
+import { ClothingPhoto } from '@/components/outfit-collage';
 import { ScreenBackground } from '@/components/screen-background';
 import {
   BottomTabInset,
@@ -31,9 +36,26 @@ import {
 import { useApp } from '@/context/app-context';
 import { useCountUp } from '@/hooks/use-count-up';
 import { starbucksIndexText } from '@/lib/starbucks-index';
+import { isPaidOff, wearCount } from '@/lib/girl-math';
 import { getWardrobeStats } from '@/lib/stats';
+import type { ClothingItem } from '@/lib/types';
 
 const colors = Colors.light;
+
+// "Bedavaya en yakın" listesinde kaç parça
+const CLOSEST_LIMIT = 3;
+
+// Hedefine en yakın (henüz amorti olmamış) parçalar: önce giyim/hedef oranı yüksek olan, eşitse az kalan
+function closestToFree(items: ClothingItem[]): ClothingItem[] {
+  return items
+    .filter((item) => !isPaidOff(item))
+    .sort(
+      (a, b) =>
+        wearCount(b) / b.targetWears - wearCount(a) / a.targetWears ||
+        a.targetWears - wearCount(a) - (b.targetWears - wearCount(b)),
+    )
+    .slice(0, CLOSEST_LIMIT);
+}
 
 export default function WalletScreen() {
   const router = useRouter();
@@ -42,11 +64,13 @@ export default function WalletScreen() {
   const isEmpty = isLoaded && items.length === 0;
   // Büyük rakamlar sayfa açılınca 0'dan sayarak yükselir
   const shownValue = useCountUp(stats.totalValue);
-  const shownSavings = useCountUp(stats.girlMathSavings);
+  const shownAmortized = useCountUp(stats.amortizedValue);
+  const shownPercent = useCountUp(stats.amortizedPercent);
 
   // Utanç Duvarı satırı: kaç parça askıda ve toplam ne kadar zarar yazıyor (duvar sayfasıyla aynı hesap)
   const wall = shameWallItems(items);
   const wallLoss = wall.reduce((sum, entry) => sum + entry.loss, 0);
+  const closest = closestToFree(items);
 
   // Tanıtım okları (birer kez, sırayla): Almalı mıyım? → Analizlerin → Story paylaş
   const coach = useCoachMarks(['wallet-buy', 'wallet-insights', 'wallet-share'], !isEmpty);
@@ -110,57 +134,80 @@ export default function WalletScreen() {
           ) : (
             <>
               {/* Dolap değeri: rakam dergi yazı tipinde, ₺ sade yazı tipinde */}
-              <Animated.View entering={FadeInDown.duration(450)} style={styles.hero}>
-                <Text style={styles.heroLabel}>DOLAP DEĞERİN</Text>
-                <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
-                  {shownValue.toLocaleString('tr-TR')}
-                  <Text style={styles.heroCurrency}> ₺</Text>
-                </Text>
-                <Text style={styles.starbucks}>
-                  Dolabın {starbucksIndexText(stats.totalValue)}
-                </Text>
-                <View style={styles.divider} />
-                {/* Girl Math kazancı aynı kartta: sayfanın tek pembe vurgusu bu rakam */}
-                <View style={styles.savingsRow}>
-                  <View style={styles.savingsText}>
-                    <Text style={styles.heroLabel}>GIRL MATH KAZANCIN</Text>
-                    <Text style={styles.savingsCaption}>
-                      Giydikçe kazandığın. Bankan bunu tanımıyor ama biz tanıyoruz 💅
-                    </Text>
+              {/* Toz pembe yansımalı büyük kart (Ana sayfanın büyük kartları gibi); küçük kutular beyaz kalır */}
+              <Animated.View entering={FadeInDown.duration(450)}>
+                <BlushCard style={styles.hero}>
+                  <Text style={styles.heroLabel}>DOLAP DEĞERİN</Text>
+                  <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
+                    {shownValue.toLocaleString('tr-TR')}
+                    <Text style={styles.heroCurrency}> ₺</Text>
+                  </Text>
+                  <Text style={styles.starbucks}>
+                    Dolabın {starbucksIndexText(stats.totalValue)}
+                  </Text>
+                  <View style={styles.divider} />
+                  {/* Giyerek geri kazandığın: dolabın ne kadarı giyilerek "geri kazanıldı" + dolan çubuk */}
+                  <View style={styles.savingsRow}>
+                    <Text style={styles.heroLabel}>GİYEREK GERİ KAZANDIĞIN</Text>
+                    <Text style={styles.savingsPercent}>%{shownPercent}</Text>
                   </View>
                   <Text style={styles.savingsValue} numberOfLines={1}>
-                    {formatTL(shownSavings)}
+                    {formatTL(shownAmortized)}
                   </Text>
-                </View>
+                  <View style={styles.track}>
+                    <View style={[styles.bar, { width: `${shownPercent}%` }]} />
+                  </View>
+                  <Text style={styles.savingsCaption}>
+                    {`${stats.paidOffCount} parça resmen bedava · ${stats.neverWornCount} parça hiç giyilmedi`}
+                  </Text>
+                </BlushCard>
               </Animated.View>
 
-              {/* Kartlar sırayla, hafifçe aşağıdan kayarak belirir */}
-              <Animated.View entering={FadeInDown.duration(450).delay(80)} style={styles.row}>
-                <StatTile
-                  label="Ortalama maliyet"
-                  value={
-                    stats.averageCostPerWear === null ? '—' : formatTL(stats.averageCostPerWear)
-                  }
-                  caption="giyim başına"
-                />
-                <StatTile
-                  label="Toplam giyim"
-                  value={String(stats.totalWears)}
-                  caption={`bu ay ${stats.wearsThisMonth}`}
-                />
-              </Animated.View>
-              <Animated.View entering={FadeInDown.duration(450).delay(160)} style={styles.row}>
-                <StatTile
-                  label="Amorti edilen"
-                  value={`${stats.paidOffCount} / ${stats.totalItems}`}
-                  caption="parça resmen bedava"
-                />
-                <StatTile
-                  label="Hiç giyilmeyen"
-                  value={String(stats.neverWornCount)}
-                  caption="parça sırasını bekliyor"
-                />
-              </Animated.View>
+              {/* Bedavaya en yakın: büyük çubuğun hesabını somut parçalarla anlatır */}
+              {closest.length > 0 && (
+                <Animated.View entering={FadeInDown.duration(450).delay(100)} style={styles.section}>
+                  <Text style={styles.sectionTitle}>Bedavaya en yakın</Text>
+                  <View style={styles.closestCard}>
+                    {closest.map((item, index) => {
+                      const wears = wearCount(item);
+                      const left = item.targetWears - wears;
+                      return (
+                        <Pressable
+                          key={item.id}
+                          onPress={() =>
+                            router.push({ pathname: '/item/[id]', params: { id: item.id } })
+                          }
+                          style={({ pressed }) => [styles.closestRow, pressed && styles.closestPressed]}>
+                          <ClothingPhoto item={item} style={styles.closestPhoto} />
+                          <View style={[styles.closestBody, index > 0 && styles.closestDivider]}>
+                            <View style={styles.closestTop}>
+                              <Text style={styles.closestName} numberOfLines={1}>
+                                {item.name}
+                              </Text>
+                              <Text style={styles.closestCount}>{`${wears}/${item.targetWears}`}</Text>
+                            </View>
+                            <View style={styles.miniTrack}>
+                              <View
+                                style={[
+                                  styles.miniBar,
+                                  { width: `${Math.round((wears / item.targetWears) * 100)}%` },
+                                ]}
+                              />
+                            </View>
+                            <Text style={styles.closestText}>
+                              {wears === 0
+                                ? 'Henüz hiç giyilmedi, ilk adım seni bekliyor'
+                                : left === 1
+                                  ? '1 giyim daha, resmen bedava!'
+                                  : `${left} giyim daha, resmen bedava`}
+                            </Text>
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </Animated.View>
+              )}
             </>
           )}
 
@@ -300,11 +347,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   hero: {
-    backgroundColor: colors.card,
-    borderRadius: Radius.xl,
     padding: Spacing.four,
     gap: Spacing.one,
-    ...Shadows.card,
   },
   heroLabel: {
     ...Typography.label,
@@ -334,15 +378,30 @@ const styles = StyleSheet.create({
   savingsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
+    justifyContent: 'space-between',
   },
-  savingsText: {
-    flex: 1,
-    gap: Spacing.one,
+  savingsPercent: {
+    ...Typography.caption,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  // Amorti çubuğu
+  track: {
+    height: 8,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.progressTrack,
+    overflow: 'hidden',
+    marginTop: Spacing.two,
+  },
+  bar: {
+    height: '100%',
+    borderRadius: Radius.pill,
+    backgroundColor: colors.progress,
   },
   savingsCaption: {
     ...Typography.caption,
     color: colors.textMuted,
+    marginTop: Spacing.two,
   },
   savingsValue: {
     fontSize: 24,
@@ -351,9 +410,72 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     color: colors.primary,
   },
-  row: {
+  section: {
+    gap: Spacing.two,
+  },
+  sectionTitle: {
+    ...Typography.heading,
+    color: colors.text,
+  },
+  // "Bedavaya en yakın": tek beyaz kartta satırlar (çizgi fotoğrafın sağından başlar)
+  closestCard: {
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    paddingLeft: Spacing.three,
+    ...Shadows.card,
+  },
+  closestRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.three,
+  },
+  closestPressed: {
+    opacity: 0.6,
+  },
+  closestPhoto: {
+    width: 44,
+    borderRadius: Radius.sm,
+  },
+  closestBody: {
+    flex: 1,
+    gap: Spacing.one,
+    paddingVertical: Spacing.three,
+    paddingRight: Spacing.three,
+  },
+  closestDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  closestTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  closestName: {
+    ...Typography.bodyBold,
+    color: colors.text,
+    flexShrink: 1,
+  },
+  closestCount: {
+    ...Typography.caption,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  miniTrack: {
+    height: 5,
+    borderRadius: Radius.pill,
+    backgroundColor: colors.progressTrack,
+    overflow: 'hidden',
+  },
+  miniBar: {
+    height: '100%',
+    borderRadius: Radius.pill,
+    backgroundColor: colors.progress,
+  },
+  closestText: {
+    ...Typography.caption,
+    color: colors.textSecondary,
   },
   // iPhone Ayarları gibi: tek beyaz kart, satırlar arasında ince çizgi (simgenin sağından başlar)
   linkGroup: {

@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   bar: {
     height: '100%',
     borderRadius: Radius.pill,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.progress,
   },
   demoBottom: {
     flexDirection: 'row',
