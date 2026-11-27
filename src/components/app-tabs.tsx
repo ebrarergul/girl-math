@@ -1,54 +1,33 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { TopTabs } from 'expo-router/js-top-tabs';
 import { useColorScheme } from 'react-native';
 
+import { GlassTabBar } from '@/components/glass-tab-bar';
 import { Colors } from '@/constants/theme';
 
-// Simgeler: "sf" iPhone'un kendi simge seti (SF Symbols), "md" Android'in simge seti (Material)
+// Sekmeler (28 Kasım, Onur): Instagram gibi parmakla yana kayan sayfalar. iPhone'un kendi sekme
+// çubuğu (NativeTabs) kaydırmayı desteklemediği için alttaki çubuk artık bizim GlassTabBar'ımız
+// (sıvı cam kapsül, glass-tab-bar.tsx). Buradaki sıra = çubuktaki ve kaydırmadaki sıra.
+// Simgeler glass-tab-bar.tsx içindeki TAB_ITEMS listesinde.
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
 
   return (
-    <NativeTabs
-      backgroundColor={colors.background}
-      tintColor={colors.primary}
-      indicatorColor={colors.primarySoft}
-      labelStyle={{ selected: { color: colors.primary } }}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Ana sayfa</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="wardrobe">
-        <NativeTabs.Trigger.Label>Dolap</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="hanger" md="checkroom" />
-      </NativeTabs.Trigger>
-
+    <TopTabs
+      tabBarPosition="bottom"
+      tabBar={(props) => <GlassTabBar {...props} />}
+      screenOptions={{ sceneStyle: { backgroundColor: colors.background } }}>
+      <TopTabs.Screen name="index" options={{ title: 'Ana sayfa' }} />
+      <TopTabs.Screen name="wardrobe" options={{ title: 'Dolap' }} />
       {/* Kombinler (26 Kasım): eskiden Dolap'taki ⊞ butonunun arkasındaydı */}
-      <NativeTabs.Trigger name="outfits">
-        <NativeTabs.Trigger.Label>Kombinler</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: 'square.grid.2x2', selected: 'square.grid.2x2.fill' }}
-          md="grid_view"
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="wallet">
-        <NativeTabs.Trigger.Label>Cüzdan</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: 'creditcard', selected: 'creditcard.fill' }}
-          md="account_balance_wallet"
-        />
-      </NativeTabs.Trigger>
+      <TopTabs.Screen name="outfits" options={{ title: 'Kombinler' }} />
+      <TopTabs.Screen name="wallet" options={{ title: 'Cüzdan' }} />
 
       {/* Onur'un deneme paneli. __DEV__ sadece geliştirmede (Expo Go) doğrudur,
           App Store sürümünde bu sekme otomatik olarak gizlenir. */}
-      {__DEV__ && (
-        <NativeTabs.Trigger name="explore">
-          <NativeTabs.Trigger.Label>Test</NativeTabs.Trigger.Label>
-          <NativeTabs.Trigger.Icon sf="wrench.and.screwdriver" md="build" />
-        </NativeTabs.Trigger>
-      )}
-    </NativeTabs>
+      <TopTabs.Protected guard={__DEV__}>
+        <TopTabs.Screen name="explore" options={{ title: 'Test' }} />
+      </TopTabs.Protected>
+    </TopTabs>
   );
 }

@@ -518,6 +518,9 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     parçasız fotoğraflı kombini silmez; `backup.ts` kombin fotoğraflarını da yedekler – Ebrar ekledi 26 Kasım.
   - `seenTips` / `markTipSeen` (tanıtım okları, `girlmath.seenTips`) – Ebrar ekledi 26 Kasım, Onur meşgulken (kural 2).
   - `resetAll` – aynı şekilde Ebrar ekledi (Ayarlar'daki "Bütün verileri sil" kullanır).
+  - Kayan sekmeler + sıvı cam alt çubuk ✅ (28 Kasım; Ebrar'ın alanı `app-tabs.tsx`, Ebrar'ın haberiyle) –
+    `glass-tab-bar.tsx`, 2 yeni paket. İlk deneme (çubuk aynı kalıp hareketle "tak diye" geçiş) animasyonsuz
+    olduğu için beğenilmedi, geri alındı.
   - **Yeni kararlaştırılan özellikler (16 Ekim, Onur + Ebrar), bu sırayla:**
     1. Renk + kombin motoru ✅
     2. **Favori kombin arşivi:** mantık ✅ (Onur), ekranlar ✅ (Ebrar): "Kombini kaydet 💾",
@@ -729,7 +732,15 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     tek kartta 3 adım + "Hadi başlayalım". (26 Kasım: 2. sayfadaki burç sorusu kaldırıldı; ilk açılış kısa
     olsun. Burç Keşfet → Burcun ya da Ayarlar → Burcum'dan.)
   - `app-tabs.tsx` – alt sekmeler: Ana sayfa, Dolap, Kombinler (26 Kasım), Cüzdan, Test (pembe, SF Symbols simgeleri).
-    `app-tabs.web.tsx` aynı sekmelerin web sürümü.
+    28 Kasım (Onur): sekmeler **Instagram gibi parmakla yana kayıyor** (`expo-router/js-top-tabs`, `tabBarPosition="bottom"`).
+    iPhone'un kendi çubuğu (`NativeTabs`) kaydırmayı desteklemediği için alttaki çubuk artık `GlassTabBar`. Buradaki sıra =
+    çubuktaki ve kaydırmadaki sıra; Test sekmesi `TopTabs.Protected guard={__DEV__}` ile sadece geliştirmede.
+    `app-tabs.web.tsx` aynı sekmelerin web sürümü (değişmedi).
+  - `glass-tab-bar.tsx` – alt sekme çubuğu (Onur, 28 Kasım): ekranın altında yüzen kapsül; iOS 26'da gerçek sıvı cam
+    (`expo-glass-effect`'in `GlassView`'u), eski iPhone/Android'de beyaz kapsül. Seçili sekmenin arkasındaki toz pembe
+    (`primarySoft`) hap parmağı takip ederek kayar, yolda hafifçe uzar; sekme değişince hafif titreşim. Simgeler dosyadaki
+    `TAB_ITEMS` listesinde. Ölçüler iOS 26 çubuğuyla aynı (FabBar kütüphanesinin ölçümleri): yükseklik 62, yanlardan 21,
+    alttan ~21, yazı 10 yarı kalın, hap kenar boşluğu 2. İnceltmek/kalınlaştırmak önerilmez (dokunma alanı en az 44 × 44).
   - `quick-wear.tsx` – ortak hızlı Giydim: `useQuickWear()` → `{ toggleWear, wearOnce, toastView }`.
     `toggleWear` ışık düğmesi (giyilmediyse Giydim + titreşim + "Geri al"lı balon, bugün
     giyildiyse geri al) – Ana sayfa şeridi. `wearOnce` sadece ekler (bugün giyildiyse "zaten
@@ -842,6 +853,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   çalışır, app.json değişmedi). Pull sonrası `npm install`.
   20 Ekim: `@react-native-community/datetimepicker` (etkinlik tarihi; Expo Go'da çalışır, app.json'a
   kendi satırını ekledi). Pull sonrası `npm install`.
+- Onur'un eklediği paketler (28 Kasım): `react-native-pager-view` ve `react-native-tab-view` (kayan sekmeler; ikisi de
+  Expo Go'da çalışır, app.json değişmedi). Pull sonrası `npm install` + `npx expo start -c`.
 - **26 Kasım kararı:** "Bugün ne giydin?" kartına kayıtlı kombinler eklendi (tek dokunuşla bütün kombin); parça
   şeridi altında kaldı. Aşağıdaki not geçmiş için duruyor.
 - **Yeniden düşünülecek (20 Ekim, Ebrar):** Ana sayfadaki "Bugün ne giydin?" şeridi. Eskiden
@@ -866,7 +879,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     fotoğrafı), `useColorScheme()` artık `null` da dönebiliyor → `scheme === 'dark' ? 'dark' : 'light'`
     (app-tabs, use-theme), app-tabs.web.tsx'te sekme ref'i türü elle çevrildi.
 - **Sekme ekranlarının alt boşluğu** `BottomTabInset` (theme.ts): iOS'ta 90 (26 Kasım'a kadar 50'ydi, iOS 26'nın
-  yüzen sekme çubuğu son satırı örtüyordu). Yeni sekme ekranında içerik altına `BottomTabInset + Spacing.four` konur.
+  yüzen sekme çubuğu son satırı örtüyordu). 28 Kasım'dan beri çubuk `GlassTabBar` ama yüksekliği aynı, 90 hâlâ doğru. Yeni sekme ekranında içerik altına `BottomTabInset + Spacing.four` konur.
 - Dolap kartındaki fotoğrafların üstünde çok hafif ton var (`photoTint`, %4): beyaz zeminli ürün fotoğrafları krem
   zeminde "beyaz kart" gibi parlamasın, gri zeminlilerle aynı dursun.
 - Açılış ekranı (splash) rengi `app.json`'da `#F5F1EB` (krem); Expo Go'da görünmez, gerçek uygulamada görünür.
