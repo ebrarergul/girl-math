@@ -36,7 +36,18 @@ function formatEntry(entry: IndexEntry): string {
   return `${entry.count.toLocaleString('tr-TR')}${NBSP}${unit}${NBSP}${entry.comparison.emoji}`;
 }
 
-// Kısa cümle. Örn: "= 11 iced latte 🧋 ya da 15 filtre kahve ☕"
+// "ya da" kısmındaki ikinci kalem: sadece iced latteden PAHALI kalemlerden seçilir (28 Kasım, Onur).
+// Eskiden bütün listeden seçiliyordu; büyük fiyatlarda "107 iced latte ya da 1.290 şişe su" gibi saçma
+// sayılar çıkıyordu. Uygun kalem yoksa null (cümle sadece iced latteyle kalır).
+// Aynı fiyat hep aynı kalemi verir (ekran yenilenince cümle değişmez).
+function secondEntry(list: IndexEntry[], main: IndexEntry, price: number): IndexEntry | null {
+  const pricier = list.filter(
+    (entry) => entry !== main && entry.comparison.price > main.comparison.price
+  );
+  return pricier.length > 0 ? pricier[Math.round(price) % pricier.length] : null;
+}
+
+// Kısa cümle. Örn: "= 107 iced latte 🧋 ya da 24 brunch 🥞"
 export function starbucksIndexText(price: number): string {
   const list = starbucksIndexList(price);
   if (list.length === 0) {
@@ -49,13 +60,10 @@ export function starbucksIndexText(price: number): string {
     return `= ${formatEntry(list[0])}`;
   }
 
-  const others = list.filter((entry) => entry !== main);
-  if (others.length === 0) {
+  const second = secondEntry(list, main, price);
+  if (!second) {
     return `= ${formatEntry(main)}`;
   }
-
-  // İkinci kalem fiyata göre seçilir: aynı fiyat hep aynı cümleyi verir (ekran yenilenince değişmez)
-  const second = others[Math.round(price) % others.length];
   return `= ${formatEntry(main)} ya da ${formatEntry(second)}`;
 }
 
@@ -78,8 +86,7 @@ export function starbucksIndexMeme(price: number): string {
     return '67 iced latte… 6-7 🤷‍♀️';
   }
 
-  const others = list.filter((entry) => entry !== main);
-  const second = others.length > 0 ? others[Math.round(price) % others.length] : null;
+  const second = secondEntry(list, main, price);
 
   const memes = [
     `Bu parayla ${n} iced latte içer, ${n} gün main character takılırdın 🧋✨`,
