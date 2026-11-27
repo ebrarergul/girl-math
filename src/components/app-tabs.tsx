@@ -16,7 +16,10 @@ export default function AppTabs() {
     <TopTabs
       tabBarPosition="bottom"
       tabBar={(props) => <GlassTabBar {...props} />}
-      screenOptions={{ sceneStyle: { backgroundColor: colors.background } }}>
+      // animationEnabled false: çubuktan dokununca sayfa doğrudan açılır (aradaki sekmeler hızla
+      // geçmesin; iPhone'un kendi çubuğu da böyle). Parmakla kaydırma yine sayfayı kaydırır.
+      // Dokununca kayan pembe hap animasyonu glass-tab-bar.tsx'te.
+      screenOptions={{ sceneStyle: { backgroundColor: colors.background }, animationEnabled: false }}>
       <TopTabs.Screen name="index" options={{ title: 'Ana sayfa' }} />
       <TopTabs.Screen name="wardrobe" options={{ title: 'Dolap' }} />
       {/* Kombinler (26 Kasım): eskiden Dolap'taki ⊞ butonunun arkasındaydı */}

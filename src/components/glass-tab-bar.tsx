@@ -78,6 +78,10 @@ export function GlassTabBar({ state, descriptors, emitter, position, jumpTo, ins
   }, [state.index]);
 
   // position: kaydırma sırasında 0, 0.3, 0.8, 1… gibi akan sekme sırası. Hap buna göre yer değiştirir.
+  // Çubuktan dokununca sayfa animasyonsuz açılır ve position bir anda yeni sekmeye atlar; hap atlamasın
+  // diye tapOffset önce farkı geri alır (hap eski yerinde kalır), sonra yay gibi 0'a iner (hap kayar).
+  const [tapOffset] = useState(() => new Animated.Value(0));
+  const pillPosition = Animated.add(position, tapOffset);
   const indexes = state.routes.map((_, index) => index);
   const halfSteps = indexes.flatMap((index) => (index < count - 1 ? [index, index + 0.5] : [index]));
   const pillStyle =
@@ -86,14 +90,14 @@ export function GlassTabBar({ state, descriptors, emitter, position, jumpTo, ins
           width: tabWidth,
           transform: [
             {
-              translateX: position.interpolate({
+              translateX: pillPosition.interpolate({
                 inputRange: indexes,
                 outputRange: indexes.map((index) => index * tabWidth),
                 extrapolate: 'clamp',
               }),
             },
             {
-              scaleX: position.interpolate({
+              scaleX: pillPosition.interpolate({
                 inputRange: halfSteps,
                 outputRange: halfSteps.map((step) => (Number.isInteger(step) ? 1 : PILL_STRETCH)),
                 extrapolate: 'clamp',
@@ -118,7 +122,15 @@ export function GlassTabBar({ state, descriptors, emitter, position, jumpTo, ins
         function handlePress() {
           const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
           if (!focused && !event.defaultPrevented) {
-            jumpTo(route.key);
+            tapOffset.stopAnimation();
+            tapOffset.setValue(state.index - index); // hap şimdilik eski sekmede dursun
+            jumpTo(route.key); // sayfa doğrudan açılır
+            Animated.spring(tapOffset, {
+              toValue: 0, // hap yeni sekmeye kayar
+              useNativeDriver: true,
+              damping: 20,
+              stiffness: 220,
+            }).start();
           }
         }
 
