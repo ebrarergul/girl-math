@@ -492,9 +492,11 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
     "Tasarım" bölümünde)
   - 25-26 Kasım ✅: taslak B tasarım turu (bütün ekranlar), SDK 58, tanıtım okları, canlı boş Ana sayfa,
     uygulama simgesi, Kombinler sekmesi, fotoğraflı kombin, yeni Cüzdan ("Bedavaya en yakın"), toz pembe kartlar.
-  - **Sırada (26 Kasım sonu):** 1) Ana sayfadaki "Kombin | Parça" seçicisi Kombinler sekmesiyle fazla benzer
-    gelirse kaldırmak (Ebrar'ın kararına bırakıldı); 2) App Store hazırlığı (Bundle ID – Onur'la, Apple Developer
-    hesabı, gizlilik politikası, TestFlight; simge sadece orada görünür); 3) premium en sona.
+  - 26 Kasım kararı ✅: Ana sayfadaki "Kombin | Parça" seçicisi **kalıyor** (Ana sayfa hızlıca "giydim" demek
+    için, Kombinler sekmesi kombinleri yönetmek için; işleri farklı).
+  - 28 Kasım ✅ (Ebrar + Onur): Bundle ID `com.girlmath.app` (app.json → `ios.bundleIdentifier`).
+  - **Sırada (28 Kasım):** App Store hazırlığı (Apple Developer hesabı, adın App Store'da boş olup olmadığı,
+    gizlilik politikası, TestFlight; simge sadece orada görünür); premium en sona.
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -816,8 +818,14 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   biter; altında iPhone "Girl Math" yazar. Dosyalar `assets/images` (icon, splash-icon, android-*, favicon),
   `scripts/make-icon.py` ile üretilir (sadece Mac). Yedek fikir: pudra pembe zeminli "g" (taslak 5).
   Simge Expo Go'da görünmez, sadece gerçek uygulamada (TestFlight/App Store).
-- **Bundle ID** (App Store'daki kalıcı kimlik, örn. `com.xxx.girlmath`) henüz yok. Bir kez
-  seçilince değiştirilemediği için Ebrar ve Onur birlikte karar verecek.
+- **Bundle ID** (App Store'daki kalıcı kimlik): `com.girlmath.app` (28 Kasım, Ebrar + Onur). App Store'a ilk
+  yüklemeden sonra değiştirilemez. Apple Developer hesabında kaydederken "kullanılıyor" derse yeni bir tane
+  seçilir ve app.json'daki `ios.bundleIdentifier` güncellenir (ilk yüklemeden önce değiştirmek sorun değil).
+- **Ad / marka riski (28 Kasım araştırması, hukuki tavsiye değil):** App Store'da "Girl Math Calculator" ve
+  "Girl Math: Savings Tracker" (bize çok benzer: birikim, veriler telefonda, Pro) var; sade "Girl Math" adı boş
+  olabilir, kesin bilgi Apple Developer hesabı açılınca. ABD'de "GIRL MATH" için birkaç marka başvurusu var, biri
+  9. sınıfta (uygulamaların da girdiği sınıf) tescilli (99037512). Gerekirse App Store adına ayırt edici ek
+  ("Girl Math: Dolap Bütçesi" gibi); TÜRKPATENT'te de marka araştırması yapılabilir.
 - Expo Go'da bildirim izni penceresinde "Girl Math" değil "Expo Go" yazar; normal. Gerçek
   uygulamada (App Store) kendi adımız çıkar. Takılma bildirimi 14+ gün gerektirdiği için hızlı
   test edilemez; deneme panelindeki "🔔 Test bildirimi" butonu kullanılır.
@@ -880,8 +888,8 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
    - Story paylaşım kartı, titreşim, pembe geçişli zemin, Utanç Duvarı, Dolap Tarotu (sonra burç yorumuyla değişti),
      hızlı Giydim, ∞ maliyet gösterimi, "Bu ay dolaba giren", Ana sayfa yenilemesi ✅
    - Ayarlar ekranı ✅, app.json izin metinleri ✅
-   - Uygulama simgesi ve açılış logosu ✅ (26 Kasım: italik pembe "g" + kalp). Sırada: karanlık mod,
-     Bundle ID (Onur'la birlikte). Premium/ücretsiz sınır ekranı **en sona** (önce uygulamayı
+   - Uygulama simgesi ve açılış logosu ✅ (26 Kasım: italik pembe "g" + kalp). Bundle ID ✅
+     (`com.girlmath.app`, 28 Kasım). Sırada: karanlık mod. Premium/ücretsiz sınır ekranı **en sona** (önce uygulamayı
      yaymak ve sevdirmek hedef).
    - Renk + kombin, kombin arşivi, Günün kombini, "Nereye?", burç yorumu ✅ (17 Ekim)
 5. Gerçek hayat kıyasları ve yerel bildirimler (expo-notifications) – Onur ✅
