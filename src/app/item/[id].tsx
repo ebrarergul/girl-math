@@ -371,7 +371,8 @@ export default function ItemDetailScreen() {
 
           {starbucks.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Starbucks Endeksi</Text>
+              {/* 28 Kasım: "Starbucks" başka şirketin markası (App Store riski, Kahoot gibi) → Girl Math Endeksi */}
+              <Text style={styles.sectionTitle}>Girl Math Endeksi</Text>
               <Text style={styles.sectionNote}>Bu parçanın fiyatı şuna eşit:</Text>
               <View style={styles.indexCard}>
                 {starbucks.map((entry) => (

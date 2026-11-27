@@ -59,7 +59,10 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
 - **Starbucks Endeksi (fırsat maliyeti simülatörü):** Asıl amaç **satın almadan önce** karar
   desteği: kullanıcı alacağı ürünün fiyatını girer → "Bunu alırsan 25 iced latte ve
   arkadaşlarınla iki akşam yemeğinden vazgeçiyorsun; değer mi?" ✅ "Almalı mıyım?" ekranı
-  (`src/app/should-i-buy.tsx`, Cüzdan'dan açılır) bunu yapıyor.
+  (`src/app/should-i-buy.tsx`, Cüzdan'dan açılır) bunu yapıyor. 28 Kasım: "Starbucks" başka şirketin markası
+  (Kahoot gibi App Store riski) → ekranda adı **Girl Math Endeksi** (detay sayfası başlığı). Kod adları
+  (`starbucks-index.ts`, `starbucksIndexText`…) aynı kaldı. "ya da" kısmına sadece iced latteden pahalı kalemler
+  girer ("1.290 şişe su" gibi saçma sayılar çıkmasın).
 - **Zaman Aşımı = Bedava (etkinlik modu):** Kıyafet "Etkinlik için alındı" etiketi ve
   etkinlik tarihiyle kaydedilir. O gün: "Bu elbisenin parası hesaptan çoktan çıktı. Bugünkü
   maliyeti 0 TL; bedavaya harika görünüyorsun!" bildirimi. ✅ Mantık + bildirimler (Onur,
