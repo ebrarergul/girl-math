@@ -55,6 +55,10 @@ asistanı. Hedef kitle Z kuşağı kadınlar. Hedef: App Store.
   Ana sayfada "Unutulan parça" kartı + `src/app/shame-wall.tsx` (Utanç Duvarı sayfası).
   Zarar = fiyat ÷ 365 × giyilmeden geçen gün (`lossAmount`/`lossText`, `clothing-card.tsx`);
   günlük tutar sadece ≥ 10 ₺ ise yazılır, asıl vurgu biriken zarar + kıyas ("≈ Brunch 🥞").
+  28 Kasım (Ebrar: "pembe yazılar keskin, acemi site gibi"): sayfa sadeleşti – satırlar tek beyaz kartta, satırda
+  sağda "855 ₺ / boşa gitti", altında gri "39 gündür askıda · alış 8.000 ₺" ve (≥ 10 ₺ ise) "Giymediğin her gün
+  22 ₺ daha boşa gidiyor"; kıyas sadece üst kartta (toplam için). En altta makara not "Bu rakamlar nereden çıktı?"
+  (en pahalı parçayla: "“Ayakkabı” 8.000 ₺, yani sana her gün 22 ₺ kira kesiyor…").
   Takılma **bildirimi** (Onur) bu hesabı henüz kullanmıyor; istenirse oradan çağrılabilir.
 - **Starbucks Endeksi (fırsat maliyeti simülatörü):** Asıl amaç **satın almadan önce** karar
   desteği: kullanıcı alacağı ürünün fiyatını girer → "Bunu alırsan 25 iced latte ve
@@ -480,7 +484,7 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - Ana sayfa ve Cüzdan ✅
   - Kıyafet düzenleme ✅ (`updateItem`'ı da Ebrar ekledi, Onur'un haberi var), Dolap sıralama
     butonu ✅, "Almalı mıyım?" ekranı ✅, Story paylaşım kartı ✅, Utanç Duvarı ✅, burç yorumu ✅, Dolap Kahoot'u ✅, hızlı Giydim (Ana sayfa şeridi + Dolap'ta basılı tutma) ✅, Ayarlar ekranı ✅
-  - Uygulama simgesi ✅ (26 Kasım, `scripts/make-icon.py`)
+  - Uygulama simgesi (26 Kasım, `scripts/make-icon.py`) – 28 Kasım: **yeniden düşünülecek**, bkz. Bilinen durumlar
   - Renk seçici ✅ (+ fotoğraftan renk tahmini ✅), detayda RENK satırı ✅, **"Bununla ne
     giyerim? ✨"** ekranı ✅ (kolaj, seçenekle değiştirme, "Kombini kaydet 💾")
   - Kombin arşivi ✅ (26 Kasım'dan beri ayrı "Kombinler" sekmesi → kayıtlı kombin sayfası), Ana sayfada
@@ -498,8 +502,13 @@ Her iş sahibinin kendi klasörlerinde yapılır, böylece aynı dosyaya iki ki�
   - 26 Kasım kararı ✅: Ana sayfadaki "Kombin | Parça" seçicisi **kalıyor** (Ana sayfa hızlıca "giydim" demek
     için, Kombinler sekmesi kombinleri yönetmek için; işleri farklı).
   - 28 Kasım ✅ (Ebrar + Onur): Bundle ID `com.girlmath.app` (app.json → `ios.bundleIdentifier`).
-  - **Sırada (28 Kasım):** App Store hazırlığı (Apple Developer hesabı, adın App Store'da boş olup olmadığı,
-    gizlilik politikası, TestFlight; simge sadece orada görünür); premium en sona.
+  - 28 Kasım ✅ (video turu): Utanç Duvarı sadeleşti; aylık özette "Bu ay giyilmeyen"; Starbucks sayılarında binlik
+    nokta (1.873) ve "şişe / su" kopmuyor; uyarı başlıklarında emoji yok; burçta "Desenli" → "Bugün şansın ·
+    Desenlerde"; detayda **günde bir Giydim** (bugün giyildiyse buton "Bugün giydin ✓", ↩ ile geri alınır).
+  - 28 Kasım ✅: **Story kartları yeni tasarım** – her paylaşım yerinin kendi kartı (bkz. `share-card.tsx`).
+  - **Sırada (28 Kasım sonu):** 1) uygulama simgesi (Gardrops'a benziyor, bkz. Bilinen durumlar); 2) App Store
+    hazırlığı (Apple Developer hesabı, adın App Store'da boş olup olmadığı, gizlilik politikası, TestFlight);
+    3) development build'e geçince OCR + kombin fotoğrafında arka plan silme (bkz. Sıradaki işler 6); premium en sona.
   - Veri ve hesaplar için yukarıdaki hazır araçları kullanır.
 - **Onur (mantık – `src/lib/`, `src/context/`):**
   - Gerçek hayat kıyasları (`src/lib/comparisons.ts`) ✅
@@ -666,7 +675,8 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     ETKİNLİK) + büyük fotoğraf, maliyet, **kıyas cümlesi** (beyaz kart, büyük kalın; giyim sayısı
     değişince `compareEntering` animasyonuyla yeniden belirir), **"Bununla ne giyerim?"** satırı,
     hedef çubuğu, Starbucks Endeksi, en altta "… tarihinde eklendi" + silme; altta "Giydim ✨" ve
-    ↩ geri al. "Giydim"de maliyet rakamı zıplar (reanimated) ve kutlama balonu çıkar (`handleWear`).
+    ↩ geri al. **Günde bir Giydim** (28 Kasım): bugün giyildiyse buton beyaz "Bugün giydin ✓" ve basılmaz
+    (kayıtlı kombin ve hızlı Giydim ile aynı kural). "Giydim"de maliyet rakamı zıplar (reanimated) ve kutlama balonu çıkar (`handleWear`).
     Etkinlik varsa ETKİNLİK satırı + kıyas kartının altında küçük geri sayım satırı (`eventCountdownText`); etkinlik günü maliyet
     yeşil "0 ₺" (normal maliyet üstü çizili, sadece gösterim), fotoğrafta "🆓 Bugün bedava", buton
     "Bugün bedavaya giy ✨".
@@ -674,7 +684,7 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     paylaşım penceresini açar). `params: { id }` → kıyafet kartı (detaydaki paylaş simgesi),
     parametresiz → dolap kartı (Cüzdan'daki paylaş butonu), `params: { kahoot: '1' }` → bu haftanın
     Kahoot rozet kartı (Kahoot sonuç ekranından), `params: { month: '1' }` → bu ayın özeti
-    (Analizlerin'deki aylık özetin paylaş simgesi).
+    (Analizlerin'deki aylık özetin paylaş simgesi). Kart tam Story boyutunda kaydedilir (`captureRef` 1080×1920).
   - `kahoot.tsx` – Dolap Kahoot'u (Ana sayfadaki Kahoot kartından): haftanın 5 sorusu sayfa açılınca
     sabitlenir; süre çubuğu + "Soru 2/5" + kalan saniye, soru kartı (🔍'de fotoğraf yakın ve bulanık,
     süreyle netleşir; 🔍'de şıklarda fotoğraf yok), hap şıklar (doğru yeşil, yanlış sallanır), açıklama
@@ -776,10 +786,21 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
     "Test"). 26 Kasım: "Almalı mıyım?" ve "Analiz" kalktı, ikisi de sadece Cüzdan'da (iki yerde olmasın).
   - `zodiac-grid.tsx` – 12 burç ızgarası + burç yardımcıları (`zodiacGlyph`, `zodiacRange`,
     `MOON_SYMBOLS`, `mercuryNote`). Burç seçimi sayfası kullanır.
-  - `share-card.tsx` – Story kartları (`ItemShareCard`, `WardrobeShareCard`, `KahootShareCard`,
-    `MonthlyShareCard`, 9:16; 26 Kasım'dan beri krem → pudra gül geçişli zemin, büyük rakamlar koyu;
-    hepsi aynı düzen `StoryLayout`: etiket + başlık, beyaz kartta büyük pembe rakam + satırlar, altta italik alıntı). Büyük rakam `BigAmount`; para olmayan sayıda
-    `currency={false}` (yoksa "750 ₺ puan" yazar).
+  - `share-card.tsx` – Story kartları, 9:16. **28 Kasım'dan beri her paylaşım yerinin kendi tasarımı var**
+    (Spotify Wrapped gibi tek odak; araştırma: Y2K, krom, scrapbook trendleri). Ölçüler kart genişliğine oranlı
+    (`u = genişlik / 300`), içerik Instagram'ın kapattığı yerlerin dışında (üst %10, alt %13: `STORY_SAFE_TOP/BOTTOM`;
+    %12/%17 fazlaydı, içerik üst üste biniyordu). Altta ortak imza `StorySign`: "Girl Math" + merak cümlesi
+    (simge kararı netleşince yanına simge). Renkler `theme.ts`'te (`storyButter`, `storyNight`, `holo*`, `storyHot`…).
+    - `ItemShareCard` (detay): koyu pembe zemin, beyaz kenarlı eğik fotoğraf çıkartması, sarı yıldız rozeti
+      (`7. GİYİM` / `RESMEN BEDAVA` / `YENİ PARÇA` / `BUGÜN BEDAVA`), üstü çizili alış fiyatı + dev giyim başı fiyat
+      (hiç giyilmediyse ∞ + "İlk giyimde → 2.000 ₺", etkinlik günü 0 ₺), kıyas hapı "= bir döner dürüm 🌯".
+    - `WardrobeShareCard` (Cüzdan, `items` da alır): pembe kareli kâğıt, en çok giyilen 5 fotoğraflı parça bantlı
+      polaroid (az parçada daha az ve büyük), dev "%15 dolabım çoktan bedava" (%0 ise "Girl Math yolculuğum başladı"),
+      yanında sarı not "9 parça = 156 iced latte 🧋 ama giyiyorum 💅".
+    - `KahootShareCard` (Quiz sonucu): pudra → lila holografik zemin (nane çıkarıldı, marka renkleri), krom halkalı
+      pembe madalyada rozet emojisi, rozet adı fuşya, puan / doğru (/ 🔥 seri) kutucukları, meydan okuma cümlesi.
+    - `MonthlyShareCard` (aylık özet): gece zemini, köşelerde neon parıltı, dev neon giyim sayısı (+ "geçen aydan +12"),
+      numaralı ilk üç (ayın yıldızı fotoğraflı, en çok renk, alışveriş – harcanan TL yok), ayın yorumu.
   - `event-picker.tsx` – formdaki "Etkinlik için aldım" kutusu (anahtar, `EVENT_TYPES` hapları 3 eşit
     sütun, emojisiz – emojiler sadece detaydaki "💍 Düğün" satırında ve bildirimlerde,
     "Diğer"de ad, iPhone tarih seçicisi). `dateFromString` / `stringFromDate` ("2026-12-05" ↔ Date).
@@ -832,6 +853,11 @@ SF Symbols, ekranda elle renk kodu yok (tek istisna: kıyafet renk yuvarlakları
   biter; altında iPhone "Girl Math" yazar. Dosyalar `assets/images` (icon, splash-icon, android-*, favicon),
   `scripts/make-icon.py` ile üretilir (sadece Mac). Yedek fikir: pudra pembe zeminli "g" (taslak 5).
   Simge Expo Go'da görünmez, sadece gerçek uygulamada (TestFlight/App Store).
+  **28 Kasım: simge yeniden düşünülecek.** Gardrops'un (Türkiye'de ikinci el moda uygulaması) simgesine çok
+  benziyor: onlarınki pembe zeminde beyaz el yazısı tek "g". Harf biçimi farklı (bizimki dergi yazısı, iki katlı),
+  ama "pembe tek g" hissi aynı. ~30 taslak denendi (harfsiz semboller, kesir g/m, iç içe G-M monogram, Ebrar'ın
+  G'den m'ye uzanan çizimi), hiçbiri beğenilmedi. Sonraki adım: Ebrar ve Onur beğendikleri 3-5 simgenin ekran
+  görüntüsünü toplar, o havada çalışılır; gerekirse tasarımcıya yaptırılır. O zamana kadar şimdiki simge kalır.
 - **Bundle ID** (App Store'daki kalıcı kimlik): `com.girlmath.app` (28 Kasım, Ebrar + Onur). App Store'a ilk
   yüklemeden sonra değiştirilemez. Apple Developer hesabında kaydederken "kullanılıyor" derse yeni bir tane
   seçilir ve app.json'daki `ios.bundleIdentifier` güncellenir (ilk yüklemeden önce değiştirmek sorun değil).
@@ -912,5 +938,12 @@ buraya temiz şekilde taşınabilir. Doğrudan kopyalanmaz, bu projenin kurallar
 6. Ekstra özellikler – Starbucks simülatörü ✅, Utanç Duvarı ✅, burç yorumu ✅, kombin önerisi ✅,
    Kahoot ✅, Zaman Aşımı ✅, OCR – ayrıntılar "Özellik
    detayları" bölümünde
+   - **Kombin fotoğrafında arka plan silme** (28 Kasım, Ebrar'ın fikri): galeriden seçilen ayna/OOTD fotoğrafından
+     sadece kişi + kombin kalsın. Apple Vision (iOS 17+, iPhone XS ve sonrası), yedek olarak VisionKit (iOS 16) ve
+     kişi ayırma (iOS 15); desteklenmiyorsa buton görünmez, fotoğraf olduğu gibi kaydedilir. Telefonda ve internetsiz
+     (remove.bg gibi servisler kullanılmaz: gizlilik). Development build gerektirir → OCR ile birlikte yapılır.
+     Hazır paket `react-native-subject-lift` çok yeni (0.2), gerekirse küçük bir Expo yerel modülü yazılır.
+     Ara çözüm (kodsuz): iPhone Fotoğraflar'da kişiye basılı tut → Paylaş → Resmi Kaydet; ama uygulamanın 3:4
+     kırpması şeffaf zemini siyah/beyaza çevirebilir (denenecek).
 7. App Store hazırlığı (Apple Developer hesabı, EAS Build/Xcode, TestFlight, gizlilik
    politikası, izin metinleri)

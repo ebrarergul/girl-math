@@ -45,6 +45,12 @@ const Palette = {
   storyLight: '#FDEAF1',
   storyMid: '#F9CFDF',
   storyDeep: '#F3A9C4',
+  // Story kartları 2. tasarım (28 Kasım): her paylaşım yerine ayrı kart (bkz. share-card.tsx)
+  butter: '#FFF2A8', // Sarı yıldız rozeti / not kâğıdı (kıyafet ve dolap kartı)
+  neonPinkClear: '#FF5C9300', // Neon parıltının şeffaf ucu (geçişin bittiği yer)
+  night: '#160B10', // Aylık özet kartının gece zemini (Wrapped havası)
+  holoLilac: '#D9D2FF', // Quiz kartının holografik zemini: pudra → lila → pudra
+  holoBlush: '#FFD1E6',
 } as const;
 
 const light = {
@@ -75,6 +81,15 @@ const light = {
   progressTrack: Palette.linen, // Çubuğun boş kısmı
   glass: 'rgba(255, 255, 255, 0.7)', // Pembe zeminli kartlarda yarı saydam beyaz (seçici zemini)
   overlay: 'rgba(24, 16, 20, 0.4)', // Alttan açılan pencerenin arkasındaki yarı saydam karartma
+  // Story kartları (28 Kasım, share-card.tsx)
+  storyButter: Palette.butter, // Sarı yıldız rozeti, not kâğıdı
+  storyNight: Palette.night, // Aylık özetin gece zemini
+  storyStickerShadow: 'rgba(80, 0, 30, 0.35)', // Çıkartma ve polaroid gölgesi
+  storyPaper: Palette.storyLight, // Dolap kartının kâğıt zemini
+  storyGingham: 'rgba(214, 31, 105, 0.09)', // Pembe kareli kâğıt çizgileri
+  storyTape: 'rgba(255, 92, 147, 0.55)', // Polaroidleri tutan yarı saydam bant
+  holoLilac: Palette.holoLilac,
+  holoBlush: Palette.holoBlush,
 };
 
 export const Colors = {
@@ -157,6 +172,10 @@ export const Gradients = {
   story: [Palette.storyLight, Palette.storyMid, Palette.storyDeep] as const,
   // Ana sayfa "Bugün ne giydin?" kartı: sol üstten toz pembe yansıma, beyaza açılır (26 Kasım)
   blush: [Palette.storyLight, Palette.white] as const,
+  // Story kıyafet kartı: fuşyadan koyu pembeye (beyaz yazı her yerde okunur)
+  storyHot: [Palette.hotPink, Palette.hotPinkDark] as const,
+  // Yazısız köşedeki neon parıltı (neon pembe üstüne yazı konmaz)
+  storyGlow: [Palette.neonPink, Palette.neonPinkClear] as const,
 };
 
 export const Shadows = {

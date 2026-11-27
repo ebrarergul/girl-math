@@ -58,7 +58,8 @@ export default function ShareScreen() {
         Alert.alert('Paylaşım bu cihazda kullanılamıyor');
         return;
       }
-      const uri = await captureRef(cardRef, { format: 'png', quality: 1 });
+      // Tam Story boyutu (1080×1920): Instagram'da bulanık çıkmasın (kart ölçüleri genişliğe oranlı)
+      const uri = await captureRef(cardRef, { format: 'png', quality: 1, width: 1080, height: 1920 });
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
         UTI: 'public.png',
@@ -103,7 +104,7 @@ export default function ShareScreen() {
           ) : item ? (
             <ItemShareCard item={item} width={cardWidth} />
           ) : (
-            <WardrobeShareCard stats={getWardrobeStats(items)} width={cardWidth} />
+            <WardrobeShareCard stats={getWardrobeStats(items)} items={items} width={cardWidth} />
           )}
         </View>
         <Text style={styles.hint}>Instagram Story, TikTok ya da WhatsApp için hazır ✨</Text>
