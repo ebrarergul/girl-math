@@ -37,7 +37,7 @@ import { Colors, Fonts, Radius, Shadows, Spacing, Typography } from '@/constants
 import { useApp } from '@/context/app-context';
 import type { ColorName } from '@/lib/colors';
 import { eventCountdownText, eventLabel, isEventDay } from '@/lib/events';
-import { costPerWear, daysSinceLastWear, isPaidOff, wearCount } from '@/lib/girl-math';
+import { costPerWear, daysSinceLastWear, isPaidOff, todayString, wearCount } from '@/lib/girl-math';
 import { photoUri } from '@/lib/photos';
 import { placeLabel, type PlaceName } from '@/lib/places';
 import { starbucksIndexList } from '@/lib/starbucks-index';
@@ -133,6 +133,8 @@ export default function ItemDetailScreen() {
   // Etkinlik: geri sayım cümlesi ve bugün etkinlik günü mü (o gün maliyet 0 ₺ gösterilir)
   const countdown = eventCountdownText(item);
   const eventDay = isEventDay(item);
+  // Bugün zaten giyildiyse "Giydim" ikinci kez saymaz (28 Kasım; hızlı Giydim ve kayıtlı kombin gibi)
+  const wornToday = item.wearDates.includes(todayString());
 
   // "Giydim": kaydı yap, rakamı zıplat, duruma göre kutlama mesajı göster
   // Pencerede yer seçilince (ya da "Geç" → null) giyim kaydedilir
@@ -432,8 +434,15 @@ export default function ItemDetailScreen() {
               coach.done('item-wear');
               setPlaceOpen(true);
             }}
-            style={({ pressed }) => [styles.wearButton, pressed && styles.wearPressed]}>
-            <Text style={styles.wearText}>{eventDay ? 'Bugün bedavaya giy ✨' : 'Giydim ✨'}</Text>
+            disabled={wornToday}
+            style={({ pressed }) => [
+              styles.wearButton,
+              wornToday && styles.wearButtonDone,
+              pressed && styles.wearPressed,
+            ]}>
+            <Text style={[styles.wearText, wornToday && styles.wearTextDone]}>
+              {wornToday ? 'Bugün giydin ✓' : eventDay ? 'Bugün bedavaya giy ✨' : 'Giydim ✨'}
+            </Text>
           </Pressable>
         </CoachMark>
       </View>
@@ -816,5 +825,15 @@ const styles = StyleSheet.create({
   wearText: {
     ...Typography.heading,
     color: colors.onPrimary,
+  },
+  // Bugün giyildi: kayıtlı kombin sayfasındaki "Bugün giydin ✓" ile aynı (beyaz, ince kenar, gölgesiz)
+  wearButtonDone: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowOpacity: 0,
+  },
+  wearTextDone: {
+    color: colors.text,
   },
 });

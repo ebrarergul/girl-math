@@ -148,10 +148,15 @@ export default function HoroscopeScreen() {
             <Text style={styles.sectionTitle}>Yıldızların seçimi</Text>
             <View style={styles.card}>
               <View style={styles.luckyRow}>
-                <Text style={styles.luckyLabel}>Bugünkü şanslı rengin</Text>
+                {/* "Desenli" bir renk değil (Kova'nın şanslılarından): "Bugün şansın · Desenlerde" (28 Kasım) */}
+                <Text style={styles.luckyLabel}>
+                  {daily.luckyColor === 'Desenli' ? 'Bugün şansın' : 'Bugünkü şanslı rengin'}
+                </Text>
                 <View style={styles.luckyColor}>
                   <ColorSwatch color={daily.luckyColor} size={16} />
-                  <Text style={styles.luckyName}>{daily.luckyColor}</Text>
+                  <Text style={styles.luckyName}>
+                    {daily.luckyColor === 'Desenli' ? 'Desenlerde' : daily.luckyColor}
+                  </Text>
                 </View>
               </View>
 
