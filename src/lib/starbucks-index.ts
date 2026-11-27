@@ -27,8 +27,13 @@ export function starbucksIndexList(price: number): IndexEntry[] {
     .reverse();
 }
 
+// Bölünmez boşluk: "1.873 şişe su 💧" satır sonunda "şişe / su" diye kopmasın (sadece kalemler arasında bölünsün)
+const NBSP = ' ';
+
+// 28 Kasım (Ebrar, Onur'un haberiyle): sayıya binlik noktası (1873 → 1.873) + kalemin içinde bölünmez boşluk
 function formatEntry(entry: IndexEntry): string {
-  return `${entry.count} ${entry.comparison.unit} ${entry.comparison.emoji}`;
+  const unit = entry.comparison.unit.replace(/ /g, NBSP);
+  return `${entry.count.toLocaleString('tr-TR')}${NBSP}${unit}${NBSP}${entry.comparison.emoji}`;
 }
 
 // Kısa cümle. Örn: "= 11 iced latte 🧋 ya da 15 filtre kahve ☕"

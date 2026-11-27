@@ -39,7 +39,7 @@ export const FORGOTTEN_DAYS = 7;
 // her gün fiyatın 1/365'i boşa gider. Günlük tutar sadece anlamlıysa (≥ 10 ₺) gösterilir,
 // asıl vurgu zamanla büyüyen toplam zarardadır.
 const LOSS_YEAR_DAYS = 365;
-const MIN_DAILY_LOSS_TO_SHOW = 10;
+export const MIN_DAILY_LOSS_TO_SHOW = 10;
 
 // Giyilmeden geçen günlerde boşa giden tutar (TL, tam sayı)
 export function lossAmount(price: number, days: number): number {

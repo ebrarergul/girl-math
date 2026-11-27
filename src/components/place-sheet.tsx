@@ -6,8 +6,8 @@
  * ve pencere kapanır. Arkadaki karartmaya dokununca vazgeçilir (giyilmez).
  *
  * item verilirse yer seçilince Onur'un repeatWarning'i bakılır: son 14 günde aynı parçayla aynı
- * yere gidildiyse pencerede uyarı çıkar (soft: açık pembe "💭 Hatırlatma", strong: turuncu
- * şeritli "🚨"), altında "Bunun yerine" (freshAlternatives; dokununca o parça giyilir) ve
+ * yere gidildiyse pencerede uyarı çıkar (soft: açık pembe "Hatırlatma", strong: turuncu
+ * şeritli "Aynı insanlar görüyor"; başlıkta emoji yok), altında "Bunun yerine" (freshAlternatives; dokununca o parça giyilir) ve
  * [Yine de giy] / [Vazgeç]. Önerilecek parça yoksa nazik bir not + "Bununla yeni kombin kur →"
  * (tek parçası olan da olabilir, dolabını eklememiş olan da; suçlamadan yeni kombin önerilir).
  *
@@ -114,7 +114,8 @@ export function PlaceSheet({
               <View style={[styles.warning, strong && styles.warningStrong]}>
                 {strong && <View style={styles.warningStripe} />}
                 <Text style={styles.warningTitle}>
-                  {strong ? '🚨 Aynı insanlar görüyor' : '💭 Hatırlatma'}
+                  {/* Başlıkta emoji yok (sadeleştirme kuralı 2); güçlü uyarıyı turuncu şerit anlatır */}
+                  {strong ? 'Aynı insanlar görüyor' : 'Hatırlatma'}
                 </Text>
                 <Text style={styles.warningText}>{pending.warning.message}</Text>
               </View>
@@ -141,7 +142,7 @@ export function PlaceSheet({
               {alternatives.length > 0 && (
                 <View style={styles.instead}>
                   <Text style={styles.insteadTitle}>
-                    {`Bunun yerine (${placeLabel(pending.place)} için taze)`}
+                    {`Bunun yerine (${pending.place} için taze)`}
                   </Text>
                   <View style={styles.insteadRow}>
                     {alternatives.map((other) => (

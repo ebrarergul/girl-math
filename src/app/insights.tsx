@@ -131,7 +131,7 @@ function MonthlySection({ items }: { items: ClothingItem[] }) {
       value: `${summary.star.item.name} · ${summary.star.wears} kere`,
     },
     summary.paidOffCount > 0 && { label: 'Amorti olan', value: `${summary.paidOffCount} parça` },
-    summary.unwornCount > 0 && { label: 'Hiç giyilmeyen', value: `${summary.unwornCount} parça` },
+    summary.unwornCount > 0 && { label: 'Bu ay giyilmeyen', value: `${summary.unwornCount} parça` },
   ].filter((row): row is { label: string; value: string } => Boolean(row));
 
   return (
